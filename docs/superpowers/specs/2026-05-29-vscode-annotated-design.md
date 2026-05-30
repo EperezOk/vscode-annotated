@@ -175,14 +175,21 @@ comments in their own author file.
 
 ## Author identity (web-safe)
 
-Resolution order:
+Resolution order (each source may be unavailable and falls through):
 
 1. Built-in Git extension API — `user.name` (via `repository.getConfig` /
-   `getGlobalConfig`).
+   `getGlobalConfig`). **Desktop only** — the built-in `vscode.git` extension has no
+   `browser` entry, so it is *unavailable in the web host* (vscode.dev, github.dev,
+   `@vscode/test-web`); `getExtension('vscode.git')` returns `undefined` there.
 2. `annotated.authorName` setting.
-3. One-time prompt, stored into `annotated.authorName`.
+3. A signed-in **GitHub authentication session** account label
+   (`vscode.authentication.getSession('github', …, { silent: true })`) — works on web.
+4. One-time prompt (`showInputBox`), stored into `annotated.authorName`.
+5. Fallback `"Unknown"` if all sources are empty.
 
-No `child_process`/`os` (web host). Comment files are named
+The resolution logic is a pure function (`resolveAuthor(sources)`) over a set of
+name sources, so it is unit-testable independently of VSCode; each source is a thin
+adapter. No `child_process`/`os` (web host). Comment files are named
 `comments/<slug-of-name>.json`; the canonical `author` and `email` live inside the
 file so a name-slug collision degrades gracefully.
 
