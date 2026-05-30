@@ -1,7 +1,15 @@
 import * as vscode from 'vscode';
+import { GroupStore } from '../core/groupStore';
+import { parseWebviewMessage, type HostToWebview } from '../shared/protocol';
+import { VscodeFileSystem } from './vscodeFileSystem';
+import { readTagPalette } from './tagPalette';
 
 export class SidebarViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = 'annotated.sidebar';
+  private view?: vscode.WebviewView;
+
+  /** Set by the extension to handle group selection (wired to the detail panel in a later phase). */
+  public onSelectGroup?: (groupId: string) => void;
 
   constructor(private readonly extensionUri: vscode.Uri) {}
 
@@ -10,11 +18,34 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
     _context: vscode.WebviewViewResolveContext,
     _token: vscode.CancellationToken,
   ): void {
+    this.view = webviewView;
     webviewView.webview.options = {
       enableScripts: true,
       localResourceRoots: [vscode.Uri.joinPath(this.extensionUri, 'dist', 'webview')],
     };
     webviewView.webview.html = this.getHtml(webviewView.webview);
+    webviewView.webview.onDidReceiveMessage(async (raw) => {
+      const message = parseWebviewMessage(raw);
+      if (!message) {
+        return;
+      }
+      if (message.type === 'ready') {
+        await this.refresh();
+      } else if (message.type === 'selectGroup') {
+        this.onSelectGroup?.(message.groupId);
+      }
+    });
+  }
+
+  /** Reload groups from disk and push fresh state to the webview. */
+  async refresh(): Promise<void> {
+    if (!this.view) {
+      return;
+    }
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    const groups = folder ? await new GroupStore(new VscodeFileSystem(folder.uri)).listGroups() : [];
+    const message: HostToWebview = { type: 'setState', groups, palette: readTagPalette() };
+    void this.view.webview.postMessage(message);
   }
 
   private getHtml(webview: vscode.Webview): string {
@@ -45,11 +76,10 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
   }
 }
 
+/** Cryptographically-strong nonce via Web Crypto (available in the web extension host). */
 function getNonce(): string {
-  let text = '';
-  const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  for (let i = 0; i < 32; i++) {
-    text += possible.charAt(Math.floor(Math.random() * possible.length));
-  }
-  return text;
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  return Array.from(bytes)
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
 }

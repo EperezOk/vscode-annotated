@@ -8,6 +8,15 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.window.registerWebviewViewProvider(SidebarViewProvider.viewType, provider),
   );
 
+  const watcher = vscode.workspace.createFileSystemWatcher('**/.annotations/**/*.json');
+  const refreshSidebar = (): void => {
+    void provider.refresh();
+  };
+  watcher.onDidCreate(refreshSidebar);
+  watcher.onDidChange(refreshSidebar);
+  watcher.onDidDelete(refreshSidebar);
+  context.subscriptions.push(watcher);
+
   context.subscriptions.push(
     vscode.commands.registerCommand('annotated.ping', () => 'pong'),
   );
