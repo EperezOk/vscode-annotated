@@ -1,5 +1,5 @@
 import { type FileSystem } from './fileSystem';
-import { type AnnotationGroup, parseGroup, serializeGroup } from '../shared/model';
+import { type AnnotationGroup, type LineRange, parseGroup, serializeGroup } from '../shared/model';
 
 const dec = new TextDecoder();
 const enc = new TextEncoder();
@@ -68,6 +68,30 @@ export class GroupStore {
       return false;
     }
     const annotations = group.annotations.map((a, i) => (i === index ? { ...a, content } : a));
+    await this.saveGroup({ ...group, annotations, updatedAt: now });
+    return true;
+  }
+
+  /**
+   * Replace one annotation's line range + content hash (file is fixed), bump
+   * updatedAt, persist. Returns false if the group/annotation does not exist.
+   */
+  async updateAnnotationRange(
+    groupId: string,
+    annotationId: string,
+    range: LineRange,
+    contentHash: string,
+    now: number,
+  ): Promise<boolean> {
+    const group = await this.getGroup(groupId);
+    if (!group) {
+      return false;
+    }
+    const index = group.annotations.findIndex((a) => a.id === annotationId);
+    if (index < 0) {
+      return false;
+    }
+    const annotations = group.annotations.map((a, i) => (i === index ? { ...a, range, contentHash } : a));
     await this.saveGroup({ ...group, annotations, updatedAt: now });
     return true;
   }

@@ -125,4 +125,23 @@ describe('GroupStore', () => {
   it('updateGroup returns false for a missing group', async () => {
     expect(await store.updateGroup('nope', { title: 'x' }, 1)).toBe(false);
   });
+
+  it('updateAnnotationRange replaces range + contentHash, bumps updatedAt, persists', async () => {
+    const g = group('g1');
+    g.annotations.push({ id: 'a1', file: 'x.ts', range: { startLine: 1, endLine: 1 }, content: 'c', contentHash: 'old' });
+    await store.saveGroup(g);
+    const ok = await store.updateAnnotationRange('g1', 'a1', { startLine: 3, endLine: 5 }, 'newhash', 777);
+    expect(ok).toBe(true);
+    const r = await store.getGroup('g1');
+    expect(r?.annotations[0].range).toEqual({ startLine: 3, endLine: 5 });
+    expect(r?.annotations[0].contentHash).toBe('newhash');
+    expect(r?.annotations[0].content).toBe('c');
+    expect(r?.updatedAt).toBe(777);
+  });
+
+  it('updateAnnotationRange returns false for a missing group/annotation', async () => {
+    expect(await store.updateAnnotationRange('nope', 'a1', { startLine: 1, endLine: 1 }, 'h', 1)).toBe(false);
+    await store.saveGroup(group('g1'));
+    expect(await store.updateAnnotationRange('g1', 'missing', { startLine: 1, endLine: 1 }, 'h', 1)).toBe(false);
+  });
 });
