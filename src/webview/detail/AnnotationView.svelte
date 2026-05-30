@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { untrack } from 'svelte';
   import { type Annotation } from '../../shared/model';
   import MarkdownPreview from './MarkdownPreview.svelte';
   import MarkdownEditor from './MarkdownEditor.svelte';
@@ -19,8 +20,11 @@
 
   const location = $derived(`${annotation.file}:${annotation.range.startLine}–${annotation.range.endLine}`);
 
-  let editing = $state(annotation.content.length === 0);
-  let draft = $state(annotation.content);
+  // Seed once from the prop (intentional — DetailApp keys this component by
+  // annotation id, so it remounts on switch). untrack() avoids the spurious
+  // `state_referenced_locally` warning while preserving that semantics.
+  let editing = $state(untrack(() => annotation.content.length === 0));
+  let draft = $state(untrack(() => annotation.content));
 
   function startEdit(): void {
     draft = annotation.content;
