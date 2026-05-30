@@ -11,6 +11,9 @@ export class DetailPanelProvider implements vscode.WebviewViewProvider {
   /** Set by the extension to navigate to a selected annotation. */
   public onSelectAnnotation?: (annotation: Annotation) => void;
 
+  /** Set by the extension to persist an annotation's edited content. */
+  public onUpdateAnnotation?: (groupId: string, annotationId: string, content: string) => void;
+
   constructor(private readonly extensionUri: vscode.Uri) {}
 
   resolveWebviewView(
@@ -36,6 +39,12 @@ export class DetailPanelProvider implements vscode.WebviewViewProvider {
         if (annotation) {
           this.onSelectAnnotation?.(annotation);
         }
+      } else if (message.type === 'updateAnnotation') {
+        if (this.group) {
+          this.onUpdateAnnotation?.(this.group.id, message.annotationId, message.content);
+        }
+      } else if (message.type === 'copyText') {
+        void vscode.env.clipboard.writeText(message.text);
       }
     });
   }

@@ -53,4 +53,22 @@ export class GroupStore {
   async deleteGroup(id: string): Promise<void> {
     await this.fs.delete(this.path(id));
   }
+
+  /**
+   * Replace one annotation's content and bump the group's updatedAt, then persist.
+   * Returns false if the group or annotation does not exist.
+   */
+  async updateAnnotation(groupId: string, annotationId: string, content: string, now: number): Promise<boolean> {
+    const group = await this.getGroup(groupId);
+    if (!group) {
+      return false;
+    }
+    const index = group.annotations.findIndex((a) => a.id === annotationId);
+    if (index < 0) {
+      return false;
+    }
+    const annotations = group.annotations.map((a, i) => (i === index ? { ...a, content } : a));
+    await this.saveGroup({ ...group, annotations, updatedAt: now });
+    return true;
+  }
 }

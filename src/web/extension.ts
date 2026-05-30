@@ -43,6 +43,19 @@ export function activate(context: vscode.ExtensionContext): void {
     }
   };
 
+  detailProvider.onUpdateAnnotation = async (groupId, annotationId, content): Promise<void> => {
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    if (!folder) {
+      return;
+    }
+    const store = new GroupStore(new VscodeFileSystem(folder.uri));
+    const ok = await store.updateAnnotation(groupId, annotationId, content, Math.floor(Date.now() / 1000));
+    if (ok) {
+      const updated = await store.getGroup(groupId);
+      detailProvider.showGroup(updated, readTagPalette());
+    }
+  };
+
   context.subscriptions.push(
     vscode.commands.registerCommand('annotated.ping', () => 'pong'),
   );

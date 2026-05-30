@@ -78,4 +78,21 @@ describe('GroupStore', () => {
     const bytes = await fs.readFile('.annotations/groups/g1.json');
     expect(new TextDecoder().decode(bytes)).toBe(serializeGroup(g));
   });
+
+  it('updateAnnotation replaces content, bumps updatedAt, and persists', async () => {
+    const g = group('g1');
+    g.annotations.push({ id: 'a1', file: 'x.ts', range: { startLine: 1, endLine: 1 }, content: 'old', contentHash: 'h' });
+    await store.saveGroup(g);
+    const ok = await store.updateAnnotation('g1', 'a1', 'new content', 999);
+    expect(ok).toBe(true);
+    const reloaded = await store.getGroup('g1');
+    expect(reloaded?.annotations[0].content).toBe('new content');
+    expect(reloaded?.updatedAt).toBe(999);
+  });
+
+  it('updateAnnotation returns false for a missing group or annotation', async () => {
+    expect(await store.updateAnnotation('nope', 'a1', 'x', 1)).toBe(false);
+    await store.saveGroup(group('g1'));
+    expect(await store.updateAnnotation('g1', 'missing', 'x', 1)).toBe(false);
+  });
 });
