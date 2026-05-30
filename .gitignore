@@ -4,3 +4,6 @@ out/
 dist/
 *.vsix
 .vscode-test/
+test-results/
+playwright-report/
+.vscode-test-web/
