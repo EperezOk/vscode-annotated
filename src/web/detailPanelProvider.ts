@@ -14,6 +14,13 @@ export class DetailPanelProvider implements vscode.WebviewViewProvider {
   /** Set by the extension to persist an annotation's edited content. */
   public onUpdateAnnotation?: (groupId: string, annotationId: string, content: string) => void;
 
+  /** Set by the extension: rename the active group. */
+  public onSetGroupTitle?: (groupId: string, title: string) => void;
+  /** Set by the extension: edit the active group's tags (native picker). */
+  public onEditTags?: (groupId: string) => void;
+  /** Set by the extension: edit the active group's Git ref (native picker). */
+  public onEditGitRef?: (groupId: string) => void;
+
   constructor(private readonly extensionUri: vscode.Uri) {}
 
   resolveWebviewView(
@@ -45,6 +52,18 @@ export class DetailPanelProvider implements vscode.WebviewViewProvider {
         }
       } else if (message.type === 'copyText') {
         void vscode.env.clipboard.writeText(message.text);
+      } else if (message.type === 'setGroupTitle') {
+        if (this.group) {
+          this.onSetGroupTitle?.(this.group.id, message.title);
+        }
+      } else if (message.type === 'editTags') {
+        if (this.group) {
+          this.onEditTags?.(this.group.id);
+        }
+      } else if (message.type === 'editGitRef') {
+        if (this.group) {
+          this.onEditGitRef?.(this.group.id);
+        }
       }
     });
   }
