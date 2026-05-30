@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { resolveAuthor, type AuthorNameSources } from './authorIdentity';
+import { resolveAuthor, resolveAuthorEmail, type AuthorNameSources } from './authorIdentity';
 
 function sources(overrides: Partial<AuthorNameSources>): AuthorNameSources {
   return {
@@ -38,5 +38,21 @@ describe('resolveAuthor', () => {
 
   it('ignores whitespace-only values', async () => {
     expect(await resolveAuthor(sources({ gitUserName: async () => '   ', settingAuthorName: () => 'Real' }))).toBe('Real');
+  });
+});
+
+describe('resolveAuthorEmail', () => {
+  const sources = (over: Partial<Record<'git' | 'setting' | 'github', string | undefined>>) => ({
+    gitUserEmail: async () => over.git,
+    settingAuthorEmail: () => over.setting,
+    githubAccountEmail: async () => over.github,
+  });
+  it('prefers git, then setting, then github', async () => {
+    expect(await resolveAuthorEmail(sources({ git: 'g@x', setting: 's@x', github: 'h@x' }))).toBe('g@x');
+    expect(await resolveAuthorEmail(sources({ setting: 's@x', github: 'h@x' }))).toBe('s@x');
+    expect(await resolveAuthorEmail(sources({ github: 'h@x' }))).toBe('h@x');
+  });
+  it('returns empty string when no source provides one', async () => {
+    expect(await resolveAuthorEmail(sources({}))).toBe('');
   });
 });

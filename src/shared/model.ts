@@ -96,3 +96,47 @@ export function parseGroup(raw: unknown): AnnotationGroup {
 export function serializeGroup(group: AnnotationGroup): string {
   return JSON.stringify(group, null, 2);
 }
+
+/** One comment in a per-author comment file. */
+export interface Comment {
+  id: string;
+  annotationId: string;
+  content: string;
+  timestamp: number; // epoch seconds
+}
+
+/** A per-author comment file (.annotations/comments/<slug>.json). */
+export interface CommentFile {
+  author: string;
+  email: string;
+  comments: Comment[];
+}
+
+/** A comment flattened into a thread, with its file's author attached. */
+export interface ThreadComment extends Comment {
+  author: string;
+}
+
+function parseComment(raw: unknown): Comment {
+  if (!isObject(raw)) fail('comment', 'is not an object');
+  const { id, annotationId, content, timestamp } = raw;
+  if (typeof id !== 'string') fail('comment.id', 'must be a string');
+  if (typeof annotationId !== 'string') fail('comment.annotationId', 'must be a string');
+  if (typeof content !== 'string') fail('comment.content', 'must be a string');
+  if (typeof timestamp !== 'number') fail('comment.timestamp', 'must be a number');
+  return { id, annotationId, content, timestamp };
+}
+
+/** Validate an untrusted value as a CommentFile. Throws on any problem. */
+export function parseCommentFile(raw: unknown): CommentFile {
+  if (!isObject(raw)) fail('commentFile', 'is not an object');
+  const { author, email, comments } = raw;
+  if (typeof author !== 'string') fail('commentFile.author', 'must be a string');
+  if (typeof email !== 'string') fail('commentFile.email', 'must be a string');
+  if (!Array.isArray(comments)) fail('commentFile.comments', 'must be an array');
+  return { author, email, comments: comments.map(parseComment) };
+}
+
+export function serializeCommentFile(file: CommentFile): string {
+  return JSON.stringify(file, null, 2);
+}
