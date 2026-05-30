@@ -290,7 +290,7 @@ describe('sha256Hex', () => {
 
   it('is deterministic and content-sensitive', async () => {
     expect(await sha256Hex('hello')).toBe(await sha256Hex('hello'));
-    expect(await sha256Hex('hello')).not.toBe(await sha256Hex('hello'));
+    expect(await sha256Hex('hello')).not.toBe(await sha256Hex('world'));
   });
 });
 
