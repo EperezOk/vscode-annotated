@@ -8,12 +8,8 @@
   "createdAt": 1730000100,
   "updatedAt": 1730000200,
   "annotations": [
-    {
-      "id": "seed-resolved-anno",
-      "file": "README.md",
-      "range": { "startLine": 3, "endLine": 5 },
-      "content": "Resolved annotation",
-      "contentHash": "resolved-seed"
-    }
+    { "id": "r1", "file": "README.md", "range": { "startLine": 1, "endLine": 1 }, "content": "First resolved note.", "contentHash": "seed" },
+    { "id": "r2", "file": "README.md", "range": { "startLine": 2, "endLine": 2 }, "content": "Second resolved note.", "contentHash": "seed" },
+    { "id": "r3", "file": "README.md", "range": { "startLine": 3, "endLine": 3 }, "content": "Third resolved note.", "contentHash": "seed" }
   ]
 }

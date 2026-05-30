@@ -25,6 +25,9 @@ export class DetailPanelProvider implements vscode.WebviewViewProvider {
   /** Set by the extension: persist an annotation's edited line range. */
   public onUpdateAnnotationRange?: (groupId: string, annotationId: string, startLine: number, endLine: number) => void;
 
+  /** Set by the extension: persist a reordered annotation list. */
+  public onReorderAnnotations?: (groupId: string, annotationIds: string[]) => void;
+
   constructor(private readonly extensionUri: vscode.Uri) {}
 
   resolveWebviewView(
@@ -71,6 +74,10 @@ export class DetailPanelProvider implements vscode.WebviewViewProvider {
       } else if (message.type === 'editGitRef') {
         if (this.group) {
           this.onEditGitRef?.(this.group.id);
+        }
+      } else if (message.type === 'reorderAnnotations') {
+        if (this.group) {
+          this.onReorderAnnotations?.(this.group.id, message.annotationIds);
         }
       }
     });

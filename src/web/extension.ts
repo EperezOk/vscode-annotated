@@ -134,6 +134,18 @@ export function activate(context: vscode.ExtensionContext): void {
     await patchGroup(groupId, { gitRef: ref.trim() === '' ? null : ref.trim() });
   };
 
+  detailProvider.onReorderAnnotations = async (groupId, annotationIds): Promise<void> => {
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    if (!folder) {
+      return;
+    }
+    const store = new GroupStore(new VscodeFileSystem(folder.uri));
+    const ok = await store.reorderAnnotations(groupId, annotationIds, now());
+    if (ok) {
+      await showGroupWithStale(groupId);
+    }
+  };
+
   detailProvider.onUpdateAnnotationRange = async (groupId, annotationId, startLine, endLine): Promise<void> => {
     const folder = vscode.workspace.workspaceFolders?.[0];
     if (!folder) {
