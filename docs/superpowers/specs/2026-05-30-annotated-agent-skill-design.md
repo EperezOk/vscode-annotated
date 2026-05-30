@@ -144,14 +144,26 @@ extension's `crypto.randomUUID()` is lowercase, so normalize).
 
 **Timestamps** — `date +%s` (epoch seconds).
 
-### Config — `.vscode/settings.json` (workspace)
-- `annotated.tags`: `[{ "name": string, "color": string }]` — the tag palette (shared/committed).
+### Config — VSCode settings
+- `annotated.tags`: `[{ "name": string, "color": string }]` — the tag palette. **Tag writes
+  may target either the workspace config or the user's global config — the user decides per
+  write** (default: workspace):
+  - **Workspace:** `.vscode/settings.json` in the repo (shared/committed). Always
+    file-accessible.
+  - **Global (user):** the user's `settings.json`, whose path depends on OS + VSCode flavor —
+    macOS `~/Library/Application Support/Code/User/settings.json`, Linux
+    `~/.config/Code/User/settings.json`, Windows `%APPDATA%\Code\User\settings.json` (swap the
+    `Code` segment for `Code - Insiders` / `VSCodium` / `Cursor` as appropriate). The skill
+    documents how to locate it and **confirms the resolved path with the user before writing**.
+
+  Either target: read-merge-write the `annotated.tags` array, **dedup by `name`** (last write
+  wins on color). Both files may be absent — create them with a minimal `{ }` shell if needed,
+  preserving any unrelated existing keys.
 - `annotated.authorName` / `annotated.authorEmail`: the human's identity (the agent reads but
   does not overwrite these).
 - **Agent identity convention:** `annotated.agentName` (optional) → fallback `"Claude"`. The
-  agent uses this as its `author` for groups and as the basis for its comment-file slug.
-- Config writes target the **workspace** `.vscode/settings.json` (file-accessible, shared),
-  never the user's global settings.
+  agent uses this as its `author` for groups and as the basis for its comment-file slug. The
+  agent's own groups/comments are always workspace files under `.annotations/`.
 
 ## Operations (each a copy-pasteable recipe in `references/operations.md`)
 
@@ -172,8 +184,9 @@ extension's `crypto.randomUUID()` is lowercase, so normalize).
    annotation to an **agent-authored** group: append + bump `updatedAt`.
 4. **Manage own.** Resolve/restore (flip `status`) or delete **agent-authored** groups; delete
    the agent's own comments (filter its own comment file). Never on others' files.
-5. **Update config.** Add a tag to `annotated.tags` (dedup by name) or set `annotated.agentName`
-   in `.vscode/settings.json`.
+5. **Update config.** Add a tag to `annotated.tags` (dedup by name) — to the **workspace**
+   `.vscode/settings.json` or, when the user chooses, the **global** user `settings.json`
+   (resolve the path per OS/flavor and confirm it before writing). Or set `annotated.agentName`.
 
 ## Safety & etiquette (hard rules stated in SKILL.md)
 
