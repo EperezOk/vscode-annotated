@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { type Annotation, type AnnotationGroup } from '../shared/model';
+import { type Annotation, type AnnotationGroup, type GroupStatus } from '../shared/model';
 import { parseDetailMessage, type HostToDetail, type TagColor } from '../shared/protocol';
 
 export class DetailPanelProvider implements vscode.WebviewViewProvider {
@@ -27,6 +27,9 @@ export class DetailPanelProvider implements vscode.WebviewViewProvider {
 
   /** Set by the extension: persist a reordered annotation list. */
   public onReorderAnnotations?: (groupId: string, annotationIds: string[]) => void;
+
+  /** Set by the extension: change the current group's status. */
+  public onUpdateGroupStatus?: (groupId: string, status: GroupStatus) => void;
 
   constructor(private readonly extensionUri: vscode.Uri) {}
 
@@ -78,6 +81,10 @@ export class DetailPanelProvider implements vscode.WebviewViewProvider {
       } else if (message.type === 'reorderAnnotations') {
         if (this.group) {
           this.onReorderAnnotations?.(this.group.id, message.annotationIds);
+        }
+      } else if (message.type === 'updateGroupStatus') {
+        if (this.group) {
+          this.onUpdateGroupStatus?.(this.group.id, message.status);
         }
       }
     });

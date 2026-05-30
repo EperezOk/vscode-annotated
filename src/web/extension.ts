@@ -10,6 +10,7 @@ import { readGitRefInfo } from './gitRefsSource';
 import { gitRefSuggestions } from '../core/gitRefs';
 import { computeStaleIds } from './staleness';
 import { sha256Hex, anchorText } from '../shared/hash';
+import { type GroupStatus } from '../shared/model';
 
 export function activate(context: vscode.ExtensionContext): void {
   const provider = new SidebarViewProvider(context.extensionUri);
@@ -70,7 +71,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
   const patchGroup = async (
     groupId: string,
-    patch: { title?: string; tags?: string[]; gitRef?: string | null },
+    patch: { title?: string; tags?: string[]; gitRef?: string | null; status?: GroupStatus },
   ): Promise<void> => {
     const folder = vscode.workspace.workspaceFolders?.[0];
     if (!folder) {
@@ -132,6 +133,10 @@ export function activate(context: vscode.ExtensionContext): void {
       return;
     }
     await patchGroup(groupId, { gitRef: ref.trim() === '' ? null : ref.trim() });
+  };
+
+  detailProvider.onUpdateGroupStatus = async (groupId, status): Promise<void> => {
+    await patchGroup(groupId, { status });
   };
 
   detailProvider.onReorderAnnotations = async (groupId, annotationIds): Promise<void> => {
