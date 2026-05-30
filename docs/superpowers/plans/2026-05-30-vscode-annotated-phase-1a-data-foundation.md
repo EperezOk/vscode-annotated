@@ -1105,4 +1105,12 @@ This delivers the tested data foundation. The next sub-plans build on it:
 - **1b — Create Annotation:** command + QuickPick flow + keybindings; uses `GroupStore`, `resolveAuthor` (with the real VSCode-backed `AuthorNameSources`: git ext on desktop, `annotated.authorName` setting, GitHub session, prompt), `newId`, `sha256Hex`/`anchorText` to create groups/annotations.
 - **1c — Sidebar:** rebuild the webview on the real protocol; host loads groups via `GroupStore`/`VscodeFileSystem` and pushes state; `FileSystemWatcher` live reload; crypto nonce; drop the `name` scaffold prop; conditional CSS link.
 - **1d / 1e — Detail panel (group + annotation views), CodeMirror editor, navigate-to-code.**
+
+## Phase 1b carry-over (from Phase 1a final review)
+
+- **Concrete `VscodeAuthorNameSources`** (in `src/web/`) implementing `AuthorNameSources` — git ext (`getExtension('vscode.git')`, desktop-only), `annotated.authorName` setting, `vscode.authentication.getSession('github', …, { silent: true })?.account.label`, `showInputBox`, and `config.update` to persist.
+- **Mutation pattern:** add an annotation via `getGroup → push annotation → saveGroup` (no `updateGroup` method needed). The command sets `updatedAt` (and `createdAt` on new groups).
+- **Timestamp idiom:** callers use `Math.floor(Date.now() / 1000)` for epoch seconds; consider a tiny `epochSeconds()` helper in `src/shared` if it repeats.
+- **MemoryFileSystem parity (minor):** `MemoryFileSystem.createDirectory` adds only the given path to its `dirs` set, while `VscodeFileSystem.createDirectory` walks all ancestor segments. `GroupStore` never calls `exists()`, so there's no impact today — but if a 1b command checks `exists('.annotations')` (an ancestor), make `MemoryFileSystem.createDirectory` walk ancestors too, to keep the two implementations' `exists()` semantics aligned for unit tests.
+- **`.annotations/` is tracked, by design** (the spec stores annotations in-repo, committed — sharing + AI use cases). Do NOT gitignore it.
 ```
