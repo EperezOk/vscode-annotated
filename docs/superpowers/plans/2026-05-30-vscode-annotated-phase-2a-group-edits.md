@@ -820,4 +820,11 @@ git commit -m "test: updateGroup integration + group-title-edit e2e"
 - [ ] Manual sanity (optional): open a group → rename the title inline → it persists; click "edit tags" → pick from the palette → chips update; click git-ref "edit" → (desktop) pick HEAD/branch/tag or Custom, (web) type a ref → it shows.
 
 Next in Phase 2: **2b** — drift detection (recompute the content hash vs the current file → stale dot in the list + banner in the annotation view) + editable annotation line range. Then **2c** (sidebar filters + show-resolved) and **2d** (drag-reorder + Next/Previous nav).
+
+## Phase 2b carry-over (from Phase 2a final review)
+
+- **Drift logic stays pure:** `Annotation.contentHash` (SHA-256 of anchored lines at creation) already exists. Add a pure `isStale(fileText, range, contentHash): Promise<boolean>` (or sync over `string[]` lines) in `src/core/` reusing `anchorText` + `sha256Hex` — testable without VSCode. The "when to check" (on group load / on file change) is host glue.
+- **Editable line range:** add a `DetailToHost` message (e.g. `editLineRange{annotationId}`) + a `GroupStore.updateAnnotationRange(groupId, annotationId, range, now)` mirroring `updateAnnotation` (and recompute `contentHash` from the new range's current file lines on save). Add a `mode`-preservation unit test for the range-edit scenario.
+- **Extract a `GroupPatch` type** to `src/shared/model.ts` (`Partial<Pick<AnnotationGroup,'title'|'tags'|'gitRef'>>`) — currently duplicated between `groupStore.ts` and the inline type in `extension.ts`. Do before adding more editable fields (e.g. `status` in Phase 3).
+- **Minor (optional):** git-ref QuickPick uses display labels as sentinels (`Clear`/`Custom…`) — switch to an `id` field on picker items to avoid a degenerate collision with a branch literally named that. And `onSetGroupTitle` is fire-and-forget (`void patchGroup`) vs the awaited tag/git-ref handlers — harmless, but unify if touching that code.
 ```
