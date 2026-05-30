@@ -990,4 +990,16 @@ git commit -m "ci: run all test tiers; add README"
 - [ ] All work committed on the `annotated` branch.
 
 This establishes the foundation Phase 1 builds on: a web-compatible extension, the Svelte webview pipeline, the shared protocol module, and a green three-tier test harness. The Phase 1 plan (MVP core — storage, Create Annotation, sidebar cards, detail panels, navigate-to-code) will be written next, grounded in this scaffold.
+
+## Phase 1 carry-over (from final review)
+
+Non-blocking items surfaced during Phase 0 execution/review, to fold into Phase 1:
+
+- **Wire the message protocol.** `protocol.ts` + `parseMessage` exist and are tested, but nothing calls them yet. Phase 1 establishes the `webview.postMessage` (webview→host) and `webviewView.webview.onDidReceiveMessage` (host) plumbing, with the canonical `parse → discriminate → handle` pattern on the host side.
+- **Nonce → Web Crypto.** `getNonce()` in `sidebarViewProvider.ts` uses `Math.random()` (the VSCode-sample pattern). Switch to `crypto.getRandomValues` before real/untrusted content is rendered in webviews.
+- **Replace the `name` test-scaffold prop** on `App.svelte` with real host-provided state.
+- **Consolidate Svelte preprocessing.** Two preprocessors exist (`svelte-preprocess` for esbuild, `vitePreprocess` for Vitest). Standardize on one canonical config referenced by both toolchains as components grow.
+- **Conditional CSS `<link>`.** The webview HTML always links `main.css`; if a future entry component has no `<style>`, esbuild-svelte emits no CSS → silent 404. Guard it (or guarantee a stylesheet).
+- **Node engine requirement.** Vite 8 / Vitest 4 require Node ≥20.19. Pin/declare this (e.g. `engines.node`, `.nvmrc`) and reflect it in CI (the workflow currently uses Node 20 — bump to 20.19+/22).
+- **CI ordering nit.** `npx playwright install --with-deps chromium` can move to just before `test:e2e` (it's not needed by the integration tier).
 ```
