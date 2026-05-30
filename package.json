@@ -1,0 +1,48 @@
+{
+  "name": "vscode-annotated",
+  "displayName": "Annotated",
+  "description": "Annotate a codebase with grouped, shareable Markdown annotations.",
+  "version": "0.0.0",
+  "publisher": "openzeppelin",
+  "license": "MIT",
+  "engines": { "vscode": "^1.100.0" },
+  "categories": ["Other"],
+  "activationEvents": [],
+  "browser": "./dist/web/extension.js",
+  "contributes": {
+    "commands": [
+      { "command": "annotated.ping", "title": "Annotated: Ping" }
+    ]
+  },
+  "scripts": {
+    "compile": "node esbuild.mjs",
+    "watch": "node esbuild.mjs --watch",
+    "package": "node esbuild.mjs --production",
+    "check-types": "tsc --noEmit",
+    "test:unit": "vitest run",
+    "test:integration": "npm run compile && vscode-test-web --browserType=chromium --extensionDevelopmentPath=. --extensionTestsPath=dist/web/test/suite/index.js --headless --quality=stable",
+    "serve:web": "vscode-test-web --browserType=none --extensionDevelopmentPath=. --port=3000",
+    "test:e2e": "playwright test",
+    "test": "npm run check-types && npm run test:unit && npm run test:integration && npm run test:e2e",
+    "start": "vscode-test-web --browserType=chromium --extensionDevelopmentPath=.",
+    "vscode:prepublish": "npm run package"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.60.0",
+    "@sveltejs/vite-plugin-svelte": "^7.1.2",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/svelte": "^5.3.1",
+    "@testing-library/user-event": "^14.5.2",
+    "@types/mocha": "^10.0.7",
+    "@types/vscode": "^1.100.0",
+    "@vscode/test-web": "^0.0.80",
+    "esbuild": "^0.28.0",
+    "esbuild-svelte": "^0.9.5",
+    "jsdom": "^29.1.1",
+    "mocha": "^11.7.6",
+    "svelte": "^5.56.0",
+    "svelte-preprocess": "^6.0.5",
+    "typescript": "^5.9.2",
+    "vitest": "^4.1.7"
+  }
+}

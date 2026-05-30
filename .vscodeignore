@@ -1,0 +1,15 @@
+.vscode/**
+.github/**
+src/**
+e2e/**
+node_modules/**
+**/*.test.ts
+**/*.map
+esbuild.mjs
+vitest.config.ts
+vitest-setup.ts
+playwright.config.ts
+svelte.config.js
+tsconfig.json
+docs/**
+.superpowers/**
