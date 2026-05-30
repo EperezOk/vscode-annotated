@@ -2,7 +2,7 @@
   import GroupView from './GroupView.svelte';
   import {
     detail, openAnnotationView, showGroupView, saveAnnotationContent, copyToClipboard,
-    renameGroup, requestEditTags, requestEditGitRef, saveAnnotationRange, reorderAnnotations,
+    renameGroup, requestEditTags, requestEditGitRef, saveAnnotationRange, reorderAnnotations, setGroupStatus,
   } from './state';
   import { postToHost } from './vscodeApi';
   import AnnotationView from './AnnotationView.svelte';
@@ -49,6 +49,7 @@
       oneditgitref={requestEditGitRef}
       onselectrow={openRow}
       onreorder={(ids) => reorderAnnotations(ids)}
+      onsetstatus={(s) => setGroupStatus(s)}
     />
   {/if}
 </main>

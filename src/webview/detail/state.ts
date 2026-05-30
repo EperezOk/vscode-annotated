@@ -54,3 +54,8 @@ export function saveAnnotationRange(annotationId: string, startLine: number, end
 export function reorderAnnotations(annotationIds: string[]): void {
   postToHost({ type: 'reorderAnnotations', annotationIds });
 }
+
+/** Set the current group's status (open/resolved). */
+export function setGroupStatus(status: 'open' | 'resolved'): void {
+  postToHost({ type: 'updateGroupStatus', status });
+}

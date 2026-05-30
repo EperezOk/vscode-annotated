@@ -83,4 +83,21 @@ describe('GroupView', () => {
     await fireEvent.drop(handles[1]);
     expect(onreorder).not.toHaveBeenCalled();
   });
+
+  it('shows a Resolve button for an open group and requests resolved on click', async () => {
+    const onsetstatus = vi.fn();
+    render(GroupView, { group: group(), palette, onsetstatus });
+    const btn = screen.getByTestId('resolve-btn');
+    expect(btn).toHaveTextContent('Resolve');
+    await userEvent.click(btn);
+    expect(onsetstatus).toHaveBeenCalledWith('resolved');
+  });
+  it('shows a Restore button for a resolved group and requests open on click', async () => {
+    const onsetstatus = vi.fn();
+    render(GroupView, { group: { ...group(), status: 'resolved' }, palette, onsetstatus });
+    const btn = screen.getByTestId('resolve-btn');
+    expect(btn).toHaveTextContent('Restore');
+    await userEvent.click(btn);
+    expect(onsetstatus).toHaveBeenCalledWith('open');
+  });
 });

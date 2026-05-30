@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { type AnnotationGroup } from '../../shared/model';
+  import { type AnnotationGroup, type GroupStatus } from '../../shared/model';
   import { type TagColor } from '../../shared/protocol';
   import { tagColor } from '../../core/sidebarState';
   import { moveBefore } from '../../core/detailState';
@@ -14,6 +14,7 @@
     oneditgitref,
     onselectrow,
     onreorder,
+    onsetstatus,
   }: {
     group: AnnotationGroup;
     palette: TagColor[];
@@ -23,6 +24,7 @@
     oneditgitref?: () => void;
     onselectrow?: (id: string) => void;
     onreorder?: (annotationIds: string[]) => void;
+    onsetstatus?: (status: GroupStatus) => void;
   } = $props();
 
   let editingTitle = $state(false);
@@ -50,6 +52,11 @@
       onrename?.(trimmed);
     }
   }
+  const resolveLabel = $derived(group.status === 'resolved' ? 'Restore' : 'Resolve');
+  function toggleStatus(): void {
+    onsetstatus?.(group.status === 'resolved' ? 'open' : 'resolved');
+  }
+
   function onTitleKey(event: KeyboardEvent): void {
     if (event.key === 'Enter') {
       commitTitle();
@@ -87,6 +94,7 @@
     <div class="gitref-row">
       Git ref: {#if group.gitRef}<code>{group.gitRef}</code>{:else}<span class="none">none</span>{/if}
       <button type="button" class="link" data-testid="edit-gitref-btn" onclick={() => oneditgitref?.()}>edit</button>
+      <button type="button" class="link" data-testid="resolve-btn" onclick={toggleStatus}>{resolveLabel}</button>
     </div>
   </header>
 
