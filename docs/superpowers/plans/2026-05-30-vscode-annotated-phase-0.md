@@ -69,7 +69,7 @@ e2e/
   "displayName": "Annotated",
   "description": "Annotate a codebase with grouped, shareable Markdown annotations.",
   "version": "0.0.0",
-  "publisher": "openzeppelin",
+  "publisher": "eperez",
   "license": "MIT",
   "engines": { "vscode": "^1.100.0" },
   "categories": ["Other"],
@@ -786,9 +786,9 @@ import * as vscode from 'vscode';
 
 suite('Annotated web extension', () => {
   test('activates and registers the ping command', async () => {
-    const ext = vscode.extensions.getExtension('openzeppelin.vscode-annotated');
+    const ext = vscode.extensions.getExtension('eperez.vscode-annotated');
     if (!ext) {
-      throw new Error('extension not found by id openzeppelin.vscode-annotated');
+      throw new Error('extension not found by id eperez.vscode-annotated');
     }
     await ext.activate();
     const commands = await vscode.commands.getCommands(true);
