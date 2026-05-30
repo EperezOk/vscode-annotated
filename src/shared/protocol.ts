@@ -1,5 +1,5 @@
 // Typed message contract between the extension host and webviews.
-import { type AnnotationGroup, type GroupStatus } from './model';
+import { type AnnotationGroup, type GroupStatus, type ThreadComment } from './model';
 
 /** A tag's display info sent to the webview (structurally matches core `Tag`). */
 export interface TagColor {
@@ -25,6 +25,8 @@ export type HostToDetail = {
   group: AnnotationGroup | null;
   palette: TagColor[];
   staleIds?: string[];
+  comments?: ThreadComment[];
+  currentAuthor?: string;
 };
 
 /** Detail-panel → host messages. */
@@ -38,7 +40,10 @@ export type DetailToHost =
   | { type: 'editGitRef' }
   | { type: 'updateAnnotationRange'; annotationId: string; startLine: number; endLine: number }
   | { type: 'reorderAnnotations'; annotationIds: string[] }
-  | { type: 'updateGroupStatus'; status: GroupStatus };
+  | { type: 'updateGroupStatus'; status: GroupStatus }
+  | { type: 'addComment'; annotationId: string; content: string }
+  | { type: 'editComment'; commentId: string; content: string }
+  | { type: 'deleteComment'; commentId: string };
 
 function isObject(x: unknown): x is Record<string, unknown> {
   return typeof x === 'object' && x !== null;
@@ -94,6 +99,18 @@ export function parseDetailMessage(raw: unknown): DetailToHost | null {
     case 'updateGroupStatus':
       return raw.status === 'open' || raw.status === 'resolved'
         ? { type: 'updateGroupStatus', status: raw.status }
+        : null;
+    case 'addComment':
+      return typeof raw.annotationId === 'string' && typeof raw.content === 'string'
+        ? { type: 'addComment', annotationId: raw.annotationId, content: raw.content }
+        : null;
+    case 'editComment':
+      return typeof raw.commentId === 'string' && typeof raw.content === 'string'
+        ? { type: 'editComment', commentId: raw.commentId, content: raw.content }
+        : null;
+    case 'deleteComment':
+      return typeof raw.commentId === 'string'
+        ? { type: 'deleteComment', commentId: raw.commentId }
         : null;
     default:
       return null;

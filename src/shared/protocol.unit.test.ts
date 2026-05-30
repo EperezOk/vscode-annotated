@@ -100,4 +100,20 @@ describe('parseDetailMessage', () => {
     expect(parseDetailMessage({ type: 'updateGroupStatus', status: 'done' })).toBeNull();
     expect(parseDetailMessage({ type: 'updateGroupStatus', status: 42 })).toBeNull();
   });
+  it('accepts addComment / editComment / deleteComment', () => {
+    expect(parseDetailMessage({ type: 'addComment', annotationId: 'a1', content: 'hi' })).toEqual({
+      type: 'addComment', annotationId: 'a1', content: 'hi',
+    });
+    expect(parseDetailMessage({ type: 'editComment', commentId: 'c1', content: 'x' })).toEqual({
+      type: 'editComment', commentId: 'c1', content: 'x',
+    });
+    expect(parseDetailMessage({ type: 'deleteComment', commentId: 'c1' })).toEqual({
+      type: 'deleteComment', commentId: 'c1',
+    });
+  });
+  it('rejects malformed comment messages', () => {
+    expect(parseDetailMessage({ type: 'addComment', annotationId: 'a1' })).toBeNull();
+    expect(parseDetailMessage({ type: 'editComment', commentId: 1, content: 'x' })).toBeNull();
+    expect(parseDetailMessage({ type: 'deleteComment' })).toBeNull();
+  });
 });
