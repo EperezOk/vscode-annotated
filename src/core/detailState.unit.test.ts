@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { initialDetailState, applyDetailMessage, oneLine } from './detailState';
+import { initialDetailState, applyDetailMessage, oneLine, openAnnotation, backToGroup } from './detailState';
 import { type AnnotationGroup } from '../shared/model';
 
 function group(): AnnotationGroup {
@@ -12,7 +12,7 @@ function group(): AnnotationGroup {
 
 describe('initialDetailState', () => {
   it('has no group and no selection', () => {
-    expect(initialDetailState()).toEqual({ group: null, palette: [], selectedAnnotationId: null });
+    expect(initialDetailState()).toEqual({ group: null, palette: [], selectedAnnotationId: null, mode: 'group' });
   });
 });
 
@@ -28,6 +28,43 @@ describe('applyDetailMessage', () => {
   it('setGroup with null clears the group', () => {
     const next = applyDetailMessage(initialDetailState(), { type: 'setGroup', group: null, palette: [] });
     expect(next.group).toBeNull();
+  });
+});
+
+describe('mode transitions', () => {
+  it('initial mode is group', () => {
+    expect(initialDetailState().mode).toBe('group');
+  });
+
+  it('openAnnotation switches to annotation mode and records the id', () => {
+    const next = openAnnotation(initialDetailState(), 'a1');
+    expect(next.mode).toBe('annotation');
+    expect(next.selectedAnnotationId).toBe('a1');
+  });
+
+  it('backToGroup returns to group mode and clears the selection', () => {
+    const next = backToGroup(openAnnotation(initialDetailState(), 'a1'));
+    expect(next.mode).toBe('group');
+    expect(next.selectedAnnotationId).toBeNull();
+  });
+
+  it('setGroup keeps annotation mode when the selected annotation still exists', () => {
+    const g = {
+      id: 'g1', title: 'G', author: 'A', tags: [], gitRef: null, status: 'open' as const,
+      createdAt: 1, updatedAt: 1,
+      annotations: [{ id: 'a1', file: 'x', range: { startLine: 1, endLine: 1 }, content: 'c', contentHash: 'h' }],
+    };
+    const start = openAnnotation({ ...initialDetailState(), group: g }, 'a1');
+    const next = applyDetailMessage(start, { type: 'setGroup', group: g, palette: [] });
+    expect(next.mode).toBe('annotation');
+    expect(next.selectedAnnotationId).toBe('a1');
+  });
+
+  it('setGroup falls back to group mode when the selected annotation is gone', () => {
+    const start = openAnnotation(initialDetailState(), 'gone');
+    const next = applyDetailMessage(start, { type: 'setGroup', group: null, palette: [] });
+    expect(next.mode).toBe('group');
+    expect(next.selectedAnnotationId).toBeNull();
   });
 });
 

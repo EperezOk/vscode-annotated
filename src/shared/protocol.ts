@@ -29,7 +29,9 @@ export type HostToDetail = {
 /** Detail-panel → host messages. */
 export type DetailToHost =
   | { type: 'ready' }
-  | { type: 'selectAnnotation'; annotationId: string };
+  | { type: 'selectAnnotation'; annotationId: string }
+  | { type: 'updateAnnotation'; annotationId: string; content: string }
+  | { type: 'copyText'; text: string };
 
 function isObject(x: unknown): x is Record<string, unknown> {
   return typeof x === 'object' && x !== null;
@@ -60,6 +62,12 @@ export function parseDetailMessage(raw: unknown): DetailToHost | null {
       return { type: 'ready' };
     case 'selectAnnotation':
       return typeof raw.annotationId === 'string' ? { type: 'selectAnnotation', annotationId: raw.annotationId } : null;
+    case 'updateAnnotation':
+      return typeof raw.annotationId === 'string' && typeof raw.content === 'string'
+        ? { type: 'updateAnnotation', annotationId: raw.annotationId, content: raw.content }
+        : null;
+    case 'copyText':
+      return typeof raw.text === 'string' ? { type: 'copyText', text: raw.text } : null;
     default:
       return null;
   }

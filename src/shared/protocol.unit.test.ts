@@ -43,4 +43,21 @@ describe('parseDetailMessage', () => {
     expect(parseDetailMessage({ type: 'nope' })).toBeNull();
     expect(parseDetailMessage(null)).toBeNull();
   });
+
+  it('accepts updateAnnotation with string id + content', () => {
+    expect(parseDetailMessage({ type: 'updateAnnotation', annotationId: 'a1', content: 'hi' })).toEqual({
+      type: 'updateAnnotation',
+      annotationId: 'a1',
+      content: 'hi',
+    });
+  });
+
+  it('accepts copyText with a string', () => {
+    expect(parseDetailMessage({ type: 'copyText', text: 'x' })).toEqual({ type: 'copyText', text: 'x' });
+  });
+
+  it('rejects updateAnnotation with non-string fields', () => {
+    expect(parseDetailMessage({ type: 'updateAnnotation', annotationId: 'a1', content: 5 })).toBeNull();
+    expect(parseDetailMessage({ type: 'copyText', text: 5 })).toBeNull();
+  });
 });
