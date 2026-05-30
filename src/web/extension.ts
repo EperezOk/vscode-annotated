@@ -8,6 +8,8 @@ import { readTagPalette } from './tagPalette';
 import { revealAnnotation } from './navigateToCode';
 import { readGitRefInfo } from './gitRefsSource';
 import { gitRefSuggestions } from '../core/gitRefs';
+import { computeStaleIds } from './staleness';
+import { sha256Hex, anchorText } from '../shared/hash';
 
 export function activate(context: vscode.ExtensionContext): void {
   const provider = new SidebarViewProvider(context.extensionUri);
@@ -29,12 +31,21 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.window.registerWebviewViewProvider(DetailPanelProvider.viewType, detailProvider),
   );
 
-  provider.onSelectGroup = async (groupId: string): Promise<void> => {
+  const now = (): number => Math.floor(Date.now() / 1000);
+
+  const showGroupWithStale = async (groupId: string): Promise<void> => {
     const folder = vscode.workspace.workspaceFolders?.[0];
-    const group = folder
-      ? await new GroupStore(new VscodeFileSystem(folder.uri)).getGroup(groupId)
-      : null;
-    detailProvider.showGroup(group, readTagPalette());
+    if (!folder) {
+      return;
+    }
+    const fs = new VscodeFileSystem(folder.uri);
+    const group = await new GroupStore(fs).getGroup(groupId);
+    const staleIds = group ? await computeStaleIds(fs, group) : [];
+    detailProvider.showGroup(group, readTagPalette(), staleIds);
+  };
+
+  provider.onSelectGroup = async (groupId: string): Promise<void> => {
+    await showGroupWithStale(groupId);
     await vscode.commands.executeCommand('annotated.detail.focus');
   };
 
@@ -51,22 +62,12 @@ export function activate(context: vscode.ExtensionContext): void {
       return;
     }
     const store = new GroupStore(new VscodeFileSystem(folder.uri));
-    const ok = await store.updateAnnotation(groupId, annotationId, content, Math.floor(Date.now() / 1000));
+    const ok = await store.updateAnnotation(groupId, annotationId, content, now());
     if (ok) {
-      const updated = await store.getGroup(groupId);
-      detailProvider.showGroup(updated, readTagPalette());
+      await showGroupWithStale(groupId);
     }
   };
 
-  const now = (): number => Math.floor(Date.now() / 1000);
-  const reloadDetail = async (groupId: string): Promise<void> => {
-    const folder = vscode.workspace.workspaceFolders?.[0];
-    if (!folder) {
-      return;
-    }
-    const updated = await new GroupStore(new VscodeFileSystem(folder.uri)).getGroup(groupId);
-    detailProvider.showGroup(updated, readTagPalette());
-  };
   const patchGroup = async (
     groupId: string,
     patch: { title?: string; tags?: string[]; gitRef?: string | null },
@@ -77,7 +78,7 @@ export function activate(context: vscode.ExtensionContext): void {
     }
     const ok = await new GroupStore(new VscodeFileSystem(folder.uri)).updateGroup(groupId, patch, now());
     if (ok) {
-      await reloadDetail(groupId);
+      await showGroupWithStale(groupId);
     }
   };
 
@@ -131,6 +132,32 @@ export function activate(context: vscode.ExtensionContext): void {
       return;
     }
     await patchGroup(groupId, { gitRef: ref.trim() === '' ? null : ref.trim() });
+  };
+
+  detailProvider.onUpdateAnnotationRange = async (groupId, annotationId, startLine, endLine): Promise<void> => {
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    if (!folder) {
+      return;
+    }
+    const fs = new VscodeFileSystem(folder.uri);
+    const store = new GroupStore(fs);
+    const group = await store.getGroup(groupId);
+    const annotation = group?.annotations.find((a) => a.id === annotationId);
+    if (!annotation) {
+      return;
+    }
+    const range = { startLine, endLine };
+    let contentHash = annotation.contentHash;
+    try {
+      const fileText = new TextDecoder().decode(await fs.readFile(annotation.file));
+      contentHash = await sha256Hex(anchorText(fileText, range));
+    } catch {
+      // file unreadable — keep the old hash (the row will show stale)
+    }
+    const ok = await store.updateAnnotationRange(groupId, annotationId, range, contentHash, now());
+    if (ok) {
+      await showGroupWithStale(groupId);
+    }
   };
 
   context.subscriptions.push(

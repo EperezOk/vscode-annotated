@@ -7,6 +7,7 @@ export class DetailPanelProvider implements vscode.WebviewViewProvider {
   private view?: vscode.WebviewView;
   private group: AnnotationGroup | null = null;
   private palette: TagColor[] = [];
+  private staleIds: string[] = [];
 
   /** Set by the extension to navigate to a selected annotation. */
   public onSelectAnnotation?: (annotation: Annotation) => void;
@@ -20,6 +21,9 @@ export class DetailPanelProvider implements vscode.WebviewViewProvider {
   public onEditTags?: (groupId: string) => void;
   /** Set by the extension: edit the active group's Git ref (native picker). */
   public onEditGitRef?: (groupId: string) => void;
+
+  /** Set by the extension: persist an annotation's edited line range. */
+  public onUpdateAnnotationRange?: (groupId: string, annotationId: string, startLine: number, endLine: number) => void;
 
   constructor(private readonly extensionUri: vscode.Uri) {}
 
@@ -50,6 +54,10 @@ export class DetailPanelProvider implements vscode.WebviewViewProvider {
         if (this.group) {
           this.onUpdateAnnotation?.(this.group.id, message.annotationId, message.content);
         }
+      } else if (message.type === 'updateAnnotationRange') {
+        if (this.group) {
+          this.onUpdateAnnotationRange?.(this.group.id, message.annotationId, message.startLine, message.endLine);
+        }
       } else if (message.type === 'copyText') {
         void vscode.env.clipboard.writeText(message.text);
       } else if (message.type === 'setGroupTitle') {
@@ -69,9 +77,10 @@ export class DetailPanelProvider implements vscode.WebviewViewProvider {
   }
 
   /** Set the group shown by the panel and push it to the webview (if resolved). */
-  showGroup(group: AnnotationGroup | null, palette: TagColor[]): void {
+  showGroup(group: AnnotationGroup | null, palette: TagColor[], staleIds: string[] = []): void {
     this.group = group;
     this.palette = palette;
+    this.staleIds = staleIds;
     this.post();
   }
 
@@ -79,7 +88,7 @@ export class DetailPanelProvider implements vscode.WebviewViewProvider {
     if (!this.view) {
       return;
     }
-    const message: HostToDetail = { type: 'setGroup', group: this.group, palette: this.palette };
+    const message: HostToDetail = { type: 'setGroup', group: this.group, palette: this.palette, staleIds: this.staleIds };
     void this.view.webview.postMessage(message);
   }
 
