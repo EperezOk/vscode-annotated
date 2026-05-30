@@ -50,4 +50,9 @@ describe('GroupView', () => {
     await userEvent.click(screen.getByTestId('annotation-row'));
     expect(onselectrow).toHaveBeenCalledWith('a1');
   });
+
+  it('marks a row stale when its id is in staleIds', () => {
+    render(GroupView, { group: group(), palette, staleIds: ['a1'] });
+    expect(screen.getByTestId('stale-dot')).toBeInTheDocument();
+  });
 });

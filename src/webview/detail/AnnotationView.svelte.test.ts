@@ -47,4 +47,20 @@ describe('AnnotationView', () => {
     await userEvent.click(screen.getByTestId('copy-md-btn'));
     expect(oncopy).toHaveBeenCalledWith('# Note');
   });
+
+  it('shows the stale banner when stale', () => {
+    render(AnnotationView, { annotation: annotation('# Note'), stale: true });
+    expect(screen.getByTestId('stale-banner')).toBeInTheDocument();
+  });
+  it('edits the range and calls onsaverange', async () => {
+    const onsaverange = vi.fn();
+    render(AnnotationView, { annotation: annotation('# Note'), onsaverange });
+    await userEvent.click(screen.getByTestId('edit-range-btn'));
+    const start = screen.getByTestId('range-start') as HTMLInputElement;
+    await userEvent.clear(start); await userEvent.type(start, '5');
+    const end = screen.getByTestId('range-end') as HTMLInputElement;
+    await userEvent.clear(end); await userEvent.type(end, '9');
+    await userEvent.click(screen.getByTestId('save-range-btn'));
+    expect(onsaverange).toHaveBeenCalledWith('a1', 5, 9);
+  });
 });

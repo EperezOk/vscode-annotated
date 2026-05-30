@@ -7,6 +7,7 @@
   let {
     group,
     palette,
+    staleIds = [],
     onrename,
     onedittags,
     oneditgitref,
@@ -14,6 +15,7 @@
   }: {
     group: AnnotationGroup;
     palette: TagColor[];
+    staleIds?: string[];
     onrename?: (title: string) => void;
     onedittags?: () => void;
     oneditgitref?: () => void;
@@ -76,7 +78,7 @@
 
   <div class="rows">
     {#each group.annotations as annotation (annotation.id)}
-      <AnnotationRow {annotation} selected={false} onselect={(id) => onselectrow?.(id)} />
+      <AnnotationRow {annotation} selected={false} stale={staleIds.includes(annotation.id)} onselect={(id) => onselectrow?.(id)} />
     {/each}
   </div>
 </section>

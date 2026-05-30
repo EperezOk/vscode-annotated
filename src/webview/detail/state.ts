@@ -44,3 +44,8 @@ export function requestEditTags(): void {
 export function requestEditGitRef(): void {
   postToHost({ type: 'editGitRef' });
 }
+
+/** Persist an annotation's edited line range (host recomputes the hash). */
+export function saveAnnotationRange(annotationId: string, startLine: number, endLine: number): void {
+  postToHost({ type: 'updateAnnotationRange', annotationId, startLine, endLine });
+}

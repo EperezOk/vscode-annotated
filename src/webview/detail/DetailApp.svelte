@@ -2,7 +2,7 @@
   import GroupView from './GroupView.svelte';
   import {
     detail, openAnnotationView, showGroupView, saveAnnotationContent, copyToClipboard,
-    renameGroup, requestEditTags, requestEditGitRef,
+    renameGroup, requestEditTags, requestEditGitRef, saveAnnotationRange,
   } from './state';
   import { postToHost } from './vscodeApi';
   import AnnotationView from './AnnotationView.svelte';
@@ -24,16 +24,19 @@
     {#key $detail.selectedAnnotationId}
       <AnnotationView
         annotation={current}
+        stale={($detail.staleIds ?? []).includes(current.id)}
         onback={showGroupView}
         onsave={(id, content) => saveAnnotationContent(id, content)}
         oncopy={(content) => copyToClipboard(content)}
         oncopyloc={(loc) => copyToClipboard(loc)}
+        onsaverange={(id, s, e) => saveAnnotationRange(id, s, e)}
       />
     {/key}
   {:else}
     <GroupView
       group={$detail.group}
       palette={$detail.palette}
+      staleIds={$detail.staleIds ?? []}
       onrename={(title) => renameGroup(title)}
       onedittags={requestEditTags}
       oneditgitref={requestEditGitRef}
