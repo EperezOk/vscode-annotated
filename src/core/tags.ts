@@ -4,6 +4,23 @@ export interface Tag {
   color: string;
 }
 
+/** The pinned QuickPick item label that triggers inline tag creation. */
+export const NEW_TAG_LABEL = '$(add) New tag…';
+
+/** Split picked QuickPick labels into real tag names + whether ＋New tag was chosen. */
+export function splitPickedTags(labels: string[]): { names: string[]; addNew: boolean } {
+  const names: string[] = [];
+  let addNew = false;
+  for (const label of labels) {
+    if (label === NEW_TAG_LABEL) {
+      addNew = true;
+    } else {
+      names.push(label);
+    }
+  }
+  return { names, addNew };
+}
+
 const DEFAULT_COLOR = '#888888';
 
 /** Validate/normalize the raw `annotated.tags` config value into a Tag[]. */

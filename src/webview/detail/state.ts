@@ -54,3 +54,23 @@ export function saveAnnotationRange(annotationId: string, startLine: number, end
 export function reorderAnnotations(annotationIds: string[]): void {
   postToHost({ type: 'reorderAnnotations', annotationIds });
 }
+
+/** Set the current group's status (open/resolved). */
+export function setGroupStatus(status: 'open' | 'resolved'): void {
+  postToHost({ type: 'updateGroupStatus', status });
+}
+
+/** Add a comment to the given annotation (host attributes + persists). */
+export function addComment(annotationId: string, content: string): void {
+  postToHost({ type: 'addComment', annotationId, content });
+}
+
+/** Edit one of the current user's own comments. */
+export function editComment(commentId: string, content: string): void {
+  postToHost({ type: 'editComment', commentId, content });
+}
+
+/** Delete one of the current user's own comments. */
+export function deleteComment(commentId: string): void {
+  postToHost({ type: 'deleteComment', commentId });
+}

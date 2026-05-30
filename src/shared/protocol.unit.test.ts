@@ -20,6 +20,16 @@ describe('parseWebviewMessage', () => {
     expect(parseWebviewMessage(null)).toBeNull();
     expect(parseWebviewMessage('ready')).toBeNull();
   });
+
+  it('accepts bulk messages with a string[] groupIds', () => {
+    for (const type of ['bulkEditTags', 'bulkEditGitRef', 'bulkResolveRestore', 'bulkDelete'] as const) {
+      expect(parseWebviewMessage({ type, groupIds: ['g1', 'g2'] })).toEqual({ type, groupIds: ['g1', 'g2'] });
+    }
+  });
+  it('rejects bulk messages with a non-array or non-string ids', () => {
+    expect(parseWebviewMessage({ type: 'bulkDelete', groupIds: 'g1' })).toBeNull();
+    expect(parseWebviewMessage({ type: 'bulkEditTags', groupIds: ['g1', 2] })).toBeNull();
+  });
 });
 
 describe('parseDetailMessage', () => {
@@ -87,5 +97,33 @@ describe('parseDetailMessage', () => {
   it('rejects reorderAnnotations with non-string ids or a non-array', () => {
     expect(parseDetailMessage({ type: 'reorderAnnotations', annotationIds: ['a1', 2] })).toBeNull();
     expect(parseDetailMessage({ type: 'reorderAnnotations', annotationIds: 'a1' })).toBeNull();
+  });
+  it('accepts updateGroupStatus with a valid status', () => {
+    expect(parseDetailMessage({ type: 'updateGroupStatus', status: 'resolved' })).toEqual({
+      type: 'updateGroupStatus', status: 'resolved',
+    });
+    expect(parseDetailMessage({ type: 'updateGroupStatus', status: 'open' })).toEqual({
+      type: 'updateGroupStatus', status: 'open',
+    });
+  });
+  it('rejects updateGroupStatus with an invalid status', () => {
+    expect(parseDetailMessage({ type: 'updateGroupStatus', status: 'done' })).toBeNull();
+    expect(parseDetailMessage({ type: 'updateGroupStatus', status: 42 })).toBeNull();
+  });
+  it('accepts addComment / editComment / deleteComment', () => {
+    expect(parseDetailMessage({ type: 'addComment', annotationId: 'a1', content: 'hi' })).toEqual({
+      type: 'addComment', annotationId: 'a1', content: 'hi',
+    });
+    expect(parseDetailMessage({ type: 'editComment', commentId: 'c1', content: 'x' })).toEqual({
+      type: 'editComment', commentId: 'c1', content: 'x',
+    });
+    expect(parseDetailMessage({ type: 'deleteComment', commentId: 'c1' })).toEqual({
+      type: 'deleteComment', commentId: 'c1',
+    });
+  });
+  it('rejects malformed comment messages', () => {
+    expect(parseDetailMessage({ type: 'addComment', annotationId: 'a1' })).toBeNull();
+    expect(parseDetailMessage({ type: 'editComment', commentId: 1, content: 'x' })).toBeNull();
+    expect(parseDetailMessage({ type: 'deleteComment' })).toBeNull();
   });
 });

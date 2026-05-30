@@ -11,6 +11,11 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
   /** Set by the extension to handle group selection (wired to the detail panel in a later phase). */
   public onSelectGroup?: (groupId: string) => void;
 
+  public onBulkEditTags?: (groupIds: string[]) => Promise<void>;
+  public onBulkEditGitRef?: (groupIds: string[]) => Promise<void>;
+  public onBulkResolveRestore?: (groupIds: string[]) => Promise<void>;
+  public onBulkDelete?: (groupIds: string[]) => Promise<void>;
+
   constructor(private readonly extensionUri: vscode.Uri) {}
 
   resolveWebviewView(
@@ -33,6 +38,14 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
         await this.refresh();
       } else if (message.type === 'selectGroup') {
         this.onSelectGroup?.(message.groupId);
+      } else if (message.type === 'bulkEditTags') {
+        await this.onBulkEditTags?.(message.groupIds);
+      } else if (message.type === 'bulkEditGitRef') {
+        await this.onBulkEditGitRef?.(message.groupIds);
+      } else if (message.type === 'bulkResolveRestore') {
+        await this.onBulkResolveRestore?.(message.groupIds);
+      } else if (message.type === 'bulkDelete') {
+        await this.onBulkDelete?.(message.groupIds);
       }
     });
   }

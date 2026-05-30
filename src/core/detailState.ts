@@ -1,4 +1,4 @@
-import { type AnnotationGroup } from '../shared/model';
+import { type AnnotationGroup, type ThreadComment } from '../shared/model';
 import { type HostToDetail, type TagColor } from '../shared/protocol';
 
 export interface DetailState {
@@ -7,10 +7,12 @@ export interface DetailState {
   selectedAnnotationId: string | null;
   mode: 'group' | 'annotation';
   staleIds: string[];
+  comments: ThreadComment[];
+  currentAuthor: string;
 }
 
 export function initialDetailState(): DetailState {
-  return { group: null, palette: [], selectedAnnotationId: null, mode: 'group', staleIds: [] };
+  return { group: null, palette: [], selectedAnnotationId: null, mode: 'group', staleIds: [], comments: [], currentAuthor: '' };
 }
 
 /** Apply a host→detail message, returning a new state. */
@@ -27,6 +29,8 @@ export function applyDetailMessage(state: DetailState, message: HostToDetail): D
         selectedAnnotationId: keep ? state.selectedAnnotationId : null,
         mode: keep ? 'annotation' : 'group',
         staleIds: message.staleIds ?? [],
+        comments: message.comments ?? [],
+        currentAuthor: message.currentAuthor ?? '',
       };
     }
     default:
@@ -102,4 +106,9 @@ export function annotationPosition(state: DetailState): { current: number; total
     return null;
   }
   return { current: index + 1, total: state.group.annotations.length };
+}
+
+/** Comments belonging to one annotation (already timestamp-sorted by the host). */
+export function commentsFor(state: DetailState, annotationId: string): ThreadComment[] {
+  return (state.comments ?? []).filter((c) => c.annotationId === annotationId);
 }

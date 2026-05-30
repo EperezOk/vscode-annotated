@@ -56,6 +56,11 @@
         "annotated.authorName": {
           "type": "string",
           "description": "Display name used as the author of annotation groups you create."
+        },
+        "annotated.authorEmail": {
+          "type": "string",
+          "default": "",
+          "description": "Email used to attribute your annotation comments (canonical identity)."
         }
       }
     }

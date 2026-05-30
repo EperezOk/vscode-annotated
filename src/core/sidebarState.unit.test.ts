@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { initialSidebarState, applyHostMessage, tagColor, filterGroups, availableTags, availableAuthors, toggleInList } from './sidebarState';
+import { initialSidebarState, applyHostMessage, tagColor, filterGroups, availableTags, availableAuthors, toggleInList, bulkStatusToggle } from './sidebarState';
 import { type AnnotationGroup } from '../shared/model';
 
 function group(
@@ -17,6 +17,7 @@ describe('initialSidebarState', () => {
     expect(initialSidebarState()).toEqual({
       groups: [], palette: [], selectedId: null,
       selectedTags: [], selectedAuthors: [], showResolved: false,
+      bulkMode: false, selectedGroupIds: [],
     });
   });
 });
@@ -125,5 +126,33 @@ describe('applyHostMessage preserves + prunes filters', () => {
     expect(next.selectedTags).toEqual(['security']);
     expect(next.selectedAuthors).toEqual(['Ana']);
     expect(next.showResolved).toBe(true);
+  });
+});
+
+describe('bulk-select state', () => {
+  it('initial state is not in bulk mode with no selection', () => {
+    expect(initialSidebarState().bulkMode).toBe(false);
+    expect(initialSidebarState().selectedGroupIds).toEqual([]);
+  });
+  it('setState preserves bulkMode and prunes selectedGroupIds to present groups', () => {
+    const state = { ...initialSidebarState(), bulkMode: true, selectedGroupIds: ['g1', 'gone'] };
+    const next = applyHostMessage(state, { type: 'setState', groups: [group('g1')], palette: [] });
+    expect(next.bulkMode).toBe(true);
+    expect(next.selectedGroupIds).toEqual(['g1']);
+  });
+});
+
+describe('bulkStatusToggle', () => {
+  it('all open → resolved', () => {
+    expect(bulkStatusToggle([group('a'), group('b')])).toBe('resolved');
+  });
+  it('all resolved → open', () => {
+    expect(bulkStatusToggle([group('a', { status: 'resolved' }), group('b', { status: 'resolved' })])).toBe('open');
+  });
+  it('mixed → resolved', () => {
+    expect(bulkStatusToggle([group('a'), group('b', { status: 'resolved' })])).toBe('resolved');
+  });
+  it('empty → resolved', () => {
+    expect(bulkStatusToggle([])).toBe('resolved');
   });
 });

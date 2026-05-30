@@ -22,6 +22,23 @@ function clean(value: string | undefined): string | undefined {
   return trimmed ? trimmed : undefined;
 }
 
+export interface AuthorEmailSources {
+  gitUserEmail(): Promise<string | undefined>;
+  settingAuthorEmail(): string | undefined;
+  githubAccountEmail(): Promise<string | undefined>;
+}
+
+/** Resolve the author email by trying each source; '' if none. */
+export async function resolveAuthorEmail(sources: AuthorEmailSources): Promise<string> {
+  const git = clean(await sources.gitUserEmail());
+  if (git) return git;
+  const setting = clean(sources.settingAuthorEmail());
+  if (setting) return setting;
+  const github = clean(await sources.githubAccountEmail());
+  if (github) return github;
+  return '';
+}
+
 /** Resolve the author display name by trying each source in priority order. */
 export async function resolveAuthor(sources: AuthorNameSources): Promise<string> {
   const git = clean(await sources.gitUserName());

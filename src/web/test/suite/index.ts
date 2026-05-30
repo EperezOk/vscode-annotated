@@ -13,6 +13,7 @@ export function run(): Promise<void> {
       import('./updateGroup.integration.test'),
       import('./updateAnnotationRange.integration.test'),
       import('./reorderAnnotations.integration.test'),
+      import('./commentStore.integration.test'),
     ])
       .then(() => {
         try {

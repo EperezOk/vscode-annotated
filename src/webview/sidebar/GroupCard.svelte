@@ -7,12 +7,18 @@
     group,
     palette,
     selected = false,
+    bulkMode = false,
+    checked = false,
     onselect,
+    oncheck,
   }: {
     group: AnnotationGroup;
     palette: TagColor[];
     selected?: boolean;
+    bulkMode?: boolean;
+    checked?: boolean;
     onselect?: (id: string) => void;
+    oncheck?: (id: string) => void;
   } = $props();
 </script>
 
@@ -22,8 +28,11 @@
   class:selected
   class:resolved={group.status === 'resolved'}
   data-testid="group-card"
-  onclick={() => onselect?.(group.id)}
+  onclick={() => (bulkMode ? oncheck?.(group.id) : onselect?.(group.id))}
 >
+  {#if bulkMode}
+    <input type="checkbox" class="bulk-cb" data-testid="bulk-checkbox" checked={checked} tabindex="-1" aria-label="Select group" />
+  {/if}
   <div class="title">
     {group.title}
     {#if group.status === 'resolved'}<span class="badge" data-testid="resolved-badge">resolved</span>{/if}
@@ -79,4 +88,5 @@
     border-radius: 9px;
     color: #fff;
   }
+  .bulk-cb { margin-right: 6px; pointer-events: none; vertical-align: middle; }
 </style>

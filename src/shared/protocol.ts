@@ -1,5 +1,5 @@
 // Typed message contract between the extension host and webviews.
-import { type AnnotationGroup } from './model';
+import { type AnnotationGroup, type GroupStatus, type ThreadComment } from './model';
 
 /** A tag's display info sent to the webview (structurally matches core `Tag`). */
 export interface TagColor {
@@ -17,7 +17,11 @@ export type HostToWebview = {
 /** Webview → host messages. */
 export type WebviewToHost =
   | { type: 'ready' }
-  | { type: 'selectGroup'; groupId: string };
+  | { type: 'selectGroup'; groupId: string }
+  | { type: 'bulkEditTags'; groupIds: string[] }
+  | { type: 'bulkEditGitRef'; groupIds: string[] }
+  | { type: 'bulkResolveRestore'; groupIds: string[] }
+  | { type: 'bulkDelete'; groupIds: string[] };
 
 /** Host → detail-panel messages. */
 export type HostToDetail = {
@@ -25,6 +29,8 @@ export type HostToDetail = {
   group: AnnotationGroup | null;
   palette: TagColor[];
   staleIds?: string[];
+  comments?: ThreadComment[];
+  currentAuthor?: string;
 };
 
 /** Detail-panel → host messages. */
@@ -37,7 +43,11 @@ export type DetailToHost =
   | { type: 'editTags' }
   | { type: 'editGitRef' }
   | { type: 'updateAnnotationRange'; annotationId: string; startLine: number; endLine: number }
-  | { type: 'reorderAnnotations'; annotationIds: string[] };
+  | { type: 'reorderAnnotations'; annotationIds: string[] }
+  | { type: 'updateGroupStatus'; status: GroupStatus }
+  | { type: 'addComment'; annotationId: string; content: string }
+  | { type: 'editComment'; commentId: string; content: string }
+  | { type: 'deleteComment'; commentId: string };
 
 function isObject(x: unknown): x is Record<string, unknown> {
   return typeof x === 'object' && x !== null;
@@ -53,6 +63,13 @@ export function parseWebviewMessage(raw: unknown): WebviewToHost | null {
       return { type: 'ready' };
     case 'selectGroup':
       return typeof raw.groupId === 'string' ? { type: 'selectGroup', groupId: raw.groupId } : null;
+    case 'bulkEditTags':
+    case 'bulkEditGitRef':
+    case 'bulkResolveRestore':
+    case 'bulkDelete':
+      return Array.isArray(raw.groupIds) && (raw.groupIds as unknown[]).every((id) => typeof id === 'string')
+        ? { type: raw.type as 'bulkEditTags' | 'bulkEditGitRef' | 'bulkResolveRestore' | 'bulkDelete', groupIds: raw.groupIds as string[] }
+        : null;
     default:
       return null;
   }
@@ -89,6 +106,22 @@ export function parseDetailMessage(raw: unknown): DetailToHost | null {
     case 'reorderAnnotations':
       return Array.isArray(raw.annotationIds) && (raw.annotationIds as unknown[]).every((id) => typeof id === 'string')
         ? { type: 'reorderAnnotations', annotationIds: raw.annotationIds as string[] }
+        : null;
+    case 'updateGroupStatus':
+      return raw.status === 'open' || raw.status === 'resolved'
+        ? { type: 'updateGroupStatus', status: raw.status }
+        : null;
+    case 'addComment':
+      return typeof raw.annotationId === 'string' && typeof raw.content === 'string'
+        ? { type: 'addComment', annotationId: raw.annotationId, content: raw.content }
+        : null;
+    case 'editComment':
+      return typeof raw.commentId === 'string' && typeof raw.content === 'string'
+        ? { type: 'editComment', commentId: raw.commentId, content: raw.content }
+        : null;
+    case 'deleteComment':
+      return typeof raw.commentId === 'string'
+        ? { type: 'deleteComment', commentId: raw.commentId }
         : null;
     default:
       return null;

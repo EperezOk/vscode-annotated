@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { initialDetailState, applyDetailMessage, oneLine, openAnnotation, backToGroup, isStale, moveBefore, selectedAnnotationIndex, nextAnnotationId, prevAnnotationId, annotationPosition } from './detailState';
+import { initialDetailState, applyDetailMessage, oneLine, openAnnotation, backToGroup, isStale, moveBefore, selectedAnnotationIndex, nextAnnotationId, prevAnnotationId, annotationPosition, commentsFor } from './detailState';
 import { type AnnotationGroup } from '../shared/model';
 
 function group(): AnnotationGroup {
@@ -12,7 +12,7 @@ function group(): AnnotationGroup {
 
 describe('initialDetailState', () => {
   it('has no group and no selection', () => {
-    expect(initialDetailState()).toEqual({ group: null, palette: [], selectedAnnotationId: null, mode: 'group', staleIds: [] });
+    expect(initialDetailState()).toEqual({ group: null, palette: [], selectedAnnotationId: null, mode: 'group', staleIds: [], comments: [], currentAuthor: '' });
   });
 });
 
@@ -128,6 +128,30 @@ describe('annotation navigation', () => {
     const state = { ...initialDetailState(), group: group3(), selectedAnnotationId: 'a2' };
     expect(annotationPosition(state)).toEqual({ current: 2, total: 3 });
     expect(annotationPosition(initialDetailState())).toBeNull();
+  });
+});
+
+describe('comments in detail state', () => {
+  const thread = [
+    { id: 'c1', annotationId: 'a1', author: 'Ana', content: 'one', timestamp: 100 },
+    { id: 'c2', annotationId: 'a2', author: 'Bob', content: 'two', timestamp: 200 },
+  ];
+  it('initial state has empty comments + currentAuthor', () => {
+    const s = initialDetailState();
+    expect(s.comments).toEqual([]);
+    expect(s.currentAuthor).toBe('');
+  });
+  it('setGroup stores comments + currentAuthor (defaulting)', () => {
+    const next = applyDetailMessage(initialDetailState(), {
+      type: 'setGroup', group: null, palette: [], comments: thread, currentAuthor: 'Ana',
+    });
+    expect(next.comments).toEqual(thread);
+    expect(next.currentAuthor).toBe('Ana');
+  });
+  it('commentsFor filters by annotation id', () => {
+    const s = { ...initialDetailState(), comments: thread };
+    expect(commentsFor(s, 'a1').map((c) => c.id)).toEqual(['c1']);
+    expect(commentsFor(s, 'zzz')).toEqual([]);
   });
 });
 

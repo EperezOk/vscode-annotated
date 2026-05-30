@@ -4,12 +4,20 @@ import { registerCreateAnnotationCommand } from './createAnnotationCommand';
 import { DetailPanelProvider } from './detailPanelProvider';
 import { GroupStore } from '../core/groupStore';
 import { VscodeFileSystem } from './vscodeFileSystem';
-import { readTagPalette } from './tagPalette';
+import { readTagPalette, addTagToPalette } from './tagPalette';
+import { NEW_TAG_LABEL, splitPickedTags } from '../core/tags';
 import { revealAnnotation } from './navigateToCode';
 import { readGitRefInfo } from './gitRefsSource';
 import { gitRefSuggestions } from '../core/gitRefs';
 import { computeStaleIds } from './staleness';
 import { sha256Hex, anchorText } from '../shared/hash';
+import { type AnnotationGroup, type GroupStatus } from '../shared/model';
+import { bulkStatusToggle } from '../core/sidebarState';
+import { CommentStore } from '../core/commentStore';
+import { flattenComments, slugifyAuthor } from '../core/comments';
+import { resolveAuthor, resolveAuthorEmail } from '../core/authorIdentity';
+import { VscodeAuthorNameSources } from './authorSources';
+import { newId } from '../shared/ids';
 
 export function activate(context: vscode.ExtensionContext): void {
   const provider = new SidebarViewProvider(context.extensionUri);
@@ -33,6 +41,17 @@ export function activate(context: vscode.ExtensionContext): void {
 
   const now = (): number => Math.floor(Date.now() / 1000);
 
+  let cachedAuthor: string | undefined;
+  let cachedEmail: string | undefined;
+  const currentIdentity = async (): Promise<{ author: string; email: string }> => {
+    if (cachedAuthor === undefined) {
+      const sources = new VscodeAuthorNameSources();
+      cachedAuthor = await resolveAuthor(sources);
+      cachedEmail = await resolveAuthorEmail(sources);
+    }
+    return { author: cachedAuthor, email: cachedEmail ?? '' };
+  };
+
   const showGroupWithStale = async (groupId: string): Promise<void> => {
     const folder = vscode.workspace.workspaceFolders?.[0];
     if (!folder) {
@@ -41,12 +60,117 @@ export function activate(context: vscode.ExtensionContext): void {
     const fs = new VscodeFileSystem(folder.uri);
     const group = await new GroupStore(fs).getGroup(groupId);
     const staleIds = group ? await computeStaleIds(fs, group) : [];
-    detailProvider.showGroup(group, readTagPalette(), staleIds);
+    const ids = new Set(group?.annotations.map((a) => a.id) ?? []);
+    const comments = flattenComments(await new CommentStore(fs).listCommentFiles()).filter((c) => ids.has(c.annotationId));
+    const { author } = await currentIdentity();
+    detailProvider.showGroup(group, readTagPalette(), staleIds, comments, author);
   };
 
   provider.onSelectGroup = async (groupId: string): Promise<void> => {
     await showGroupWithStale(groupId);
     await vscode.commands.executeCommand('annotated.detail.focus');
+  };
+
+  provider.onBulkResolveRestore = async (groupIds): Promise<void> => {
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    if (!folder || groupIds.length === 0) {
+      return;
+    }
+    const store = new GroupStore(new VscodeFileSystem(folder.uri));
+    const groups = (await Promise.all(groupIds.map((id) => store.getGroup(id)))).filter((g): g is AnnotationGroup => g !== null);
+    const status = bulkStatusToggle(groups);
+    for (const id of groupIds) {
+      await store.updateGroup(id, { status }, now());
+    }
+    await provider.refresh();
+  };
+
+  provider.onBulkDelete = async (groupIds): Promise<void> => {
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    if (!folder || groupIds.length === 0) {
+      return;
+    }
+    const choice = await vscode.window.showWarningMessage(
+      `Delete ${groupIds.length} group${groupIds.length === 1 ? '' : 's'}? This cannot be undone.`,
+      { modal: true },
+      'Delete',
+    );
+    if (choice !== 'Delete') {
+      return;
+    }
+    const store = new GroupStore(new VscodeFileSystem(folder.uri));
+    for (const id of groupIds) {
+      await store.deleteGroup(id);
+    }
+    await provider.refresh();
+  };
+
+  provider.onBulkEditTags = async (groupIds): Promise<void> => {
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    if (!folder || groupIds.length === 0) {
+      return;
+    }
+    const palette = readTagPalette();
+    const items: vscode.QuickPickItem[] = [
+      ...palette.map((t) => ({ label: t.name })),
+      { label: NEW_TAG_LABEL, alwaysShow: true },
+    ];
+    const picked = await vscode.window.showQuickPick(items, {
+      canPickMany: true,
+      placeHolder: `Set tags on ${groupIds.length} group(s)`,
+    });
+    if (picked === undefined) {
+      return;
+    }
+    const { names, addNew } = splitPickedTags(picked.map((item) => item.label));
+    if (addNew) {
+      const name = await vscode.window.showInputBox({ prompt: 'New tag name' });
+      if (name && name.trim()) {
+        const color = await vscode.window.showInputBox({ prompt: 'Tag color (hex)', value: '#888888' });
+        await addTagToPalette(name.trim(), color?.trim() || '#888888');
+        names.push(name.trim());
+      }
+    }
+    const store = new GroupStore(new VscodeFileSystem(folder.uri));
+    for (const id of groupIds) {
+      await store.updateGroup(id, { tags: names }, now());
+    }
+    await provider.refresh();
+  };
+
+  provider.onBulkEditGitRef = async (groupIds): Promise<void> => {
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    if (!folder || groupIds.length === 0) {
+      return;
+    }
+    const info = await readGitRefInfo();
+    const suggestions = gitRefSuggestions(info);
+    const CLEAR = '$(close) Clear';
+    const CUSTOM = '$(edit) Custom…';
+    const picked = await vscode.window.showQuickPick(
+      [{ label: CLEAR }, { label: CUSTOM }, ...suggestions.map((s) => ({ label: s.label, description: s.description }))],
+      { placeHolder: `Set the Git ref on ${groupIds.length} group(s)` },
+    );
+    if (!picked) {
+      return;
+    }
+    let gitRef: string | null;
+    if (picked.label === CLEAR) {
+      gitRef = null;
+    } else if (picked.label === CUSTOM) {
+      const custom = await vscode.window.showInputBox({ prompt: 'Git ref (branch / tag / SHA)' });
+      if (custom === undefined) {
+        return;
+      }
+      gitRef = custom.trim() === '' ? null : custom.trim();
+    } else {
+      gitRef = picked.label;
+    }
+    const store = new GroupStore(new VscodeFileSystem(folder.uri));
+    for (const id of groupIds) {
+      await store.updateGroup(id, { gitRef }, now());
+    }
+    await provider.refresh();
   };
 
   detailProvider.onSelectAnnotation = (annotation): void => {
@@ -70,7 +194,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
   const patchGroup = async (
     groupId: string,
-    patch: { title?: string; tags?: string[]; gitRef?: string | null },
+    patch: { title?: string; tags?: string[]; gitRef?: string | null; status?: GroupStatus },
   ): Promise<void> => {
     const folder = vscode.workspace.workspaceFolders?.[0];
     if (!folder) {
@@ -96,14 +220,27 @@ export function activate(context: vscode.ExtensionContext): void {
       return;
     }
     const palette = readTagPalette();
-    const picked = await vscode.window.showQuickPick(
-      palette.map((t) => ({ label: t.name, picked: group.tags.includes(t.name) })),
-      { canPickMany: true, placeHolder: 'Select tags for this group' },
-    );
+    const items: vscode.QuickPickItem[] = [
+      ...palette.map((t) => ({ label: t.name, picked: group.tags.includes(t.name) })),
+      { label: NEW_TAG_LABEL, alwaysShow: true },
+    ];
+    const picked = await vscode.window.showQuickPick(items, {
+      canPickMany: true,
+      placeHolder: 'Select tags for this group',
+    });
     if (picked === undefined) {
       return;
     }
-    await patchGroup(groupId, { tags: picked.map((p) => p.label) });
+    const { names, addNew } = splitPickedTags(picked.map((item) => item.label));
+    if (addNew) {
+      const name = await vscode.window.showInputBox({ prompt: 'New tag name' });
+      if (name && name.trim()) {
+        const color = await vscode.window.showInputBox({ prompt: 'Tag color (hex)', value: '#888888' });
+        await addTagToPalette(name.trim(), color?.trim() || '#888888');
+        names.push(name.trim());
+      }
+    }
+    await patchGroup(groupId, { tags: names });
   };
 
   detailProvider.onEditGitRef = async (groupId): Promise<void> => {
@@ -132,6 +269,45 @@ export function activate(context: vscode.ExtensionContext): void {
       return;
     }
     await patchGroup(groupId, { gitRef: ref.trim() === '' ? null : ref.trim() });
+  };
+
+  detailProvider.onUpdateGroupStatus = async (groupId, status): Promise<void> => {
+    await patchGroup(groupId, { status });
+  };
+
+  detailProvider.onAddComment = async (groupId, annotationId, content): Promise<void> => {
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    if (!folder) {
+      return;
+    }
+    const { author, email } = await currentIdentity();
+    const fs = new VscodeFileSystem(folder.uri);
+    await new CommentStore(fs).addComment(slugifyAuthor(author), author, email, {
+      id: newId(), annotationId, content, timestamp: now(),
+    });
+    await showGroupWithStale(groupId);
+  };
+
+  detailProvider.onEditComment = async (groupId, commentId, content): Promise<void> => {
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    if (!folder) {
+      return;
+    }
+    const { author } = await currentIdentity();
+    const fs = new VscodeFileSystem(folder.uri);
+    await new CommentStore(fs).updateComment(slugifyAuthor(author), commentId, content);
+    await showGroupWithStale(groupId);
+  };
+
+  detailProvider.onDeleteComment = async (groupId, commentId): Promise<void> => {
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    if (!folder) {
+      return;
+    }
+    const { author } = await currentIdentity();
+    const fs = new VscodeFileSystem(folder.uri);
+    await new CommentStore(fs).deleteComment(slugifyAuthor(author), commentId);
+    await showGroupWithStale(groupId);
   };
 
   detailProvider.onReorderAnnotations = async (groupId, annotationIds): Promise<void> => {

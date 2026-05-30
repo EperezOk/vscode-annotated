@@ -46,4 +46,18 @@ describe('GroupCard', () => {
     render(GroupCard, { group: group(), palette: [] });
     expect(screen.queryByTestId('resolved-badge')).toBeNull();
   });
+  it('shows a checkbox in bulk mode and toggles selection on card click', async () => {
+    const oncheck = vi.fn();
+    render(GroupCard, { group: group(), palette: [], bulkMode: true, checked: false, oncheck });
+    expect(screen.getByTestId('bulk-checkbox')).toBeInTheDocument();
+    await userEvent.click(screen.getByTestId('group-card'));
+    expect(oncheck).toHaveBeenCalledWith('g1');
+  });
+  it('reflects the checked state and has no checkbox outside bulk mode', () => {
+    const { unmount } = render(GroupCard, { group: group(), palette: [], bulkMode: true, checked: true });
+    expect(screen.getByTestId('bulk-checkbox')).toBeChecked();
+    unmount();
+    render(GroupCard, { group: group(), palette: [] });
+    expect(screen.queryByTestId('bulk-checkbox')).toBeNull();
+  });
 });

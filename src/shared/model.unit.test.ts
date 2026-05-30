@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseGroup, serializeGroup, type AnnotationGroup } from './model';
+import { parseGroup, serializeGroup, parseCommentFile, serializeCommentFile, type AnnotationGroup } from './model';
 
 const validGroup: AnnotationGroup = {
   id: 'g1',
@@ -53,5 +53,21 @@ describe('serializeGroup/parseGroup', () => {
   it('throws when an annotation range is malformed', () => {
     const bad = { ...validGroup, annotations: [{ ...validGroup.annotations[0], range: { startLine: 5, endLine: 2 } }] };
     expect(() => parseGroup(bad)).toThrow(/range/);
+  });
+});
+
+describe('parseCommentFile', () => {
+  it('parses a valid comment file', () => {
+    const raw = { author: 'Ana', email: 'a@x', comments: [
+      { id: 'c1', annotationId: 'a1', content: 'hi', timestamp: 100 },
+    ] };
+    expect(parseCommentFile(raw)).toEqual(raw);
+  });
+  it('throws on a malformed comment', () => {
+    expect(() => parseCommentFile({ author: 'Ana', email: 'a@x', comments: [{ id: 1 }] })).toThrow();
+  });
+  it('round-trips through serializeCommentFile', () => {
+    const file = { author: 'Ana', email: 'a@x', comments: [{ id: 'c1', annotationId: 'a1', content: 'hi', timestamp: 100 }] };
+    expect(parseCommentFile(JSON.parse(serializeCommentFile(file)))).toEqual(file);
   });
 });
