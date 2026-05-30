@@ -5,7 +5,11 @@ export function run(): Promise<void> {
     mocha.setup({ ui: 'tdd', reporter: 'spec' });
 
     // Register suites AFTER mocha.setup so the tdd globals (suite/test) exist.
-    Promise.all([import('./extension.test'), import('./groupStore.integration.test')])
+    Promise.all([
+      import('./extension.test'),
+      import('./groupStore.integration.test'),
+      import('./navigate.integration.test'),
+    ])
       .then(() => {
         try {
           mocha.run((failures) => {
