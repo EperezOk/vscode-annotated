@@ -1,0 +1,19 @@
+{
+  "id": "seed-resolved",
+  "title": "Resolved Group",
+  "author": "Reviewer",
+  "tags": ["review"],
+  "gitRef": null,
+  "status": "resolved",
+  "createdAt": 1730000100,
+  "updatedAt": 1730000200,
+  "annotations": [
+    {
+      "id": "seed-resolved-anno",
+      "file": "README.md",
+      "range": { "startLine": 3, "endLine": 5 },
+      "content": "Resolved annotation",
+      "contentHash": "resolved-seed"
+    }
+  ]
+}
