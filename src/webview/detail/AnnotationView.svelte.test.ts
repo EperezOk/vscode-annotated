@@ -4,6 +4,10 @@ import { describe, it, expect, vi } from 'vitest';
 import AnnotationView from './AnnotationView.svelte';
 import { type Annotation } from '../../shared/model';
 
+vi.mock('./MarkdownEditor.svelte', async () => ({
+  default: (await import('./__mocks__/MarkdownEditorStub.svelte')).default,
+}));
+
 function annotation(content: string): Annotation {
   return { id: 'a1', file: 'src/x.ts', range: { startLine: 2, endLine: 4 }, content, contentHash: 'h' };
 }

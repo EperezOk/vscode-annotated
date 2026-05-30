@@ -1,42 +1,57 @@
 <script lang="ts">
-  let {
-    doc = '',
-    onChange,
-  }: {
-    doc?: string;
-    onChange?: (value: string) => void;
-  } = $props();
+  import { onMount } from 'svelte';
+  import { EditorState } from '@codemirror/state';
+  import { EditorView, keymap } from '@codemirror/view';
+  import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
+  import { syntaxHighlighting, defaultHighlightStyle } from '@codemirror/language';
+  import { markdown } from '@codemirror/lang-markdown';
+  import { markdownKeymap, urlPasteHandler } from './editorExtensions';
 
-  let value = $state(doc);
+  let { doc = '', onChange }: { doc?: string; onChange?: (value: string) => void } = $props();
 
-  function handleInput(event: Event): void {
-    value = (event.currentTarget as HTMLTextAreaElement).value;
-    onChange?.(value);
-  }
+  let host: HTMLDivElement;
+  let view: EditorView | undefined;
+
+  onMount(() => {
+    view = new EditorView({
+      parent: host,
+      state: EditorState.create({
+        doc,
+        extensions: [
+          history(),
+          syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+          markdown(),
+          urlPasteHandler,
+          keymap.of([...markdownKeymap, ...defaultKeymap, ...historyKeymap]),
+          EditorView.lineWrapping,
+          EditorView.updateListener.of((update) => {
+            if (update.docChanged) {
+              onChange?.(update.state.doc.toString());
+            }
+          }),
+        ],
+      }),
+    });
+    return () => view?.destroy();
+  });
 </script>
 
-<textarea
-  class="md-editor"
-  data-testid="md-editor"
-  value={doc}
-  oninput={handleInput}
-  spellcheck="false"
-  placeholder="Write Markdown…"
-></textarea>
+<div class="md-editor" data-testid="md-editor" bind:this={host}></div>
 
 <style>
   .md-editor {
-    width: 100%;
-    box-sizing: border-box;
-    min-height: 160px;
-    resize: vertical;
-    background: var(--vscode-input-background, #2a2a2a);
-    color: var(--vscode-input-foreground, #ddd);
     border: 1px solid var(--vscode-input-border, #555);
     border-radius: 4px;
-    padding: 8px;
-    font-family: var(--vscode-editor-font-family, monospace);
+    background: var(--vscode-input-background, #2a2a2a);
+    min-height: 160px;
     font-size: 12.5px;
-    line-height: 1.5;
   }
+  .md-editor :global(.cm-editor) { min-height: 160px; }
+  .md-editor :global(.cm-editor.cm-focused) { outline: none; }
+  .md-editor :global(.cm-content) {
+    font-family: var(--vscode-editor-font-family, monospace);
+    color: var(--vscode-input-foreground, #ddd);
+    caret-color: var(--vscode-editorCursor-foreground, #ddd);
+  }
+  .md-editor :global(.cm-scroller) { overflow: auto; }
 </style>
