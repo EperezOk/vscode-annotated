@@ -4,6 +4,9 @@ All paths are workspace-relative. See `data-contract.md` for the exact schema, i
 and the node-free recipes (hash / id / timestamp / slug). **Always uphold the invariants and
 the safety rules in `SKILL.md`.**
 
+> Reminder: generate `<uuidgen>` ids in **lowercase**, and take `contentHash` and the author
+> slug from the recipes in `data-contract.md` — don't hand-write them.
+
 ## 1. Surf / read
 
 - **List groups:** read each `.annotations/groups/*.json`; for each report
@@ -49,7 +52,7 @@ You may reply to **any** annotation, but only ever write your **own** slug file.
 3. Write `.annotations/groups/<id>.json` — **the filename stem MUST equal `id`**.
 
 **Add an annotation to a group you already authored:** append to its `annotations`, recompute
-nothing for existing entries, set the new entry's `contentHash`, and bump `updatedAt` to `date +%s`.
+nothing for existing entries, set the new entry's `contentHash`, and bump `updatedAt` to `date +%s` — never add to a group authored by someone else.
 
 ## 4. Manage your own
 
