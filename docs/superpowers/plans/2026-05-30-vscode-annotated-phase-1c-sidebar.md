@@ -852,4 +852,12 @@ git commit -m "test: e2e seed group + sidebar card assertion; serve workspace"
 - [ ] Manual sanity (optional): `npm start` (opens `test-workspace`), open the Annotated view, see the Seed Group card; in a real folder, create an annotation and watch the sidebar update live.
 
 Next: **1d** — detail panel in the Secondary Side Bar (group view: title/author/tags/annotation list), wired to the sidebar's `selectGroup` via `provider.onSelectGroup`; selecting an annotation navigates to code with a decoration. Then **1e** — annotation view + CodeMirror editor.
+
+## Phase 1d carry-over (from Phase 1c final review)
+
+- **Wire `provider.onSelectGroup`** in `extension.ts` to the new detail-panel provider (the hook is already public on `SidebarViewProvider`). The `palette` already flows to webviews via `setState`, so the detail panel needs no protocol change to render tag colors.
+- **Stale-when-hidden (minor):** `refresh()` does a fire-and-forget `postMessage`; if the sidebar is hidden when a watcher event fires, the update is missed until the next `ready` (re-mount). Consider adding `webviewView.onDidChangeVisibility` → `refresh()` when it becomes visible. Harden in 1d or a small follow-up.
+- **Protocol symmetry (minor):** `main.ts` validates inbound `setState` with an inline check. A shared `parseHostMessage` in `protocol.ts` (mirroring `parseWebviewMessage`) would make host→webview narrowing safer on both sides.
+- **Unify `DEFAULT_COLOR` (minor):** `'#888888'` is defined independently in both `src/core/sidebarState.ts` and `src/web/tagPalette.ts`; fold into one shared constant.
+- `seed.json`'s `contentHash` is the placeholder `"seed"` (fine for a fixture; not a real SHA-256).
 ```
