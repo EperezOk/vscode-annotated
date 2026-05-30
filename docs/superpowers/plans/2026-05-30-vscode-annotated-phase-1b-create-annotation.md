@@ -237,6 +237,7 @@ describe('runCreateAnnotation', () => {
     expect(saved.tags).toEqual(['security']);
     expect(saved.annotations).toHaveLength(1);
     expect(saved.annotations[0]).toMatchObject({ file: 'src/x.ts', range: { startLine: 1, endLine: 2 }, content: '', contentHash: 'HASH' });
+    expect(saved.createdAt).toBe(saved.updatedAt); // a brand-new group's first annotation shares one timestamp
     expect(result?.id).toBe(saved.id);
   });
 
@@ -371,8 +372,9 @@ export async function runCreateAnnotation(deps: CreateAnnotationDeps): Promise<A
     return undefined;
   }
   const author = await deps.resolveAuthor();
-  const base = createGroup({ id: deps.newId(), title, author, tags, now: deps.now() });
-  const group = addAnnotation(base, annotation, deps.now());
+  const now = deps.now();
+  const base = createGroup({ id: deps.newId(), title, author, tags, now });
+  const group = addAnnotation(base, annotation, now);
   await deps.saveGroup(group);
   deps.showInfo(`Created group "${group.title}".`);
   return group;
