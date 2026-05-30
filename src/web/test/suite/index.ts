@@ -10,6 +10,7 @@ export function run(): Promise<void> {
       import('./groupStore.integration.test'),
       import('./navigate.integration.test'),
       import('./updateAnnotation.integration.test'),
+      import('./updateGroup.integration.test'),
     ])
       .then(() => {
         try {
