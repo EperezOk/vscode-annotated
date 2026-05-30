@@ -9,6 +9,7 @@ export function run(): Promise<void> {
       import('./extension.test'),
       import('./groupStore.integration.test'),
       import('./navigate.integration.test'),
+      import('./updateAnnotation.integration.test'),
     ])
       .then(() => {
         try {
