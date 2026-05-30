@@ -73,6 +73,10 @@
     "start": "vscode-test-web --browserType=chromium --extensionDevelopmentPath=.",
     "vscode:prepublish": "npm run package"
   },
+  "dependencies": {
+    "dompurify": "^3.4.7",
+    "markdown-it": "^14.2.0"
+  },
   "devDependencies": {
     "@playwright/test": "^1.60.0",
     "@sveltejs/vite-plugin-svelte": "^7.1.2",
