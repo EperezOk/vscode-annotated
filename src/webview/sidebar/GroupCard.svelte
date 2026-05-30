@@ -20,10 +20,14 @@
   type="button"
   class="card"
   class:selected
+  class:resolved={group.status === 'resolved'}
   data-testid="group-card"
   onclick={() => onselect?.(group.id)}
 >
-  <div class="title">{group.title}</div>
+  <div class="title">
+    {group.title}
+    {#if group.status === 'resolved'}<span class="badge" data-testid="resolved-badge">resolved</span>{/if}
+  </div>
   <div class="meta">{group.author} · {group.annotations.length} annotation{group.annotations.length === 1 ? '' : 's'}</div>
   {#if group.tags.length > 0}
     <div class="chips">
@@ -52,6 +56,8 @@
   .card.selected {
     outline: 1px solid var(--vscode-focusBorder, #3794ff);
   }
+  .card.resolved { opacity: 0.6; }
+  .badge { margin-left: 6px; font-size: 9px; text-transform: uppercase; letter-spacing: 0.04em; padding: 1px 5px; border-radius: 8px; background: var(--vscode-badge-background, #4d4d4d); color: var(--vscode-badge-foreground, #fff); vertical-align: middle; }
   .title {
     font-weight: 600;
     font-size: 12.5px;

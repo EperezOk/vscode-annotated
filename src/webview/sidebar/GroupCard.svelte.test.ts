@@ -36,4 +36,14 @@ describe('GroupCard', () => {
     await userEvent.click(screen.getByTestId('group-card'));
     expect(onselect).toHaveBeenCalledWith('g1');
   });
+
+  it('shows a resolved badge and dims when the group is resolved', () => {
+    render(GroupCard, { group: { ...group(), status: 'resolved' }, palette: [] });
+    expect(screen.getByTestId('resolved-badge')).toBeInTheDocument();
+    expect(screen.getByTestId('group-card')).toHaveClass('resolved');
+  });
+  it('has no resolved badge for an open group', () => {
+    render(GroupCard, { group: group(), palette: [] });
+    expect(screen.queryByTestId('resolved-badge')).toBeNull();
+  });
 });
