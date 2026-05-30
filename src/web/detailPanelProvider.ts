@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { type Annotation, type AnnotationGroup, type GroupStatus } from '../shared/model';
+import { type Annotation, type AnnotationGroup, type GroupStatus, type ThreadComment } from '../shared/model';
 import { parseDetailMessage, type HostToDetail, type TagColor } from '../shared/protocol';
 
 export class DetailPanelProvider implements vscode.WebviewViewProvider {
@@ -8,6 +8,8 @@ export class DetailPanelProvider implements vscode.WebviewViewProvider {
   private group: AnnotationGroup | null = null;
   private palette: TagColor[] = [];
   private staleIds: string[] = [];
+  private comments: ThreadComment[] = [];
+  private currentAuthor = '';
 
   /** Set by the extension to navigate to a selected annotation. */
   public onSelectAnnotation?: (annotation: Annotation) => void;
@@ -30,6 +32,13 @@ export class DetailPanelProvider implements vscode.WebviewViewProvider {
 
   /** Set by the extension: change the current group's status. */
   public onUpdateGroupStatus?: (groupId: string, status: GroupStatus) => void;
+
+  /** Set by the extension: add a comment to an annotation. */
+  public onAddComment?: (groupId: string, annotationId: string, content: string) => void;
+  /** Set by the extension: edit a comment's content. */
+  public onEditComment?: (groupId: string, commentId: string, content: string) => void;
+  /** Set by the extension: delete a comment. */
+  public onDeleteComment?: (groupId: string, commentId: string) => void;
 
   constructor(private readonly extensionUri: vscode.Uri) {}
 
@@ -86,15 +95,35 @@ export class DetailPanelProvider implements vscode.WebviewViewProvider {
         if (this.group) {
           this.onUpdateGroupStatus?.(this.group.id, message.status);
         }
+      } else if (message.type === 'addComment') {
+        if (this.group) {
+          this.onAddComment?.(this.group.id, message.annotationId, message.content);
+        }
+      } else if (message.type === 'editComment') {
+        if (this.group) {
+          this.onEditComment?.(this.group.id, message.commentId, message.content);
+        }
+      } else if (message.type === 'deleteComment') {
+        if (this.group) {
+          this.onDeleteComment?.(this.group.id, message.commentId);
+        }
       }
     });
   }
 
   /** Set the group shown by the panel and push it to the webview (if resolved). */
-  showGroup(group: AnnotationGroup | null, palette: TagColor[], staleIds: string[] = []): void {
+  showGroup(
+    group: AnnotationGroup | null,
+    palette: TagColor[],
+    staleIds: string[] = [],
+    comments: ThreadComment[] = [],
+    currentAuthor = '',
+  ): void {
     this.group = group;
     this.palette = palette;
     this.staleIds = staleIds;
+    this.comments = comments;
+    this.currentAuthor = currentAuthor;
     this.post();
   }
 
@@ -102,7 +131,7 @@ export class DetailPanelProvider implements vscode.WebviewViewProvider {
     if (!this.view) {
       return;
     }
-    const message: HostToDetail = { type: 'setGroup', group: this.group, palette: this.palette, staleIds: this.staleIds };
+    const message: HostToDetail = { type: 'setGroup', group: this.group, palette: this.palette, staleIds: this.staleIds, comments: this.comments, currentAuthor: this.currentAuthor };
     void this.view.webview.postMessage(message);
   }
 

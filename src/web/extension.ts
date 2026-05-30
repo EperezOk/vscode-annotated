@@ -11,6 +11,11 @@ import { gitRefSuggestions } from '../core/gitRefs';
 import { computeStaleIds } from './staleness';
 import { sha256Hex, anchorText } from '../shared/hash';
 import { type GroupStatus } from '../shared/model';
+import { CommentStore } from '../core/commentStore';
+import { flattenComments, slugifyAuthor } from '../core/comments';
+import { resolveAuthor, resolveAuthorEmail } from '../core/authorIdentity';
+import { VscodeAuthorNameSources } from './authorSources';
+import { newId } from '../shared/ids';
 
 export function activate(context: vscode.ExtensionContext): void {
   const provider = new SidebarViewProvider(context.extensionUri);
@@ -34,6 +39,17 @@ export function activate(context: vscode.ExtensionContext): void {
 
   const now = (): number => Math.floor(Date.now() / 1000);
 
+  let cachedAuthor: string | undefined;
+  let cachedEmail: string | undefined;
+  const currentIdentity = async (): Promise<{ author: string; email: string }> => {
+    if (cachedAuthor === undefined) {
+      const sources = new VscodeAuthorNameSources();
+      cachedAuthor = await resolveAuthor(sources);
+      cachedEmail = await resolveAuthorEmail(sources);
+    }
+    return { author: cachedAuthor, email: cachedEmail ?? '' };
+  };
+
   const showGroupWithStale = async (groupId: string): Promise<void> => {
     const folder = vscode.workspace.workspaceFolders?.[0];
     if (!folder) {
@@ -42,7 +58,10 @@ export function activate(context: vscode.ExtensionContext): void {
     const fs = new VscodeFileSystem(folder.uri);
     const group = await new GroupStore(fs).getGroup(groupId);
     const staleIds = group ? await computeStaleIds(fs, group) : [];
-    detailProvider.showGroup(group, readTagPalette(), staleIds);
+    const ids = new Set(group?.annotations.map((a) => a.id) ?? []);
+    const comments = flattenComments(await new CommentStore(fs).listCommentFiles()).filter((c) => ids.has(c.annotationId));
+    const { author } = await currentIdentity();
+    detailProvider.showGroup(group, readTagPalette(), staleIds, comments, author);
   };
 
   provider.onSelectGroup = async (groupId: string): Promise<void> => {
@@ -137,6 +156,41 @@ export function activate(context: vscode.ExtensionContext): void {
 
   detailProvider.onUpdateGroupStatus = async (groupId, status): Promise<void> => {
     await patchGroup(groupId, { status });
+  };
+
+  detailProvider.onAddComment = async (groupId, annotationId, content): Promise<void> => {
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    if (!folder) {
+      return;
+    }
+    const { author, email } = await currentIdentity();
+    const fs = new VscodeFileSystem(folder.uri);
+    await new CommentStore(fs).addComment(slugifyAuthor(author), author, email, {
+      id: newId(), annotationId, content, timestamp: now(),
+    });
+    await showGroupWithStale(groupId);
+  };
+
+  detailProvider.onEditComment = async (groupId, commentId, content): Promise<void> => {
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    if (!folder) {
+      return;
+    }
+    const { author } = await currentIdentity();
+    const fs = new VscodeFileSystem(folder.uri);
+    await new CommentStore(fs).updateComment(slugifyAuthor(author), commentId, content);
+    await showGroupWithStale(groupId);
+  };
+
+  detailProvider.onDeleteComment = async (groupId, commentId): Promise<void> => {
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    if (!folder) {
+      return;
+    }
+    const { author } = await currentIdentity();
+    const fs = new VscodeFileSystem(folder.uri);
+    await new CommentStore(fs).deleteComment(slugifyAuthor(author), commentId);
+    await showGroupWithStale(groupId);
   };
 
   detailProvider.onReorderAnnotations = async (groupId, annotationIds): Promise<void> => {
