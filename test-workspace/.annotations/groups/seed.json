@@ -1,0 +1,19 @@
+{
+  "id": "seed-group",
+  "title": "Seed Group",
+  "author": "Seeder",
+  "tags": ["security"],
+  "gitRef": null,
+  "status": "open",
+  "createdAt": 1730000000,
+  "updatedAt": 1730000000,
+  "annotations": [
+    {
+      "id": "seed-anno",
+      "file": "README.md",
+      "range": { "startLine": 1, "endLine": 1 },
+      "content": "Seed annotation",
+      "contentHash": "seed"
+    }
+  ]
+}
