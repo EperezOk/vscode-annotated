@@ -11,6 +11,7 @@ export function run(): Promise<void> {
       import('./navigate.integration.test'),
       import('./updateAnnotation.integration.test'),
       import('./updateGroup.integration.test'),
+      import('./updateAnnotationRange.integration.test'),
     ])
       .then(() => {
         try {
