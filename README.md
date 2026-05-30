@@ -3,6 +3,12 @@
 A VSCode extension for annotating a codebase with grouped, shareable Markdown
 annotations. See the design spec in `docs/superpowers/specs/`.
 
+## Agent skill
+
+`skills/annotated-agent/` is a Claude Code skill for AI agents to participate in an annotated
+workspace (surf, reply, create, configure) by reading/writing `.annotations/` directly. See
+`skills/annotated-agent/README.md`.
+
 ## Development
 
 ```bash

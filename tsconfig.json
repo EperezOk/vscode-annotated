@@ -12,5 +12,5 @@
     "types": ["mocha"]
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "dist", "e2e", "**/*.svelte.test.ts"]
+  "exclude": ["node_modules", "dist", "e2e", "**/*.svelte.test.ts", "**/*.unit.test.ts"]
 }
