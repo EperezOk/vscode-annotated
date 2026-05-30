@@ -79,4 +79,13 @@ describe('parseDetailMessage', () => {
   it('rejects updateAnnotationRange with non-number lines', () => {
     expect(parseDetailMessage({ type: 'updateAnnotationRange', annotationId: 'a1', startLine: '2', endLine: 4 })).toBeNull();
   });
+  it('accepts reorderAnnotations with a string[] of ids', () => {
+    expect(parseDetailMessage({ type: 'reorderAnnotations', annotationIds: ['a1', 'a2'] })).toEqual({
+      type: 'reorderAnnotations', annotationIds: ['a1', 'a2'],
+    });
+  });
+  it('rejects reorderAnnotations with non-string ids or a non-array', () => {
+    expect(parseDetailMessage({ type: 'reorderAnnotations', annotationIds: ['a1', 2] })).toBeNull();
+    expect(parseDetailMessage({ type: 'reorderAnnotations', annotationIds: 'a1' })).toBeNull();
+  });
 });

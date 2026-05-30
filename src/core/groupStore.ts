@@ -97,6 +97,29 @@ export class GroupStore {
   }
 
   /**
+   * Rewrite the annotation order to match `orderedIds`. Persists only when
+   * `orderedIds` is a permutation of the group's existing annotation ids
+   * (same length, every id present exactly once). Returns false otherwise.
+   */
+  async reorderAnnotations(groupId: string, orderedIds: string[], now: number): Promise<boolean> {
+    const group = await this.getGroup(groupId);
+    if (!group) {
+      return false;
+    }
+    const byId = new Map(group.annotations.map((a) => [a.id, a]));
+    const unique = new Set(orderedIds);
+    if (orderedIds.length !== group.annotations.length || unique.size !== orderedIds.length) {
+      return false;
+    }
+    if (!orderedIds.every((id) => byId.has(id))) {
+      return false;
+    }
+    const annotations = orderedIds.map((id) => byId.get(id)!);
+    await this.saveGroup({ ...group, annotations, updatedAt: now });
+    return true;
+  }
+
+  /**
    * Apply a partial patch to a group's metadata (title/tags/gitRef), bump
    * updatedAt, and persist. Returns false if the group does not exist.
    */

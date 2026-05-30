@@ -144,4 +144,34 @@ describe('GroupStore', () => {
     await store.saveGroup(group('g1'));
     expect(await store.updateAnnotationRange('g1', 'missing', { startLine: 1, endLine: 1 }, 'h', 1)).toBe(false);
   });
+
+  it('reorderAnnotations rewrites the array order, bumps updatedAt, persists', async () => {
+    const g = group('g1');
+    g.annotations.push(
+      { id: 'a1', file: 'x.ts', range: { startLine: 1, endLine: 1 }, content: 'c1', contentHash: 'h' },
+      { id: 'a2', file: 'x.ts', range: { startLine: 2, endLine: 2 }, content: 'c2', contentHash: 'h' },
+      { id: 'a3', file: 'x.ts', range: { startLine: 3, endLine: 3 }, content: 'c3', contentHash: 'h' },
+    );
+    await store.saveGroup(g);
+    const ok = await store.reorderAnnotations('g1', ['a3', 'a1', 'a2'], 555);
+    expect(ok).toBe(true);
+    const r = await store.getGroup('g1');
+    expect(r?.annotations.map((a) => a.id)).toEqual(['a3', 'a1', 'a2']);
+    expect(r?.updatedAt).toBe(555);
+  });
+
+  it('reorderAnnotations rejects a non-permutation (missing/extra/duplicate ids)', async () => {
+    const g = group('g1');
+    g.annotations.push(
+      { id: 'a1', file: 'x.ts', range: { startLine: 1, endLine: 1 }, content: '', contentHash: 'h' },
+      { id: 'a2', file: 'x.ts', range: { startLine: 2, endLine: 2 }, content: '', contentHash: 'h' },
+    );
+    await store.saveGroup(g);
+    expect(await store.reorderAnnotations('g1', ['a1'], 1)).toBe(false);
+    expect(await store.reorderAnnotations('g1', ['a1', 'zzz'], 1)).toBe(false);
+    expect(await store.reorderAnnotations('g1', ['a1', 'a1'], 1)).toBe(false);
+    expect(await store.reorderAnnotations('missing', ['a1', 'a2'], 1)).toBe(false);
+    const r = await store.getGroup('g1');
+    expect(r?.annotations.map((a) => a.id)).toEqual(['a1', 'a2']);
+  });
 });

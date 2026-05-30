@@ -54,3 +54,52 @@ export function oneLine(content: string, max = 60): string {
   const firstLine = content.split('\n').map((l) => l.trim()).find((l) => l.length > 0) ?? '';
   return firstLine.length > max ? `${firstLine.slice(0, max - 1)}…` : firstLine;
 }
+
+/** Reorder ids by removing `moved` and inserting it immediately before `target`. */
+export function moveBefore(ids: string[], moved: string, target: string): string[] {
+  if (moved === target) {
+    return [...ids];
+  }
+  const without = ids.filter((id) => id !== moved);
+  const index = without.indexOf(target);
+  if (index < 0) {
+    return [...without, moved];
+  }
+  return [...without.slice(0, index), moved, ...without.slice(index)];
+}
+
+/** Index of the selected annotation in the group, or -1. */
+export function selectedAnnotationIndex(state: DetailState): number {
+  if (!state.group || state.selectedAnnotationId === null) {
+    return -1;
+  }
+  return state.group.annotations.findIndex((a) => a.id === state.selectedAnnotationId);
+}
+
+/** Id of the annotation after the selected one, or null at the end. */
+export function nextAnnotationId(state: DetailState): string | null {
+  const index = selectedAnnotationIndex(state);
+  if (index < 0 || !state.group) {
+    return null;
+  }
+  const next = state.group.annotations[index + 1];
+  return next ? next.id : null;
+}
+
+/** Id of the annotation before the selected one, or null at the start. */
+export function prevAnnotationId(state: DetailState): string | null {
+  const index = selectedAnnotationIndex(state);
+  if (index <= 0 || !state.group) {
+    return null;
+  }
+  return state.group.annotations[index - 1].id;
+}
+
+/** 1-based position of the selected annotation + the group total, or null. */
+export function annotationPosition(state: DetailState): { current: number; total: number } | null {
+  const index = selectedAnnotationIndex(state);
+  if (index < 0 || !state.group) {
+    return null;
+  }
+  return { current: index + 1, total: state.group.annotations.length };
+}

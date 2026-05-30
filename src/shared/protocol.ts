@@ -36,7 +36,8 @@ export type DetailToHost =
   | { type: 'setGroupTitle'; title: string }
   | { type: 'editTags' }
   | { type: 'editGitRef' }
-  | { type: 'updateAnnotationRange'; annotationId: string; startLine: number; endLine: number };
+  | { type: 'updateAnnotationRange'; annotationId: string; startLine: number; endLine: number }
+  | { type: 'reorderAnnotations'; annotationIds: string[] };
 
 function isObject(x: unknown): x is Record<string, unknown> {
   return typeof x === 'object' && x !== null;
@@ -84,6 +85,10 @@ export function parseDetailMessage(raw: unknown): DetailToHost | null {
         typeof raw.startLine === 'number' &&
         typeof raw.endLine === 'number'
         ? { type: 'updateAnnotationRange', annotationId: raw.annotationId, startLine: raw.startLine, endLine: raw.endLine }
+        : null;
+    case 'reorderAnnotations':
+      return Array.isArray(raw.annotationIds) && (raw.annotationIds as unknown[]).every((id) => typeof id === 'string')
+        ? { type: 'reorderAnnotations', annotationIds: raw.annotationIds as string[] }
         : null;
     default:
       return null;

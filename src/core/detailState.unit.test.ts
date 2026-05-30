@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { initialDetailState, applyDetailMessage, oneLine, openAnnotation, backToGroup, isStale } from './detailState';
+import { initialDetailState, applyDetailMessage, oneLine, openAnnotation, backToGroup, isStale, moveBefore, selectedAnnotationIndex, nextAnnotationId, prevAnnotationId, annotationPosition } from './detailState';
 import { type AnnotationGroup } from '../shared/model';
 
 function group(): AnnotationGroup {
@@ -80,6 +80,54 @@ describe('staleIds', () => {
     const s = { ...initialDetailState(), staleIds: ['a1'] };
     expect(isStale(s, 'a1')).toBe(true);
     expect(isStale(s, 'a2')).toBe(false);
+  });
+});
+
+function group3(): AnnotationGroup {
+  return {
+    id: 'g1', title: 'G', author: 'A', tags: [], gitRef: null, status: 'open', createdAt: 1, updatedAt: 1,
+    annotations: [
+      { id: 'a1', file: 'x.ts', range: { startLine: 1, endLine: 1 }, content: '', contentHash: 'h' },
+      { id: 'a2', file: 'x.ts', range: { startLine: 2, endLine: 2 }, content: '', contentHash: 'h' },
+      { id: 'a3', file: 'x.ts', range: { startLine: 3, endLine: 3 }, content: '', contentHash: 'h' },
+    ],
+  };
+}
+
+describe('moveBefore', () => {
+  it('moves an item up (before an earlier target)', () => {
+    expect(moveBefore(['a1', 'a2', 'a3'], 'a3', 'a1')).toEqual(['a3', 'a1', 'a2']);
+  });
+  it('moves an item down (before a later target)', () => {
+    expect(moveBefore(['a1', 'a2', 'a3'], 'a1', 'a3')).toEqual(['a2', 'a1', 'a3']);
+  });
+  it('is a no-op when moved === target', () => {
+    expect(moveBefore(['a1', 'a2'], 'a1', 'a1')).toEqual(['a1', 'a2']);
+  });
+  it('appends the moved id when the target is missing', () => {
+    expect(moveBefore(['a1', 'a2'], 'a1', 'zzz')).toEqual(['a2', 'a1']);
+  });
+});
+
+describe('annotation navigation', () => {
+  it('selectedAnnotationIndex finds the current annotation', () => {
+    const state = { ...initialDetailState(), group: group3(), selectedAnnotationId: 'a2' };
+    expect(selectedAnnotationIndex(state)).toBe(1);
+  });
+  it('nextAnnotationId returns the next id, null at the end', () => {
+    const state = { ...initialDetailState(), group: group3(), selectedAnnotationId: 'a2' };
+    expect(nextAnnotationId(state)).toBe('a3');
+    expect(nextAnnotationId({ ...state, selectedAnnotationId: 'a3' })).toBeNull();
+  });
+  it('prevAnnotationId returns the previous id, null at the start', () => {
+    const state = { ...initialDetailState(), group: group3(), selectedAnnotationId: 'a2' };
+    expect(prevAnnotationId(state)).toBe('a1');
+    expect(prevAnnotationId({ ...state, selectedAnnotationId: 'a1' })).toBeNull();
+  });
+  it('annotationPosition is 1-based with the total, or null when unselected', () => {
+    const state = { ...initialDetailState(), group: group3(), selectedAnnotationId: 'a2' };
+    expect(annotationPosition(state)).toEqual({ current: 2, total: 3 });
+    expect(annotationPosition(initialDetailState())).toBeNull();
   });
 });
 
