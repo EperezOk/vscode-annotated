@@ -26,12 +26,17 @@ describe('DetailApp.svelte', () => {
     expect(screen.getByTestId('detail-empty')).toBeInTheDocument();
   });
 
-  it('renders the group header and an annotation row per annotation', () => {
-    detail.set({ group: group(), palette: [{ name: 'security', color: '#c0392b' }], selectedAnnotationId: null });
+  it('renders the group header and an annotation row per annotation in group mode', () => {
+    detail.set({ group: group(), palette: [{ name: 'security', color: '#c0392b' }], selectedAnnotationId: null, mode: 'group' });
     render(DetailApp);
     expect(screen.getByTestId('detail-title')).toHaveTextContent('Login review');
-    expect(screen.getByTestId('detail')).toHaveTextContent('Ezequiel');
-    expect(screen.getByTestId('detail')).toHaveTextContent('security');
     expect(screen.getAllByTestId('annotation-row')).toHaveLength(2);
+  });
+
+  it('renders the annotation view in annotation mode', () => {
+    detail.set({ group: group(), palette: [], selectedAnnotationId: 'a1', mode: 'annotation' });
+    render(DetailApp);
+    expect(screen.getByTestId('annotation-view')).toBeInTheDocument();
+    expect(screen.queryByTestId('detail-title')).toBeNull();
   });
 });

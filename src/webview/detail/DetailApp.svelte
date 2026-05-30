@@ -1,18 +1,31 @@
 <script lang="ts">
-  import { detail, setSelectedAnnotation } from './state';
+  import { detail, openAnnotationView, showGroupView, saveAnnotationContent, copyToClipboard } from './state';
   import { postToHost } from './vscodeApi';
   import { tagColor } from '../../core/sidebarState';
   import AnnotationRow from './AnnotationRow.svelte';
+  import AnnotationView from './AnnotationView.svelte';
 
-  function onselect(id: string): void {
-    setSelectedAnnotation(id);
-    postToHost({ type: 'selectAnnotation', annotationId: id });
+  function openRow(id: string): void {
+    openAnnotationView(id);
+    postToHost({ type: 'selectAnnotation', annotationId: id }); // navigate-to-code
   }
+
+  const current = $derived(
+    $detail.group?.annotations.find((a) => a.id === $detail.selectedAnnotationId) ?? null,
+  );
 </script>
 
 <main data-testid="detail">
   {#if !$detail.group}
     <p class="empty" data-testid="detail-empty">Select a group to see its annotations.</p>
+  {:else if $detail.mode === 'annotation' && current}
+    <AnnotationView
+      annotation={current}
+      onback={showGroupView}
+      onsave={(id, content) => saveAnnotationContent(id, content)}
+      oncopy={(content) => copyToClipboard(content)}
+      oncopyloc={(loc) => copyToClipboard(loc)}
+    />
   {:else}
     <header class="head">
       <div class="title" data-testid="detail-title">{$detail.group.title}</div>
@@ -30,11 +43,7 @@
     </header>
     <div class="rows">
       {#each $detail.group.annotations as annotation (annotation.id)}
-        <AnnotationRow
-          {annotation}
-          selected={$detail.selectedAnnotationId === annotation.id}
-          {onselect}
-        />
+        <AnnotationRow {annotation} selected={false} onselect={openRow} />
       {/each}
     </div>
   {/if}
