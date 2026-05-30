@@ -217,7 +217,7 @@ function deps(overrides: Partial<CreateAnnotationDeps>): CreateAnnotationDeps {
 describe('runCreateAnnotation', () => {
   it('warns and aborts when there is no selection', async () => {
     const showWarning = vi.fn();
-    const saveGroup = vi.fn(async () => {});
+    const saveGroup = vi.fn<(group: AnnotationGroup) => Promise<void>>(async () => {});
     const result = await runCreateAnnotation(deps({ getSelection: () => undefined, showWarning, saveGroup }));
     expect(result).toBeUndefined();
     expect(saveGroup).not.toHaveBeenCalled();
@@ -225,7 +225,7 @@ describe('runCreateAnnotation', () => {
   });
 
   it('creates a new group with the annotation and saves it', async () => {
-    const saveGroup = vi.fn(async () => {});
+    const saveGroup = vi.fn<(group: AnnotationGroup) => Promise<void>>(async () => {});
     let nextId = 0;
     const result = await runCreateAnnotation(
       deps({ saveGroup, newId: () => `id-${++nextId}`, pickTags: async () => ['security'] }),
@@ -248,7 +248,7 @@ describe('runCreateAnnotation', () => {
 
   it('appends to an existing group when one is picked', async () => {
     const existing = createGroup({ id: 'g1', title: 'Existing', author: 'A', tags: [], now: 1 });
-    const saveGroup = vi.fn(async () => {});
+    const saveGroup = vi.fn<(group: AnnotationGroup) => Promise<void>>(async () => {});
     await runCreateAnnotation(
       deps({ listGroups: async () => [existing], pickGroup: async () => ({ kind: 'existing', id: 'g1' }), saveGroup }),
     );
@@ -259,21 +259,21 @@ describe('runCreateAnnotation', () => {
   });
 
   it('aborts without saving when the group pick is cancelled', async () => {
-    const saveGroup = vi.fn(async () => {});
+    const saveGroup = vi.fn<(group: AnnotationGroup) => Promise<void>>(async () => {});
     const result = await runCreateAnnotation(deps({ pickGroup: async () => undefined, saveGroup }));
     expect(result).toBeUndefined();
     expect(saveGroup).not.toHaveBeenCalled();
   });
 
   it('aborts without saving when the new-group title is cancelled', async () => {
-    const saveGroup = vi.fn(async () => {});
+    const saveGroup = vi.fn<(group: AnnotationGroup) => Promise<void>>(async () => {});
     const result = await runCreateAnnotation(deps({ promptGroupTitle: async () => undefined, saveGroup }));
     expect(result).toBeUndefined();
     expect(saveGroup).not.toHaveBeenCalled();
   });
 
   it('aborts without saving when tag selection is cancelled', async () => {
-    const saveGroup = vi.fn(async () => {});
+    const saveGroup = vi.fn<(group: AnnotationGroup) => Promise<void>>(async () => {});
     const result = await runCreateAnnotation(deps({ pickTags: async () => undefined, saveGroup }));
     expect(result).toBeUndefined();
     expect(saveGroup).not.toHaveBeenCalled();
