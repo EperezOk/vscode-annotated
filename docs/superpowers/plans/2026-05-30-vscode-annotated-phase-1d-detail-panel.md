@@ -962,4 +962,12 @@ git commit -m "test: navigate-to-code integration + detail-panel e2e"
 - [ ] Manual sanity (optional): `npm start`, open the Annotated view, click a group card → the detail panel opens in the secondary side bar showing the group; click an annotation row → the editor jumps to the file and highlights the lines.
 
 Next: **1e** — annotation view (replaces the group view when an annotation is opened) with the CodeMirror Markdown editor (write/preview, copy controls, Prev/Next is Phase 2). This adds a `viewMode` to the detail panel and a second detail message (`setAnnotation`).
+
+## Phase 1e carry-over (from Phase 1d final review)
+
+- **DetailState gains a mode discriminant:** add `mode: 'group' | 'annotation'` (+ a `selectedAnnotation`/annotation field) so the detail panel can show either the group view or a single annotation view. Add a `HostToDetail` variant `{ type: 'setAnnotation'; annotation: Annotation | null }`.
+- **Symmetric message validation:** the detail `main.ts` currently inline-checks `type === 'setGroup'`. When 1e adds `setAnnotation`, route host→webview messages through a shared validator (e.g. a `parseHostDetailMessage`) instead of growing inline checks.
+- **Editing path:** writing Markdown in the CodeMirror editor → a `DetailToHost` `{ type: 'updateAnnotation'; annotationId; content }` → host needs a `GroupStore.updateAnnotation(groupId, annotationId, content)` (load → replace annotation content + recompute nothing for content; bump `updatedAt`) → save → the `FileSystemWatcher` already refreshes the sidebar.
+- **Editor:** CodeMirror 6 + `@codemirror/lang-markdown` with the niceties (paste-URL-as-link, bold/italic) — selection transforms kept pure/unit-testable per the spec. Copy-markdown / copy-path controls. Prev/Next navigation is **Phase 2**, not 1e.
+- **Minor (optional hardening):** call `clearHighlight()` on `deactivate` (the module-level decoration/lastEditor otherwise persist until the tab closes).
 ```
