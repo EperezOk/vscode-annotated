@@ -5,7 +5,7 @@
   "version": "0.0.0",
   "publisher": "openzeppelin",
   "license": "MIT",
-  "engines": { "vscode": "^1.100.0" },
+  "engines": { "vscode": "^1.100.0", "node": ">=20.19" },
   "categories": ["Other"],
   "activationEvents": [],
   "browser": "./dist/web/extension.js",
