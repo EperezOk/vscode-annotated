@@ -71,9 +71,11 @@ Detail panel (reused)           Storage layer                           (one fil
   **Secondary Side Bar**, which VSCode keeps on the opposite side of the primary side
   bar. Larger, opened/closed more frequently. Keeping the detail panel in the
   secondary side bar leaves the **editor area fully free** for the code you navigate
-  to. *Implementation note:* manifest `viewsContainers` only target the activity bar
-  or panel, so defaulting the detail view into the secondary side bar requires a small
-  programmatic reveal on first run; users can move it afterward.
+  to. *Implementation note:* VSCode supports a `contributes.viewsContainers.secondarySidebar`
+  manifest location (stable since VSCode **1.106**), so the detail view's container is
+  declared there directly — no programmatic hack. This requires `engines.vscode ^1.106.0`
+  (on older builds the key is ignored). Selecting a group focuses the view via the
+  auto-generated `annotated.detail.focus` command, which opens the secondary side bar.
 
 ### UI stack
 
