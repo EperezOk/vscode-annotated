@@ -88,4 +88,16 @@ describe('parseDetailMessage', () => {
     expect(parseDetailMessage({ type: 'reorderAnnotations', annotationIds: ['a1', 2] })).toBeNull();
     expect(parseDetailMessage({ type: 'reorderAnnotations', annotationIds: 'a1' })).toBeNull();
   });
+  it('accepts updateGroupStatus with a valid status', () => {
+    expect(parseDetailMessage({ type: 'updateGroupStatus', status: 'resolved' })).toEqual({
+      type: 'updateGroupStatus', status: 'resolved',
+    });
+    expect(parseDetailMessage({ type: 'updateGroupStatus', status: 'open' })).toEqual({
+      type: 'updateGroupStatus', status: 'open',
+    });
+  });
+  it('rejects updateGroupStatus with an invalid status', () => {
+    expect(parseDetailMessage({ type: 'updateGroupStatus', status: 'done' })).toBeNull();
+    expect(parseDetailMessage({ type: 'updateGroupStatus', status: 42 })).toBeNull();
+  });
 });

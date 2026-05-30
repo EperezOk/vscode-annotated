@@ -174,4 +174,13 @@ describe('GroupStore', () => {
     const r = await store.getGroup('g1');
     expect(r?.annotations.map((a) => a.id)).toEqual(['a1', 'a2']);
   });
+
+  it('updateGroup can patch status and bumps updatedAt', async () => {
+    await store.saveGroup(group('g1'));
+    const ok = await store.updateGroup('g1', { status: 'resolved' }, 909);
+    expect(ok).toBe(true);
+    const r = await store.getGroup('g1');
+    expect(r?.status).toBe('resolved');
+    expect(r?.updatedAt).toBe(909);
+  });
 });

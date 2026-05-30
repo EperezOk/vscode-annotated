@@ -125,7 +125,7 @@ export class GroupStore {
    */
   async updateGroup(
     groupId: string,
-    patch: Partial<Pick<AnnotationGroup, 'title' | 'tags' | 'gitRef'>>,
+    patch: Partial<Pick<AnnotationGroup, 'title' | 'tags' | 'gitRef' | 'status'>>,
     now: number,
   ): Promise<boolean> {
     const group = await this.getGroup(groupId);
@@ -137,6 +137,7 @@ export class GroupStore {
       ...(patch.title !== undefined ? { title: patch.title } : {}),
       ...(patch.tags !== undefined ? { tags: [...patch.tags] } : {}),
       ...(patch.gitRef !== undefined ? { gitRef: patch.gitRef } : {}),
+      ...(patch.status !== undefined ? { status: patch.status } : {}),
       updatedAt: now,
     };
     await this.saveGroup(next);

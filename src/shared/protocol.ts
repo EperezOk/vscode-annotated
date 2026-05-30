@@ -1,5 +1,5 @@
 // Typed message contract between the extension host and webviews.
-import { type AnnotationGroup } from './model';
+import { type AnnotationGroup, type GroupStatus } from './model';
 
 /** A tag's display info sent to the webview (structurally matches core `Tag`). */
 export interface TagColor {
@@ -37,7 +37,8 @@ export type DetailToHost =
   | { type: 'editTags' }
   | { type: 'editGitRef' }
   | { type: 'updateAnnotationRange'; annotationId: string; startLine: number; endLine: number }
-  | { type: 'reorderAnnotations'; annotationIds: string[] };
+  | { type: 'reorderAnnotations'; annotationIds: string[] }
+  | { type: 'updateGroupStatus'; status: GroupStatus };
 
 function isObject(x: unknown): x is Record<string, unknown> {
   return typeof x === 'object' && x !== null;
@@ -89,6 +90,10 @@ export function parseDetailMessage(raw: unknown): DetailToHost | null {
     case 'reorderAnnotations':
       return Array.isArray(raw.annotationIds) && (raw.annotationIds as unknown[]).every((id) => typeof id === 'string')
         ? { type: 'reorderAnnotations', annotationIds: raw.annotationIds as string[] }
+        : null;
+    case 'updateGroupStatus':
+      return raw.status === 'open' || raw.status === 'resolved'
+        ? { type: 'updateGroupStatus', status: raw.status }
         : null;
     default:
       return null;
