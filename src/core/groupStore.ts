@@ -71,4 +71,28 @@ export class GroupStore {
     await this.saveGroup({ ...group, annotations, updatedAt: now });
     return true;
   }
+
+  /**
+   * Apply a partial patch to a group's metadata (title/tags/gitRef), bump
+   * updatedAt, and persist. Returns false if the group does not exist.
+   */
+  async updateGroup(
+    groupId: string,
+    patch: Partial<Pick<AnnotationGroup, 'title' | 'tags' | 'gitRef'>>,
+    now: number,
+  ): Promise<boolean> {
+    const group = await this.getGroup(groupId);
+    if (!group) {
+      return false;
+    }
+    const next: AnnotationGroup = {
+      ...group,
+      ...(patch.title !== undefined ? { title: patch.title } : {}),
+      ...(patch.tags !== undefined ? { tags: [...patch.tags] } : {}),
+      ...(patch.gitRef !== undefined ? { gitRef: patch.gitRef } : {}),
+      updatedAt: now,
+    };
+    await this.saveGroup(next);
+    return true;
+  }
 }

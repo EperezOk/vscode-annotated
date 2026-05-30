@@ -95,4 +95,34 @@ describe('GroupStore', () => {
     await store.saveGroup(group('g1'));
     expect(await store.updateAnnotation('g1', 'missing', 'x', 1)).toBe(false);
   });
+
+  it('updateGroup applies a partial patch, bumps updatedAt, and persists', async () => {
+    await store.saveGroup(group('g1', 'Old'));
+    const ok = await store.updateGroup('g1', { title: 'New', tags: ['security'], gitRef: 'main' }, 555);
+    expect(ok).toBe(true);
+    const g = await store.getGroup('g1');
+    expect(g?.title).toBe('New');
+    expect(g?.tags).toEqual(['security']);
+    expect(g?.gitRef).toBe('main');
+    expect(g?.updatedAt).toBe(555);
+  });
+
+  it('updateGroup leaves unspecified fields unchanged', async () => {
+    await store.saveGroup({ ...group('g1', 'Keep'), tags: ['a'], gitRef: 'dev' });
+    await store.updateGroup('g1', { title: 'Renamed' }, 1);
+    const g = await store.getGroup('g1');
+    expect(g?.title).toBe('Renamed');
+    expect(g?.tags).toEqual(['a']);
+    expect(g?.gitRef).toBe('dev');
+  });
+
+  it('updateGroup can set gitRef to null', async () => {
+    await store.saveGroup({ ...group('g1'), gitRef: 'x' });
+    await store.updateGroup('g1', { gitRef: null }, 1);
+    expect((await store.getGroup('g1'))?.gitRef).toBeNull();
+  });
+
+  it('updateGroup returns false for a missing group', async () => {
+    expect(await store.updateGroup('nope', { title: 'x' }, 1)).toBe(false);
+  });
 });
