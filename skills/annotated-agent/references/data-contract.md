@@ -102,7 +102,9 @@ Lowercase → replace each run of non-`[a-z0-9]` with `-` → strip leading/trai
 fallback `anon` if empty:
 
 ```bash
-printf '%s' "$NAME" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//' | sed 's/^$/anon/'
+s=$(printf '%s' "$NAME" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//')
+[ -n "$s" ] || s=anon
+printf '%s\n' "$s"
 ```
 
 Examples: `Claude` → `claude`; `Ana Díaz!` → `ana-d-az`; `` (empty) → `anon`.

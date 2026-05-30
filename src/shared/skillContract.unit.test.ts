@@ -22,6 +22,16 @@ const RECIPE = `awk -v s="$START" -v e="$END" 'NR>=s && NR<=e { printf "%s%s", s
   | { command -v sha256sum >/dev/null 2>&1 && sha256sum || shasum -a 256; } \\
   | cut -d' ' -f1`;
 
+// Canonical node-free author-slug recipe. The doc MUST embed this verbatim, and it MUST match
+// slugifyAuthor for every name. $NAME is an env var.
+const SLUG_RECIPE = `s=$(printf '%s' "$NAME" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//')
+[ -n "$s" ] || s=anon
+printf '%s\\n' "$s"`;
+
+function slugViaRecipe(name: string): string {
+  return execSync(SLUG_RECIPE, { env: { ...process.env, NAME: name } }).toString().trim();
+}
+
 function recipeHash(text: string, start: number, end: number): string {
   const dir = mkdtempSync(join(tmpdir(), 'anno-contract-'));
   const file = join(dir, 'f.txt');
@@ -102,5 +112,17 @@ describe('annotated-agent contract: slug parity', () => {
     expect(slugifyAuthor('Ana Díaz!')).toBe('ana-d-az');
     expect(slugifyAuthor('')).toBe('anon');
     expect(slugifyAuthor('@@@')).toBe('anon');
+  });
+});
+
+describe('annotated-agent contract: slug recipe parity + doc embed', () => {
+  for (const name of ['Claude', 'Ana Díaz!', 'Bob Smith', '', '@@@']) {
+    it(`shell slug recipe matches slugifyAuthor — ${JSON.stringify(name)}`, () => {
+      expect(slugViaRecipe(name)).toBe(slugifyAuthor(name));
+    });
+  }
+  it('data-contract.md embeds the exact SLUG_RECIPE', () => {
+    const doc = readFileSync(CONTRACT_DOC, 'utf8');
+    expect(doc.includes(SLUG_RECIPE)).toBe(true);
   });
 });
