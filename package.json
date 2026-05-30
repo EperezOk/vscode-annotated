@@ -21,8 +21,38 @@
       ]
     },
     "commands": [
-      { "command": "annotated.ping", "title": "Annotated: Ping" }
-    ]
+      { "command": "annotated.ping", "title": "Annotated: Ping" },
+      { "command": "annotated.createAnnotation", "title": "Annotated: Create Annotation" }
+    ],
+    "keybindings": [
+      {
+        "command": "annotated.createAnnotation",
+        "key": "ctrl+alt+a",
+        "mac": "cmd+alt+a",
+        "when": "editorTextFocus && editorHasSelection"
+      }
+    ],
+    "configuration": {
+      "title": "Annotated",
+      "properties": {
+        "annotated.tags": {
+          "type": "array",
+          "default": [],
+          "description": "Tag palette: each tag has a name and a display color.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "color": { "type": "string" }
+            }
+          }
+        },
+        "annotated.authorName": {
+          "type": "string",
+          "description": "Display name used as the author of annotation groups you create."
+        }
+      }
+    }
   },
   "scripts": {
     "compile": "node esbuild.mjs",
