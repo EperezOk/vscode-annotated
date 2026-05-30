@@ -2,6 +2,7 @@
   import { type AnnotationGroup } from '../../shared/model';
   import { type TagColor } from '../../shared/protocol';
   import { tagColor } from '../../core/sidebarState';
+  import { moveBefore } from '../../core/detailState';
   import AnnotationRow from './AnnotationRow.svelte';
 
   let {
@@ -12,6 +13,7 @@
     onedittags,
     oneditgitref,
     onselectrow,
+    onreorder,
   }: {
     group: AnnotationGroup;
     palette: TagColor[];
@@ -20,10 +22,22 @@
     onedittags?: () => void;
     oneditgitref?: () => void;
     onselectrow?: (id: string) => void;
+    onreorder?: (annotationIds: string[]) => void;
   } = $props();
 
   let editingTitle = $state(false);
   let titleDraft = $state('');
+  let draggedId = $state<string | null>(null);
+
+  function dropOn(targetId: string): void {
+    if (draggedId === null || draggedId === targetId) {
+      draggedId = null;
+      return;
+    }
+    const next = moveBefore(group.annotations.map((a) => a.id), draggedId, targetId);
+    draggedId = null;
+    onreorder?.(next);
+  }
 
   function startTitleEdit(): void {
     titleDraft = group.title;
@@ -78,7 +92,25 @@
 
   <div class="rows">
     {#each group.annotations as annotation (annotation.id)}
-      <AnnotationRow {annotation} selected={false} stale={staleIds.includes(annotation.id)} onselect={(id) => onselectrow?.(id)} />
+      <div
+        class="row-wrap"
+        class:dragging={draggedId === annotation.id}
+        data-testid="annotation-drag"
+        draggable="true"
+        role="listitem"
+        ondragstart={() => (draggedId = annotation.id)}
+        ondragover={(e: DragEvent) => e.preventDefault()}
+        ondrop={(e: DragEvent) => { e.preventDefault(); dropOn(annotation.id); }}
+        ondragend={() => (draggedId = null)}
+      >
+        <span class="grip" aria-hidden="true">⠿</span>
+        <AnnotationRow
+          {annotation}
+          selected={false}
+          stale={staleIds.includes(annotation.id)}
+          onselect={(id) => onselectrow?.(id)}
+        />
+      </div>
     {/each}
   </div>
 </section>
@@ -97,4 +129,8 @@
   .gitref-row code { background: var(--vscode-textCodeBlock-background, #333); padding: 1px 6px; border-radius: 3px; }
   .none { color: var(--vscode-descriptionForeground, #9a9a9a); }
   .link { background: none; border: none; color: var(--vscode-textLink-foreground, #3794ff); cursor: pointer; font-size: 11px; padding: 0; }
+  .row-wrap { display: flex; align-items: center; gap: 4px; cursor: grab; }
+  .row-wrap.dragging { opacity: 0.5; }
+  .row-wrap > :global(button) { flex: 1; }
+  .grip { color: var(--vscode-descriptionForeground, #888); font-size: 12px; user-select: none; }
 </style>

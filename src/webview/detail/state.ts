@@ -49,3 +49,8 @@ export function requestEditGitRef(): void {
 export function saveAnnotationRange(annotationId: string, startLine: number, endLine: number): void {
   postToHost({ type: 'updateAnnotationRange', annotationId, startLine, endLine });
 }
+
+/** Persist a new annotation order (host validates it is a permutation). */
+export function reorderAnnotations(annotationIds: string[]): void {
+  postToHost({ type: 'reorderAnnotations', annotationIds });
+}
