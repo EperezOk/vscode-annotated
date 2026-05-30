@@ -1,10 +1,12 @@
 import { render, screen } from '@testing-library/svelte';
 import userEvent from '@testing-library/user-event';
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import App from './App.svelte';
 import { sidebar } from './state';
 import { initialSidebarState } from '../../core/sidebarState';
 import { type AnnotationGroup } from '../../shared/model';
+import { postToHost } from './vscodeApi';
+vi.mock('./vscodeApi', () => ({ postToHost: vi.fn() }));
 
 function group(
   id: string,
@@ -20,6 +22,7 @@ function group(
 describe('App.svelte', () => {
   beforeEach(() => {
     sidebar.set(initialSidebarState());
+    vi.clearAllMocks();
   });
 
   it('shows an empty-state message when there are no groups', () => {
@@ -70,5 +73,22 @@ describe('App.svelte', () => {
     render(App);
     expect(screen.getByTestId('no-matches')).toBeInTheDocument();
     expect(screen.queryByTestId('group-card')).toBeNull();
+  });
+  it('enters bulk mode: shows the action bar, checkboxes, and a live count', async () => {
+    sidebar.set({ ...initialSidebarState(), groups: [group('g1', 'One'), group('g2', 'Two')], palette: [] });
+    render(App);
+    expect(screen.queryByTestId('bulk-action-bar')).toBeNull();
+    await userEvent.click(screen.getByTestId('bulk-toggle'));
+    expect(screen.getByTestId('bulk-action-bar')).toBeInTheDocument();
+    expect(screen.getAllByTestId('bulk-checkbox')).toHaveLength(2);
+    expect(screen.getByTestId('bulk-count')).toHaveTextContent('0 selected');
+    await userEvent.click(screen.getAllByTestId('group-card')[0]);
+    expect(screen.getByTestId('bulk-count')).toHaveTextContent('1 selected');
+  });
+  it('dispatches a bulk resolve/restore for the selected ids', async () => {
+    sidebar.set({ ...initialSidebarState(), groups: [group('g1', 'One'), group('g2', 'Two')], palette: [], bulkMode: true, selectedGroupIds: ['g1'] });
+    render(App);
+    await userEvent.click(screen.getByTestId('bulk-resolve-btn'));
+    expect(postToHost).toHaveBeenCalledWith({ type: 'bulkResolveRestore', groupIds: ['g1'] });
   });
 });
