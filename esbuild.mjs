@@ -41,7 +41,22 @@ const webviewConfig = {
   ],
 };
 
-const configs = [extensionConfig, webviewConfig];
+/** @type {import('esbuild').BuildOptions} */
+const testSuiteConfig = {
+  entryPoints: ['src/web/test/suite/index.ts'],
+  bundle: true,
+  format: 'cjs',
+  platform: 'browser',
+  target: 'es2022',
+  outfile: 'dist/web/test/suite/index.js',
+  external: ['vscode'],
+  sourcemap: !production,
+  minify: false,
+  define: { global: 'globalThis', 'process.env.NODE_ENV': '"test"' },
+  logLevel: 'info',
+};
+
+const configs = [extensionConfig, webviewConfig, testSuiteConfig];
 
 async function run() {
   const contexts = await Promise.all(configs.map((c) => esbuild.context(c)));
