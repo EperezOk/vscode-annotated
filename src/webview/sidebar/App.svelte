@@ -1,23 +1,40 @@
 <script lang="ts">
-  let { name = '' }: { name?: string } = $props();
+  import { sidebar, setSelected } from './state';
+  import { postToHost } from './vscodeApi';
+  import GroupCard from './GroupCard.svelte';
+
+  function onselect(id: string): void {
+    setSelected(id);
+    postToHost({ type: 'selectGroup', groupId: id });
+  }
 </script>
 
-<main data-testid="hello">
-  {#if name}
-    <h1>Hello, {name}</h1>
+<main data-testid="sidebar">
+  {#if $sidebar.groups.length === 0}
+    <p class="empty" data-testid="empty">
+      No annotations yet. Select code and run "Annotated: Create Annotation".
+    </p>
   {:else}
-    <h1>Annotated is alive</h1>
+    {#each $sidebar.groups as group (group.id)}
+      <GroupCard
+        {group}
+        palette={$sidebar.palette}
+        selected={$sidebar.selectedId === group.id}
+        {onselect}
+      />
+    {/each}
   {/if}
 </main>
 
 <style>
   main {
-    padding: 0.75rem;
+    padding: 8px;
     font-family: var(--vscode-font-family, sans-serif);
     color: var(--vscode-foreground, #ccc);
   }
-  h1 {
-    font-size: 1rem;
-    font-weight: 600;
+  .empty {
+    color: var(--vscode-descriptionForeground, #9a9a9a);
+    font-size: 12px;
+    padding: 8px 2px;
   }
 </style>
