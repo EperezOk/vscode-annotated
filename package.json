@@ -3,7 +3,7 @@
   "displayName": "Annotated",
   "description": "Annotate a codebase with grouped, shareable Markdown annotations.",
   "version": "0.0.0",
-  "publisher": "eperez",
+  "publisher": "eperezok",
   "license": "MIT",
   "engines": { "vscode": "^1.106.0", "node": ">=20.19" },
   "categories": ["Other"],

@@ -797,9 +797,9 @@ git commit -m "feat: Create Annotation command, keybinding, and configuration"
 
 ```ts
   test('registers the createAnnotation command', async () => {
-    const ext = vscode.extensions.getExtension('eperez.vscode-annotated');
+    const ext = vscode.extensions.getExtension('eperezok.vscode-annotated');
     if (!ext) {
-      throw new Error('extension not found by id eperez.vscode-annotated');
+      throw new Error('extension not found by id eperezok.vscode-annotated');
     }
     await ext.activate();
     const commands = await vscode.commands.getCommands(true);
