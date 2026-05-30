@@ -13,3 +13,4 @@ svelte.config.js
 tsconfig.json
 docs/**
 .superpowers/**
+test-workspace/**
