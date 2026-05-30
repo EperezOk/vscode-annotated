@@ -11,6 +11,12 @@ Project-specific guidance for AI agents working in this repo.
   branches, fast-forward / merge into `main` at sensible checkpoints. There is **no remote**
   for now, so never push or open PRs. Only surface a branch/merge decision if there's a genuine
   blocker.
+- **Keep going without asking:** do all sub-plans of a phase on a **single branch** (e.g.
+  `phase-2`), and proceed through them — and across phases — **autonomously**. Do NOT pause to
+  ask permission at sub-plan or phase boundaries; just continue (write the next plan, execute it
+  subagent-driven, review, repeat). Report progress at milestones and merge to `main` when a
+  phase is complete, but don't wait for a go-ahead. Only stop for a genuine blocker, an ambiguity
+  that truly prevents progress, or when the user interjects.
 
 ## Build & test
 
