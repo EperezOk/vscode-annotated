@@ -20,7 +20,7 @@ describe('App.svelte', () => {
   });
 
   it('renders a card per group from the store', () => {
-    sidebar.set({ groups: [group('g1', 'First'), group('g2', 'Second')], palette: [], selectedId: null });
+    sidebar.set({ ...initialSidebarState(), groups: [group('g1', 'First'), group('g2', 'Second')], palette: [] });
     render(App);
     const cards = screen.getAllByTestId('group-card');
     expect(cards).toHaveLength(2);
