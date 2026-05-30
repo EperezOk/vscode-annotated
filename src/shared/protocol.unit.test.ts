@@ -71,4 +71,12 @@ describe('parseDetailMessage', () => {
     expect(parseDetailMessage({ type: 'editTags' })).toEqual({ type: 'editTags' });
     expect(parseDetailMessage({ type: 'editGitRef' })).toEqual({ type: 'editGitRef' });
   });
+  it('accepts updateAnnotationRange with id + integer lines', () => {
+    expect(parseDetailMessage({ type: 'updateAnnotationRange', annotationId: 'a1', startLine: 2, endLine: 4 })).toEqual({
+      type: 'updateAnnotationRange', annotationId: 'a1', startLine: 2, endLine: 4,
+    });
+  });
+  it('rejects updateAnnotationRange with non-number lines', () => {
+    expect(parseDetailMessage({ type: 'updateAnnotationRange', annotationId: 'a1', startLine: '2', endLine: 4 })).toBeNull();
+  });
 });

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { initialDetailState, applyDetailMessage, oneLine, openAnnotation, backToGroup } from './detailState';
+import { initialDetailState, applyDetailMessage, oneLine, openAnnotation, backToGroup, isStale } from './detailState';
 import { type AnnotationGroup } from '../shared/model';
 
 function group(): AnnotationGroup {
@@ -12,7 +12,7 @@ function group(): AnnotationGroup {
 
 describe('initialDetailState', () => {
   it('has no group and no selection', () => {
-    expect(initialDetailState()).toEqual({ group: null, palette: [], selectedAnnotationId: null, mode: 'group' });
+    expect(initialDetailState()).toEqual({ group: null, palette: [], selectedAnnotationId: null, mode: 'group', staleIds: [] });
   });
 });
 
@@ -65,6 +65,21 @@ describe('mode transitions', () => {
     const next = applyDetailMessage(start, { type: 'setGroup', group: null, palette: [] });
     expect(next.mode).toBe('group');
     expect(next.selectedAnnotationId).toBeNull();
+  });
+});
+
+describe('staleIds', () => {
+  it('initial staleIds is empty', () => {
+    expect(initialDetailState().staleIds).toEqual([]);
+  });
+  it('setGroup stores staleIds (defaulting to [])', () => {
+    const next = applyDetailMessage(initialDetailState(), { type: 'setGroup', group: null, palette: [], staleIds: ['a1'] });
+    expect(next.staleIds).toEqual(['a1']);
+  });
+  it('isStale checks membership', () => {
+    const s = { ...initialDetailState(), staleIds: ['a1'] };
+    expect(isStale(s, 'a1')).toBe(true);
+    expect(isStale(s, 'a2')).toBe(false);
   });
 });
 

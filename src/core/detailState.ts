@@ -6,10 +6,11 @@ export interface DetailState {
   palette: TagColor[];
   selectedAnnotationId: string | null;
   mode: 'group' | 'annotation';
+  staleIds: string[];
 }
 
 export function initialDetailState(): DetailState {
-  return { group: null, palette: [], selectedAnnotationId: null, mode: 'group' };
+  return { group: null, palette: [], selectedAnnotationId: null, mode: 'group', staleIds: [] };
 }
 
 /** Apply a host→detail message, returning a new state. */
@@ -25,11 +26,17 @@ export function applyDetailMessage(state: DetailState, message: HostToDetail): D
         palette: message.palette,
         selectedAnnotationId: keep ? state.selectedAnnotationId : null,
         mode: keep ? 'annotation' : 'group',
+        staleIds: message.staleIds ?? [],
       };
     }
     default:
       return state;
   }
+}
+
+/** Whether the annotation `id` is flagged stale in this state. */
+export function isStale(state: DetailState, id: string): boolean {
+  return state.staleIds.includes(id);
 }
 
 /** Open the annotation view for `id`. */
