@@ -7,12 +7,26 @@ export class DetailPanelProvider implements vscode.WebviewViewProvider {
   private view?: vscode.WebviewView;
   private group: AnnotationGroup | null = null;
   private palette: TagColor[] = [];
+  private staleIds: string[] = [];
 
   /** Set by the extension to navigate to a selected annotation. */
   public onSelectAnnotation?: (annotation: Annotation) => void;
 
   /** Set by the extension to persist an annotation's edited content. */
   public onUpdateAnnotation?: (groupId: string, annotationId: string, content: string) => void;
+
+  /** Set by the extension: rename the active group. */
+  public onSetGroupTitle?: (groupId: string, title: string) => void;
+  /** Set by the extension: edit the active group's tags (native picker). */
+  public onEditTags?: (groupId: string) => void;
+  /** Set by the extension: edit the active group's Git ref (native picker). */
+  public onEditGitRef?: (groupId: string) => void;
+
+  /** Set by the extension: persist an annotation's edited line range. */
+  public onUpdateAnnotationRange?: (groupId: string, annotationId: string, startLine: number, endLine: number) => void;
+
+  /** Set by the extension: persist a reordered annotation list. */
+  public onReorderAnnotations?: (groupId: string, annotationIds: string[]) => void;
 
   constructor(private readonly extensionUri: vscode.Uri) {}
 
@@ -43,16 +57,37 @@ export class DetailPanelProvider implements vscode.WebviewViewProvider {
         if (this.group) {
           this.onUpdateAnnotation?.(this.group.id, message.annotationId, message.content);
         }
+      } else if (message.type === 'updateAnnotationRange') {
+        if (this.group) {
+          this.onUpdateAnnotationRange?.(this.group.id, message.annotationId, message.startLine, message.endLine);
+        }
       } else if (message.type === 'copyText') {
         void vscode.env.clipboard.writeText(message.text);
+      } else if (message.type === 'setGroupTitle') {
+        if (this.group) {
+          this.onSetGroupTitle?.(this.group.id, message.title);
+        }
+      } else if (message.type === 'editTags') {
+        if (this.group) {
+          this.onEditTags?.(this.group.id);
+        }
+      } else if (message.type === 'editGitRef') {
+        if (this.group) {
+          this.onEditGitRef?.(this.group.id);
+        }
+      } else if (message.type === 'reorderAnnotations') {
+        if (this.group) {
+          this.onReorderAnnotations?.(this.group.id, message.annotationIds);
+        }
       }
     });
   }
 
   /** Set the group shown by the panel and push it to the webview (if resolved). */
-  showGroup(group: AnnotationGroup | null, palette: TagColor[]): void {
+  showGroup(group: AnnotationGroup | null, palette: TagColor[], staleIds: string[] = []): void {
     this.group = group;
     this.palette = palette;
+    this.staleIds = staleIds;
     this.post();
   }
 
@@ -60,7 +95,7 @@ export class DetailPanelProvider implements vscode.WebviewViewProvider {
     if (!this.view) {
       return;
     }
-    const message: HostToDetail = { type: 'setGroup', group: this.group, palette: this.palette };
+    const message: HostToDetail = { type: 'setGroup', group: this.group, palette: this.palette, staleIds: this.staleIds };
     void this.view.webview.postMessage(message);
   }
 

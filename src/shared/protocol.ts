@@ -24,6 +24,7 @@ export type HostToDetail = {
   type: 'setGroup';
   group: AnnotationGroup | null;
   palette: TagColor[];
+  staleIds?: string[];
 };
 
 /** Detail-panel → host messages. */
@@ -31,7 +32,12 @@ export type DetailToHost =
   | { type: 'ready' }
   | { type: 'selectAnnotation'; annotationId: string }
   | { type: 'updateAnnotation'; annotationId: string; content: string }
-  | { type: 'copyText'; text: string };
+  | { type: 'copyText'; text: string }
+  | { type: 'setGroupTitle'; title: string }
+  | { type: 'editTags' }
+  | { type: 'editGitRef' }
+  | { type: 'updateAnnotationRange'; annotationId: string; startLine: number; endLine: number }
+  | { type: 'reorderAnnotations'; annotationIds: string[] };
 
 function isObject(x: unknown): x is Record<string, unknown> {
   return typeof x === 'object' && x !== null;
@@ -68,6 +74,22 @@ export function parseDetailMessage(raw: unknown): DetailToHost | null {
         : null;
     case 'copyText':
       return typeof raw.text === 'string' ? { type: 'copyText', text: raw.text } : null;
+    case 'setGroupTitle':
+      return typeof raw.title === 'string' ? { type: 'setGroupTitle', title: raw.title } : null;
+    case 'editTags':
+      return { type: 'editTags' };
+    case 'editGitRef':
+      return { type: 'editGitRef' };
+    case 'updateAnnotationRange':
+      return typeof raw.annotationId === 'string' &&
+        typeof raw.startLine === 'number' &&
+        typeof raw.endLine === 'number'
+        ? { type: 'updateAnnotationRange', annotationId: raw.annotationId, startLine: raw.startLine, endLine: raw.endLine }
+        : null;
+    case 'reorderAnnotations':
+      return Array.isArray(raw.annotationIds) && (raw.annotationIds as unknown[]).every((id) => typeof id === 'string')
+        ? { type: 'reorderAnnotations', annotationIds: raw.annotationIds as string[] }
+        : null;
     default:
       return null;
   }

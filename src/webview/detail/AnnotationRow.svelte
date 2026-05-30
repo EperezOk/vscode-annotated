@@ -5,10 +5,12 @@
   let {
     annotation,
     selected = false,
+    stale = false,
     onselect,
   }: {
     annotation: Annotation;
     selected?: boolean;
+    stale?: boolean;
     onselect?: (id: string) => void;
   } = $props();
 
@@ -23,6 +25,7 @@
   data-testid="annotation-row"
   onclick={() => onselect?.(annotation.id)}
 >
+  {#if stale}<span class="stale-dot" data-testid="stale-dot" title="Lines changed since this was written">●</span>{/if}
   <span class="summary">{summary}</span>
   <span class="loc">{location}</span>
 </button>
@@ -46,4 +49,5 @@
   .row.selected { background: var(--vscode-list-activeSelectionBackground, #04395e); }
   .summary { flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 12px; }
   .loc { color: var(--vscode-descriptionForeground, #8a8a8a); font-size: 10.5px; font-family: monospace; white-space: nowrap; }
+  .stale-dot { color: var(--vscode-editorWarning-foreground, #f39c12); font-size: 9px; }
 </style>

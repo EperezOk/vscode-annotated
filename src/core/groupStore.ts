@@ -1,5 +1,5 @@
 import { type FileSystem } from './fileSystem';
-import { type AnnotationGroup, parseGroup, serializeGroup } from '../shared/model';
+import { type AnnotationGroup, type LineRange, parseGroup, serializeGroup } from '../shared/model';
 
 const dec = new TextDecoder();
 const enc = new TextEncoder();
@@ -69,6 +69,77 @@ export class GroupStore {
     }
     const annotations = group.annotations.map((a, i) => (i === index ? { ...a, content } : a));
     await this.saveGroup({ ...group, annotations, updatedAt: now });
+    return true;
+  }
+
+  /**
+   * Replace one annotation's line range + content hash (file is fixed), bump
+   * updatedAt, persist. Returns false if the group/annotation does not exist.
+   */
+  async updateAnnotationRange(
+    groupId: string,
+    annotationId: string,
+    range: LineRange,
+    contentHash: string,
+    now: number,
+  ): Promise<boolean> {
+    const group = await this.getGroup(groupId);
+    if (!group) {
+      return false;
+    }
+    const index = group.annotations.findIndex((a) => a.id === annotationId);
+    if (index < 0) {
+      return false;
+    }
+    const annotations = group.annotations.map((a, i) => (i === index ? { ...a, range, contentHash } : a));
+    await this.saveGroup({ ...group, annotations, updatedAt: now });
+    return true;
+  }
+
+  /**
+   * Rewrite the annotation order to match `orderedIds`. Persists only when
+   * `orderedIds` is a permutation of the group's existing annotation ids
+   * (same length, every id present exactly once). Returns false otherwise.
+   */
+  async reorderAnnotations(groupId: string, orderedIds: string[], now: number): Promise<boolean> {
+    const group = await this.getGroup(groupId);
+    if (!group) {
+      return false;
+    }
+    const byId = new Map(group.annotations.map((a) => [a.id, a]));
+    const unique = new Set(orderedIds);
+    if (orderedIds.length !== group.annotations.length || unique.size !== orderedIds.length) {
+      return false;
+    }
+    if (!orderedIds.every((id) => byId.has(id))) {
+      return false;
+    }
+    const annotations = orderedIds.map((id) => byId.get(id)!);
+    await this.saveGroup({ ...group, annotations, updatedAt: now });
+    return true;
+  }
+
+  /**
+   * Apply a partial patch to a group's metadata (title/tags/gitRef), bump
+   * updatedAt, and persist. Returns false if the group does not exist.
+   */
+  async updateGroup(
+    groupId: string,
+    patch: Partial<Pick<AnnotationGroup, 'title' | 'tags' | 'gitRef'>>,
+    now: number,
+  ): Promise<boolean> {
+    const group = await this.getGroup(groupId);
+    if (!group) {
+      return false;
+    }
+    const next: AnnotationGroup = {
+      ...group,
+      ...(patch.title !== undefined ? { title: patch.title } : {}),
+      ...(patch.tags !== undefined ? { tags: [...patch.tags] } : {}),
+      ...(patch.gitRef !== undefined ? { gitRef: patch.gitRef } : {}),
+      updatedAt: now,
+    };
+    await this.saveGroup(next);
     return true;
   }
 }

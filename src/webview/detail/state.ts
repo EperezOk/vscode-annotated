@@ -29,3 +29,28 @@ export function saveAnnotationContent(annotationId: string, content: string): vo
 export function copyToClipboard(text: string): void {
   postToHost({ type: 'copyText', text });
 }
+
+/** Rename the active group. */
+export function renameGroup(title: string): void {
+  postToHost({ type: 'setGroupTitle', title });
+}
+
+/** Ask the host to edit the active group's tags (native picker). */
+export function requestEditTags(): void {
+  postToHost({ type: 'editTags' });
+}
+
+/** Ask the host to edit the active group's Git ref (native picker). */
+export function requestEditGitRef(): void {
+  postToHost({ type: 'editGitRef' });
+}
+
+/** Persist an annotation's edited line range (host recomputes the hash). */
+export function saveAnnotationRange(annotationId: string, startLine: number, endLine: number): void {
+  postToHost({ type: 'updateAnnotationRange', annotationId, startLine, endLine });
+}
+
+/** Persist a new annotation order (host validates it is a permutation). */
+export function reorderAnnotations(annotationIds: string[]): void {
+  postToHost({ type: 'reorderAnnotations', annotationIds });
+}

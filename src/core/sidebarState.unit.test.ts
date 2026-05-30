@@ -1,14 +1,23 @@
 import { describe, it, expect } from 'vitest';
-import { initialSidebarState, applyHostMessage, tagColor } from './sidebarState';
+import { initialSidebarState, applyHostMessage, tagColor, filterGroups, availableTags, availableAuthors, toggleInList } from './sidebarState';
 import { type AnnotationGroup } from '../shared/model';
 
-function group(id: string): AnnotationGroup {
-  return { id, title: id, author: 'A', tags: [], gitRef: null, status: 'open', createdAt: 1, updatedAt: 1, annotations: [] };
+function group(
+  id: string,
+  opts: { author?: string; tags?: string[]; status?: 'open' | 'resolved' } = {},
+): AnnotationGroup {
+  return {
+    id, title: id, author: opts.author ?? 'A', tags: opts.tags ?? [],
+    gitRef: null, status: opts.status ?? 'open', createdAt: 1, updatedAt: 1, annotations: [],
+  };
 }
 
 describe('initialSidebarState', () => {
-  it('is empty with no selection', () => {
-    expect(initialSidebarState()).toEqual({ groups: [], palette: [], selectedId: null });
+  it('is empty with no selection and no filters', () => {
+    expect(initialSidebarState()).toEqual({
+      groups: [], palette: [], selectedId: null,
+      selectedTags: [], selectedAuthors: [], showResolved: false,
+    });
   });
 });
 
@@ -43,5 +52,78 @@ describe('tagColor', () => {
 
   it('falls back to a neutral default for unknown tags', () => {
     expect(tagColor([], 'unknown')).toBe('#888888');
+  });
+});
+
+describe('availableTags / availableAuthors', () => {
+  it('returns sorted, de-duplicated tags across all groups', () => {
+    const groups = [group('g1', { tags: ['security', 'todo'] }), group('g2', { tags: ['todo', 'arch'] })];
+    expect(availableTags(groups)).toEqual(['arch', 'security', 'todo']);
+  });
+  it('returns sorted, de-duplicated authors', () => {
+    const groups = [group('g1', { author: 'Zoe' }), group('g2', { author: 'Ana' }), group('g3', { author: 'Zoe' })];
+    expect(availableAuthors(groups)).toEqual(['Ana', 'Zoe']);
+  });
+});
+
+describe('toggleInList', () => {
+  it('adds a value that is absent', () => {
+    expect(toggleInList(['a'], 'b')).toEqual(['a', 'b']);
+  });
+  it('removes a value that is present', () => {
+    expect(toggleInList(['a', 'b'], 'a')).toEqual(['b']);
+  });
+});
+
+describe('filterGroups', () => {
+  const base = initialSidebarState();
+  const groups = [
+    group('open-sec', { author: 'Ana', tags: ['security'], status: 'open' }),
+    group('open-todo', { author: 'Zoe', tags: ['todo'], status: 'open' }),
+    group('res-sec', { author: 'Ana', tags: ['security'], status: 'resolved' }),
+  ];
+
+  it('hides resolved groups by default', () => {
+    expect(filterGroups({ ...base, groups }).map((g) => g.id)).toEqual(['open-sec', 'open-todo']);
+  });
+  it('includes resolved groups when showResolved is true', () => {
+    expect(filterGroups({ ...base, groups, showResolved: true }).map((g) => g.id)).toEqual(
+      ['open-sec', 'open-todo', 'res-sec'],
+    );
+  });
+  it('OR-matches selected tags (and still hides resolved by default)', () => {
+    expect(filterGroups({ ...base, groups, selectedTags: ['security'] }).map((g) => g.id)).toEqual(['open-sec']);
+  });
+  it('OR-matches selected authors', () => {
+    expect(filterGroups({ ...base, groups, selectedAuthors: ['Zoe'] }).map((g) => g.id)).toEqual(['open-todo']);
+  });
+  it('ANDs the tag and author facets together', () => {
+    expect(
+      filterGroups({ ...base, groups, selectedTags: ['security'], selectedAuthors: ['Zoe'] }).map((g) => g.id),
+    ).toEqual([]);
+  });
+  it('combines showResolved with a tag filter', () => {
+    expect(
+      filterGroups({ ...base, groups, selectedTags: ['security'], showResolved: true }).map((g) => g.id),
+    ).toEqual(['open-sec', 'res-sec']);
+  });
+});
+
+describe('applyHostMessage preserves + prunes filters', () => {
+  it('keeps showResolved and prunes selected tags/authors no longer present', () => {
+    const state = {
+      ...initialSidebarState(),
+      selectedTags: ['security', 'gone'],
+      selectedAuthors: ['Ana', 'ghost'],
+      showResolved: true,
+    };
+    const next = applyHostMessage(state, {
+      type: 'setState',
+      groups: [group('g1', { author: 'Ana', tags: ['security'] })],
+      palette: [],
+    });
+    expect(next.selectedTags).toEqual(['security']);
+    expect(next.selectedAuthors).toEqual(['Ana']);
+    expect(next.showResolved).toBe(true);
   });
 });

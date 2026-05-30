@@ -1,7 +1,13 @@
 <script lang="ts">
-  import { sidebar, setSelected } from './state';
+  import { sidebar, setSelected, toggleTagFilter, toggleAuthorFilter, setShowResolved } from './state';
   import { postToHost } from './vscodeApi';
+  import { filterGroups, availableTags, availableAuthors } from '../../core/sidebarState';
   import GroupCard from './GroupCard.svelte';
+  import FilterBar from './FilterBar.svelte';
+
+  const visible = $derived(filterGroups($sidebar));
+  const tags = $derived(availableTags($sidebar.groups));
+  const authors = $derived(availableAuthors($sidebar.groups));
 
   function onselect(id: string): void {
     setSelected(id);
@@ -15,14 +21,28 @@
       No annotations yet. Select code and run "Annotated: Create Annotation".
     </p>
   {:else}
-    {#each $sidebar.groups as group (group.id)}
-      <GroupCard
-        {group}
-        palette={$sidebar.palette}
-        selected={$sidebar.selectedId === group.id}
-        {onselect}
-      />
-    {/each}
+    <FilterBar
+      {tags}
+      {authors}
+      selectedTags={$sidebar.selectedTags}
+      selectedAuthors={$sidebar.selectedAuthors}
+      showResolved={$sidebar.showResolved}
+      ontoggletag={toggleTagFilter}
+      ontoggleauthor={toggleAuthorFilter}
+      onshowresolved={setShowResolved}
+    />
+    {#if visible.length === 0}
+      <p class="empty" data-testid="no-matches">No groups match the current filters.</p>
+    {:else}
+      {#each visible as group (group.id)}
+        <GroupCard
+          {group}
+          palette={$sidebar.palette}
+          selected={$sidebar.selectedId === group.id}
+          {onselect}
+        />
+      {/each}
+    {/if}
   {/if}
 </main>
 

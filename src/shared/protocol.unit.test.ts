@@ -60,4 +60,32 @@ describe('parseDetailMessage', () => {
     expect(parseDetailMessage({ type: 'updateAnnotation', annotationId: 'a1', content: 5 })).toBeNull();
     expect(parseDetailMessage({ type: 'copyText', text: 5 })).toBeNull();
   });
+
+  it('accepts setGroupTitle with a string title', () => {
+    expect(parseDetailMessage({ type: 'setGroupTitle', title: 'T' })).toEqual({ type: 'setGroupTitle', title: 'T' });
+  });
+  it('rejects setGroupTitle without a string title', () => {
+    expect(parseDetailMessage({ type: 'setGroupTitle', title: 5 })).toBeNull();
+  });
+  it('accepts editTags and editGitRef', () => {
+    expect(parseDetailMessage({ type: 'editTags' })).toEqual({ type: 'editTags' });
+    expect(parseDetailMessage({ type: 'editGitRef' })).toEqual({ type: 'editGitRef' });
+  });
+  it('accepts updateAnnotationRange with id + integer lines', () => {
+    expect(parseDetailMessage({ type: 'updateAnnotationRange', annotationId: 'a1', startLine: 2, endLine: 4 })).toEqual({
+      type: 'updateAnnotationRange', annotationId: 'a1', startLine: 2, endLine: 4,
+    });
+  });
+  it('rejects updateAnnotationRange with non-number lines', () => {
+    expect(parseDetailMessage({ type: 'updateAnnotationRange', annotationId: 'a1', startLine: '2', endLine: 4 })).toBeNull();
+  });
+  it('accepts reorderAnnotations with a string[] of ids', () => {
+    expect(parseDetailMessage({ type: 'reorderAnnotations', annotationIds: ['a1', 'a2'] })).toEqual({
+      type: 'reorderAnnotations', annotationIds: ['a1', 'a2'],
+    });
+  });
+  it('rejects reorderAnnotations with non-string ids or a non-array', () => {
+    expect(parseDetailMessage({ type: 'reorderAnnotations', annotationIds: ['a1', 2] })).toBeNull();
+    expect(parseDetailMessage({ type: 'reorderAnnotations', annotationIds: 'a1' })).toBeNull();
+  });
 });

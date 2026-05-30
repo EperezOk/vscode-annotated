@@ -27,4 +27,13 @@ describe('AnnotationRow', () => {
     await userEvent.click(screen.getByTestId('annotation-row'));
     expect(onselect).toHaveBeenCalledWith('a1');
   });
+
+  it('shows a stale dot when stale', () => {
+    render(AnnotationRow, { annotation: annotation('hi'), stale: true });
+    expect(screen.getByTestId('stale-dot')).toBeInTheDocument();
+  });
+  it('has no stale dot by default', () => {
+    render(AnnotationRow, { annotation: annotation('hi') });
+    expect(screen.queryByTestId('stale-dot')).toBeNull();
+  });
 });

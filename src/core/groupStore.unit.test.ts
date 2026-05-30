@@ -95,4 +95,83 @@ describe('GroupStore', () => {
     await store.saveGroup(group('g1'));
     expect(await store.updateAnnotation('g1', 'missing', 'x', 1)).toBe(false);
   });
+
+  it('updateGroup applies a partial patch, bumps updatedAt, and persists', async () => {
+    await store.saveGroup(group('g1', 'Old'));
+    const ok = await store.updateGroup('g1', { title: 'New', tags: ['security'], gitRef: 'main' }, 555);
+    expect(ok).toBe(true);
+    const g = await store.getGroup('g1');
+    expect(g?.title).toBe('New');
+    expect(g?.tags).toEqual(['security']);
+    expect(g?.gitRef).toBe('main');
+    expect(g?.updatedAt).toBe(555);
+  });
+
+  it('updateGroup leaves unspecified fields unchanged', async () => {
+    await store.saveGroup({ ...group('g1', 'Keep'), tags: ['a'], gitRef: 'dev' });
+    await store.updateGroup('g1', { title: 'Renamed' }, 1);
+    const g = await store.getGroup('g1');
+    expect(g?.title).toBe('Renamed');
+    expect(g?.tags).toEqual(['a']);
+    expect(g?.gitRef).toBe('dev');
+  });
+
+  it('updateGroup can set gitRef to null', async () => {
+    await store.saveGroup({ ...group('g1'), gitRef: 'x' });
+    await store.updateGroup('g1', { gitRef: null }, 1);
+    expect((await store.getGroup('g1'))?.gitRef).toBeNull();
+  });
+
+  it('updateGroup returns false for a missing group', async () => {
+    expect(await store.updateGroup('nope', { title: 'x' }, 1)).toBe(false);
+  });
+
+  it('updateAnnotationRange replaces range + contentHash, bumps updatedAt, persists', async () => {
+    const g = group('g1');
+    g.annotations.push({ id: 'a1', file: 'x.ts', range: { startLine: 1, endLine: 1 }, content: 'c', contentHash: 'old' });
+    await store.saveGroup(g);
+    const ok = await store.updateAnnotationRange('g1', 'a1', { startLine: 3, endLine: 5 }, 'newhash', 777);
+    expect(ok).toBe(true);
+    const r = await store.getGroup('g1');
+    expect(r?.annotations[0].range).toEqual({ startLine: 3, endLine: 5 });
+    expect(r?.annotations[0].contentHash).toBe('newhash');
+    expect(r?.annotations[0].content).toBe('c');
+    expect(r?.updatedAt).toBe(777);
+  });
+
+  it('updateAnnotationRange returns false for a missing group/annotation', async () => {
+    expect(await store.updateAnnotationRange('nope', 'a1', { startLine: 1, endLine: 1 }, 'h', 1)).toBe(false);
+    await store.saveGroup(group('g1'));
+    expect(await store.updateAnnotationRange('g1', 'missing', { startLine: 1, endLine: 1 }, 'h', 1)).toBe(false);
+  });
+
+  it('reorderAnnotations rewrites the array order, bumps updatedAt, persists', async () => {
+    const g = group('g1');
+    g.annotations.push(
+      { id: 'a1', file: 'x.ts', range: { startLine: 1, endLine: 1 }, content: 'c1', contentHash: 'h' },
+      { id: 'a2', file: 'x.ts', range: { startLine: 2, endLine: 2 }, content: 'c2', contentHash: 'h' },
+      { id: 'a3', file: 'x.ts', range: { startLine: 3, endLine: 3 }, content: 'c3', contentHash: 'h' },
+    );
+    await store.saveGroup(g);
+    const ok = await store.reorderAnnotations('g1', ['a3', 'a1', 'a2'], 555);
+    expect(ok).toBe(true);
+    const r = await store.getGroup('g1');
+    expect(r?.annotations.map((a) => a.id)).toEqual(['a3', 'a1', 'a2']);
+    expect(r?.updatedAt).toBe(555);
+  });
+
+  it('reorderAnnotations rejects a non-permutation (missing/extra/duplicate ids)', async () => {
+    const g = group('g1');
+    g.annotations.push(
+      { id: 'a1', file: 'x.ts', range: { startLine: 1, endLine: 1 }, content: '', contentHash: 'h' },
+      { id: 'a2', file: 'x.ts', range: { startLine: 2, endLine: 2 }, content: '', contentHash: 'h' },
+    );
+    await store.saveGroup(g);
+    expect(await store.reorderAnnotations('g1', ['a1'], 1)).toBe(false);
+    expect(await store.reorderAnnotations('g1', ['a1', 'zzz'], 1)).toBe(false);
+    expect(await store.reorderAnnotations('g1', ['a1', 'a1'], 1)).toBe(false);
+    expect(await store.reorderAnnotations('missing', ['a1', 'a2'], 1)).toBe(false);
+    const r = await store.getGroup('g1');
+    expect(r?.annotations.map((a) => a.id)).toEqual(['a1', 'a2']);
+  });
 });

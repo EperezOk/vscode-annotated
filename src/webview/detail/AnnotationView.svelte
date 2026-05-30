@@ -1,26 +1,51 @@
 <script lang="ts">
+  import { untrack } from 'svelte';
   import { type Annotation } from '../../shared/model';
   import MarkdownPreview from './MarkdownPreview.svelte';
   import MarkdownEditor from './MarkdownEditor.svelte';
 
   let {
     annotation,
+    stale = false,
     onback,
     onsave,
     oncopy,
     oncopyloc,
+    onsaverange,
+    onprev,
+    onnext,
+    position,
   }: {
     annotation: Annotation;
+    stale?: boolean;
     onback?: () => void;
     onsave?: (id: string, content: string) => void;
     oncopy?: (content: string) => void;
     oncopyloc?: (loc: string) => void;
+    onsaverange?: (id: string, startLine: number, endLine: number) => void;
+    onprev?: () => void;
+    onnext?: () => void;
+    position?: { current: number; total: number };
   } = $props();
 
   const location = $derived(`${annotation.file}:${annotation.range.startLine}–${annotation.range.endLine}`);
 
-  let editing = $state(annotation.content.length === 0);
-  let draft = $state(annotation.content);
+  // Seed once from the prop (intentional — DetailApp keys this component by
+  // annotation id, so it remounts on switch). untrack() avoids the spurious
+  // `state_referenced_locally` warning while preserving that semantics.
+  let editing = $state(untrack(() => annotation.content.length === 0));
+  let draft = $state(untrack(() => annotation.content));
+
+  let editingRange = $state(false);
+  let rangeStart = $state(untrack(() => annotation.range.startLine));
+  let rangeEnd = $state(untrack(() => annotation.range.endLine));
+  function startRangeEdit(): void { rangeStart = annotation.range.startLine; rangeEnd = annotation.range.endLine; editingRange = true; }
+  function saveRange(): void {
+    const s = Math.max(1, Math.floor(Number(rangeStart) || 1));
+    const e = Math.max(s, Math.floor(Number(rangeEnd) || s));
+    editingRange = false;
+    onsaverange?.(annotation.id, s, e);
+  }
 
   function startEdit(): void {
     draft = annotation.content;
@@ -35,9 +60,25 @@
 <section class="annotation-view" data-testid="annotation-view">
   <div class="bar">
     <button type="button" class="link" data-testid="back-btn" onclick={() => onback?.()}>‹ Back</button>
-    <span class="loc" data-testid="annotation-loc">{location}</span>
+    {#if editingRange}
+      <span class="loc">{annotation.file}:
+        <input class="num" data-testid="range-start" type="number" min="1" bind:value={rangeStart} />–<input class="num" data-testid="range-end" type="number" min="1" bind:value={rangeEnd} />
+      </span>
+      <button type="button" class="link" data-testid="save-range-btn" onclick={saveRange}>save</button>
+    {:else}
+      <span class="loc" data-testid="annotation-loc">{location}</span>
+      <button type="button" class="link" data-testid="edit-range-btn" onclick={startRangeEdit}>edit range</button>
+    {/if}
     <button type="button" class="link" data-testid="copy-loc-btn" onclick={() => oncopyloc?.(location)}>⧉ path</button>
   </div>
+
+  <div class="nav" data-testid="nav-bar">
+    <button type="button" class="nav-btn" data-testid="prev-btn" disabled={!onprev} onclick={() => onprev?.()}>‹ Prev</button>
+    <span class="position" data-testid="position-info">{position?.current ?? 0} / {position?.total ?? 0}</span>
+    <button type="button" class="nav-btn" data-testid="next-btn" disabled={!onnext} onclick={() => onnext?.()}>Next ›</button>
+  </div>
+
+  {#if stale}<div class="stale-banner" data-testid="stale-banner">⚠ Lines changed since this was written — content may no longer match.</div>{/if}
 
   <div class="toolbar">
     {#if editing}
@@ -63,4 +104,10 @@
   .toolbar { display: flex; gap: 6px; margin-bottom: 8px; }
   .btn { background: var(--vscode-button-background, #0e639c); color: var(--vscode-button-foreground, #fff); border: none; border-radius: 3px; padding: 4px 10px; font-size: 11.5px; cursor: pointer; }
   .btn.ghost { background: var(--vscode-button-secondaryBackground, #3a3d41); color: var(--vscode-button-secondaryForeground, #ddd); }
+  .num { width: 42px; }
+  .stale-banner { background: #3a2f12; color: #f0c674; font-size: 11px; padding: 6px 8px; border-radius: 4px; margin-bottom: 8px; }
+  .nav { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .nav-btn { flex: 1; background: var(--vscode-button-secondaryBackground, #3a3d41); color: var(--vscode-button-secondaryForeground, #ddd); border: none; border-radius: 4px; padding: 8px 12px; font-size: 13px; cursor: pointer; }
+  .nav-btn:disabled { opacity: 0.4; cursor: default; }
+  .position { font-size: 12px; color: var(--vscode-descriptionForeground, #9a9a9a); min-width: 48px; text-align: center; }
 </style>
