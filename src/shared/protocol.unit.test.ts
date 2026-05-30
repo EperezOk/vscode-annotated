@@ -20,6 +20,16 @@ describe('parseWebviewMessage', () => {
     expect(parseWebviewMessage(null)).toBeNull();
     expect(parseWebviewMessage('ready')).toBeNull();
   });
+
+  it('accepts bulk messages with a string[] groupIds', () => {
+    for (const type of ['bulkEditTags', 'bulkEditGitRef', 'bulkResolveRestore', 'bulkDelete'] as const) {
+      expect(parseWebviewMessage({ type, groupIds: ['g1', 'g2'] })).toEqual({ type, groupIds: ['g1', 'g2'] });
+    }
+  });
+  it('rejects bulk messages with a non-array or non-string ids', () => {
+    expect(parseWebviewMessage({ type: 'bulkDelete', groupIds: 'g1' })).toBeNull();
+    expect(parseWebviewMessage({ type: 'bulkEditTags', groupIds: ['g1', 2] })).toBeNull();
+  });
 });
 
 describe('parseDetailMessage', () => {

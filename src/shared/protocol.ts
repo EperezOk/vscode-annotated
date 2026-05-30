@@ -17,7 +17,11 @@ export type HostToWebview = {
 /** Webview → host messages. */
 export type WebviewToHost =
   | { type: 'ready' }
-  | { type: 'selectGroup'; groupId: string };
+  | { type: 'selectGroup'; groupId: string }
+  | { type: 'bulkEditTags'; groupIds: string[] }
+  | { type: 'bulkEditGitRef'; groupIds: string[] }
+  | { type: 'bulkResolveRestore'; groupIds: string[] }
+  | { type: 'bulkDelete'; groupIds: string[] };
 
 /** Host → detail-panel messages. */
 export type HostToDetail = {
@@ -59,6 +63,13 @@ export function parseWebviewMessage(raw: unknown): WebviewToHost | null {
       return { type: 'ready' };
     case 'selectGroup':
       return typeof raw.groupId === 'string' ? { type: 'selectGroup', groupId: raw.groupId } : null;
+    case 'bulkEditTags':
+    case 'bulkEditGitRef':
+    case 'bulkResolveRestore':
+    case 'bulkDelete':
+      return Array.isArray(raw.groupIds) && (raw.groupIds as unknown[]).every((id) => typeof id === 'string')
+        ? { type: raw.type as 'bulkEditTags' | 'bulkEditGitRef' | 'bulkResolveRestore' | 'bulkDelete', groupIds: raw.groupIds as string[] }
+        : null;
     default:
       return null;
   }

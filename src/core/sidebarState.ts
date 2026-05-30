@@ -1,4 +1,4 @@
-import { type AnnotationGroup } from '../shared/model';
+import { type AnnotationGroup, type GroupStatus } from '../shared/model';
 import { type HostToWebview, type TagColor } from '../shared/protocol';
 
 const DEFAULT_COLOR = '#888888';
@@ -10,10 +10,12 @@ export interface SidebarState {
   selectedTags: string[];
   selectedAuthors: string[];
   showResolved: boolean;
+  bulkMode: boolean;
+  selectedGroupIds: string[];
 }
 
 export function initialSidebarState(): SidebarState {
-  return { groups: [], palette: [], selectedId: null, selectedTags: [], selectedAuthors: [], showResolved: false };
+  return { groups: [], palette: [], selectedId: null, selectedTags: [], selectedAuthors: [], showResolved: false, bulkMode: false, selectedGroupIds: [] };
 }
 
 /** Apply a host→webview message, returning a new state. */
@@ -30,6 +32,8 @@ export function applyHostMessage(state: SidebarState, message: HostToWebview): S
         selectedTags: state.selectedTags.filter((t) => tags.has(t)),
         selectedAuthors: state.selectedAuthors.filter((a) => authors.has(a)),
         showResolved: state.showResolved,
+        bulkMode: state.bulkMode,
+        selectedGroupIds: state.selectedGroupIds.filter((id) => message.groups.some((g) => g.id === id)),
       };
     }
     default:
@@ -76,4 +80,9 @@ export function filterGroups(state: SidebarState): AnnotationGroup[] {
     }
     return true;
   });
+}
+
+/** The status to apply when bulk-toggling: all-open → resolved, all-resolved → open, mixed/empty → resolved. */
+export function bulkStatusToggle(groups: AnnotationGroup[]): GroupStatus {
+  return groups.length > 0 && groups.every((g) => g.status === 'resolved') ? 'open' : 'resolved';
 }
