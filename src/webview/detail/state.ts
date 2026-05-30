@@ -29,3 +29,18 @@ export function saveAnnotationContent(annotationId: string, content: string): vo
 export function copyToClipboard(text: string): void {
   postToHost({ type: 'copyText', text });
 }
+
+/** Rename the active group. */
+export function renameGroup(title: string): void {
+  postToHost({ type: 'setGroupTitle', title });
+}
+
+/** Ask the host to edit the active group's tags (native picker). */
+export function requestEditTags(): void {
+  postToHost({ type: 'editTags' });
+}
+
+/** Ask the host to edit the active group's Git ref (native picker). */
+export function requestEditGitRef(): void {
+  postToHost({ type: 'editGitRef' });
+}
