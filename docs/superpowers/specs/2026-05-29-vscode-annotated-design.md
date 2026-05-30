@@ -78,8 +78,25 @@ Detail panel (reused)           Storage layer                           (one fil
 ### UI stack
 
 Svelte for both webviews — compiled, tiny output, reactive, and components test
-cleanly in isolation. Markdown rendering uses a Markdown library with sanitization
-(e.g. `markdown-it` + DOMPurify) inside the webview.
+cleanly in isolation. Markdown **rendering** (previews, comment bodies) uses a
+Markdown library with sanitization (e.g. `markdown-it` + DOMPurify) inside the
+webview. Markdown **editing** uses CodeMirror 6 — see [Markdown editor](#markdown-editor).
+
+### Markdown editor
+
+A single shared `MarkdownEditor` Svelte component, built on **CodeMirror 6**, is used
+everywhere Markdown is authored: annotation content, the reply box, and editing an
+existing comment.
+
+- **Syntax highlighting** via `@codemirror/lang-markdown`.
+- **Niceties** (lightweight, via CodeMirror keymaps/paste handlers):
+  - Select text + paste a URL → wraps the selection as `[selection](url)`.
+  - Bold / italic shortcuts (`ctrl/cmd+b`, `ctrl/cmd+i`) wrap the selection.
+- CodeMirror is tree-shaken; the added weight is modest (~100KB gzipped), far below a
+  full editor like Monaco, and acceptable for a webview.
+- The selection-transform logic (link wrapping, bold/italic) is implemented as **pure
+  functions** over `(text, selectionRange)` so it is unit-testable independently of
+  CodeMirror; CodeMirror only hosts it.
 
 ## Data model & file layout
 
@@ -237,12 +254,13 @@ A single reused webview that swaps between two views.
   fixed); a single **copy** control here copies the relative path + range. Editing the
   range recomputes the content hash.
 - **Stale banner** shown only when drift is detected.
-- **Toolbar:** Edit (swaps preview → textarea), Copy markdown.
-- **Body:** rendered Markdown; when the annotation is empty the body is the editing
-  textarea instead of a preview.
+- **Toolbar:** Edit (swaps preview → the Markdown editor), Copy markdown.
+- **Body:** rendered Markdown; when the annotation is empty the body is the Markdown
+  editor instead of a preview.
 - **Comment thread:** each comment shows author + relative time + rendered Markdown,
   merged across author files by timestamp. The current user's own comments show
-  `edit` / `delete`; others' are read-only. A **Reply** box takes Markdown.
+  `edit` / `delete` (editing reopens the comment in the Markdown editor); others' are
+  read-only. A **Reply** box uses the same Markdown editor.
 
 ## Commands & keybindings
 
@@ -288,6 +306,8 @@ Layered + E2E smoke, all tiers headless and agent-runnable via `npm` scripts.
 **Tier 1 — Unit (Vitest, no VSCode).**
 - Domain core: (de)serialization, ordering/reorder, drift hashing, tag-name→color
   resolution, comment-thread merge, sidebar filter logic.
+- Markdown editor selection transforms (paste-URL-as-link, bold/italic wrapping) as
+  pure functions over `(text, selectionRange)`.
 - Storage layer against an in-memory `FileSystem` abstraction over
   `vscode.workspace.fs`.
 - Svelte components via `@testing-library/svelte` + jsdom — card rendering, filter
@@ -320,8 +340,9 @@ Front-loaded because autonomous testing is a core goal — prove the harness fir
 **Phase 1 — MVP core (usable end to end).** Domain core + JSON storage over
 `vscode.workspace.fs` (`.annotations/groups/`); author identity; Create Annotation
 command + QuickPick flow + default keybindings; sidebar group cards (open a group);
-detail panel group view + annotation view (Markdown preview, empty→textarea editing,
-Edit toggle, copy controls); navigate-to-code with active-annotation highlight; tag
+detail panel group view + annotation view (Markdown preview, the shared CodeMirror
+Markdown editor with highlighting + paste-URL-as-link, Edit toggle, copy controls);
+navigate-to-code with active-annotation highlight; tag
 palette config + name→color chips; `FileSystemWatcher` live reload.
 
 **Phase 2 — Organization & navigation.** Sidebar filters (tag, author) +
