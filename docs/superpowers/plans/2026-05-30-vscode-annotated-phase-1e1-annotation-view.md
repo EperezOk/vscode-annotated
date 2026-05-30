@@ -988,5 +988,12 @@ git commit -m "test: updateAnnotation integration + annotation-view e2e"
 - [ ] All work committed on the `phase-1` branch.
 - [ ] Manual sanity (optional): open a group → click an annotation → see the editor (empty) or preview (non-empty); Edit → write Markdown → Save → reopen shows the saved content; Copy markdown / Copy path work; Back returns to the group view.
 
-Next: **1e-2** — swap `MarkdownEditor`'s internals from the textarea to **CodeMirror 6** (`@codemirror/state`/`view`/`commands`/`language`/`lang-markdown`) with Markdown highlighting + the pure selection transforms (`isUrl`/`wrapSelection`/`linkSelection` — unit-tested) wired into a paste handler (select + paste URL → link) and a bold/italic keymap. The `doc`/`onChange` interface stays identical, so `AnnotationView` and the save flow are unchanged. After 1e-2, the Phase 1 MVP is complete → merge `phase-1` → `main`.
+Next: **1e-2** — swap `MarkdownEditor`'s internals from the textarea to **CodeMirror 6** (`@codemirror/state`/`view`/`commands`/`language`/`lang-markdown`) with Markdown highlighting + the pure selection transforms (`isUrl`/`wrapSelection`/`linkSelection` — unit-tested) wired into a paste handler (select + paste URL → link) and a bold/italic keymap. The `doc`/`onChange` interface stays identical, so `AnnotationView` and the save flow are unchanged.
+
+## Phase 1e-2 carry-over (from Phase 1e-1 final review)
+
+- **Swap the editor internals to CodeMirror 6**, preserving the `MarkdownEditor` `doc`/`onChange` interface (so `AnnotationView` needs zero changes). CM can't be jsdom-mounted → the `MarkdownEditor` component becomes glue (e2e/manual); test the pure transforms (`isUrl`/`wrapSelection`/`linkSelection`) in Vitest, and wire them into a CM paste handler + bold/italic keymap. Use the modular `@codemirror/*` packages (state 6.6, view 6.43, commands 6.10, language, lang-markdown 6.5) — not the meta-package.
+- **Remove the dead `setSelectedAnnotation` export** from `src/webview/detail/state.ts` (superseded by `openAnnotationView`; unused).
+- **Harden annotation switching:** add `{#key $detail.selectedAnnotationId}` around `<AnnotationView>` in `DetailApp.svelte` (or reset `editing`/`draft` when the annotation changes) so the seed-once `$state` can't go stale when Phase 2 adds Prev/Next (direct annotation-to-annotation switching without remount). Resolves the `state_referenced_locally` warnings too.
+- **Decide Copy-markdown semantics:** currently copies the persisted `annotation.content` (not the in-flight `draft`) — consistent, but reconsider once CM lands.
 ```
