@@ -60,4 +60,15 @@ describe('parseDetailMessage', () => {
     expect(parseDetailMessage({ type: 'updateAnnotation', annotationId: 'a1', content: 5 })).toBeNull();
     expect(parseDetailMessage({ type: 'copyText', text: 5 })).toBeNull();
   });
+
+  it('accepts setGroupTitle with a string title', () => {
+    expect(parseDetailMessage({ type: 'setGroupTitle', title: 'T' })).toEqual({ type: 'setGroupTitle', title: 'T' });
+  });
+  it('rejects setGroupTitle without a string title', () => {
+    expect(parseDetailMessage({ type: 'setGroupTitle', title: 5 })).toBeNull();
+  });
+  it('accepts editTags and editGitRef', () => {
+    expect(parseDetailMessage({ type: 'editTags' })).toEqual({ type: 'editTags' });
+    expect(parseDetailMessage({ type: 'editGitRef' })).toEqual({ type: 'editGitRef' });
+  });
 });
