@@ -78,4 +78,9 @@ describe('AnnotationView', () => {
     expect(screen.getByTestId('prev-btn')).toBeDisabled();
     expect(screen.getByTestId('next-btn')).toBeDisabled();
   });
+  it('renders the comment thread', () => {
+    render(AnnotationView, { annotation: annotation('# Note'), comments: [], currentAuthor: 'Me' });
+    expect(screen.getByTestId('comment-thread')).toBeInTheDocument();
+    expect(screen.getByTestId('comment-reply-trigger')).toBeInTheDocument();
+  });
 });

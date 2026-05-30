@@ -1,8 +1,9 @@
 <script lang="ts">
   import { untrack } from 'svelte';
-  import { type Annotation } from '../../shared/model';
+  import { type Annotation, type ThreadComment } from '../../shared/model';
   import MarkdownPreview from './MarkdownPreview.svelte';
   import MarkdownEditor from './MarkdownEditor.svelte';
+  import CommentThread from './CommentThread.svelte';
 
   let {
     annotation,
@@ -15,6 +16,11 @@
     onprev,
     onnext,
     position,
+    comments,
+    currentAuthor,
+    onaddcomment,
+    oneditcomment,
+    ondeletecomment,
   }: {
     annotation: Annotation;
     stale?: boolean;
@@ -26,6 +32,11 @@
     onprev?: () => void;
     onnext?: () => void;
     position?: { current: number; total: number };
+    comments?: ThreadComment[];
+    currentAuthor?: string;
+    onaddcomment?: (annotationId: string, content: string) => void;
+    oneditcomment?: (commentId: string, content: string) => void;
+    ondeletecomment?: (commentId: string) => void;
   } = $props();
 
   const location = $derived(`${annotation.file}:${annotation.range.startLine}–${annotation.range.endLine}`);
@@ -94,6 +105,14 @@
   {:else}
     <MarkdownPreview source={annotation.content} />
   {/if}
+
+  <CommentThread
+    comments={comments ?? []}
+    currentAuthor={currentAuthor ?? ''}
+    onadd={(content) => onaddcomment?.(annotation.id, content)}
+    onedit={(id, content) => oneditcomment?.(id, content)}
+    ondelete={(id) => ondeletecomment?.(id)}
+  />
 </section>
 
 <style>

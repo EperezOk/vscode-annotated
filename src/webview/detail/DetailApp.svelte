@@ -3,10 +3,11 @@
   import {
     detail, openAnnotationView, showGroupView, saveAnnotationContent, copyToClipboard,
     renameGroup, requestEditTags, requestEditGitRef, saveAnnotationRange, reorderAnnotations, setGroupStatus,
+    addComment, editComment, deleteComment,
   } from './state';
   import { postToHost } from './vscodeApi';
   import AnnotationView from './AnnotationView.svelte';
-  import { prevAnnotationId, nextAnnotationId, annotationPosition } from '../../core/detailState';
+  import { prevAnnotationId, nextAnnotationId, annotationPosition, commentsFor } from '../../core/detailState';
 
   function openRow(id: string): void {
     openAnnotationView(id);
@@ -37,6 +38,11 @@
         position={position}
         onprev={prevId ? () => openRow(prevId) : undefined}
         onnext={nextId ? () => openRow(nextId) : undefined}
+        comments={commentsFor($detail, current.id)}
+        currentAuthor={$detail.currentAuthor}
+        onaddcomment={(id, content) => addComment(id, content)}
+        oneditcomment={(id, content) => editComment(id, content)}
+        ondeletecomment={(id) => deleteComment(id)}
       />
     {/key}
   {:else}

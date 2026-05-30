@@ -110,5 +110,5 @@ export function annotationPosition(state: DetailState): { current: number; total
 
 /** Comments belonging to one annotation (already timestamp-sorted by the host). */
 export function commentsFor(state: DetailState, annotationId: string): ThreadComment[] {
-  return state.comments.filter((c) => c.annotationId === annotationId);
+  return (state.comments ?? []).filter((c) => c.annotationId === annotationId);
 }
