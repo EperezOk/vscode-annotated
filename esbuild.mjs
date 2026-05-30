@@ -22,7 +22,10 @@ const extensionConfig = {
 
 /** @type {import('esbuild').BuildOptions} */
 const webviewConfig = {
-  entryPoints: { 'sidebar/main': 'src/webview/sidebar/main.ts' },
+  entryPoints: {
+    'sidebar/main': 'src/webview/sidebar/main.ts',
+    'detail/main': 'src/webview/detail/main.ts',
+  },
   bundle: true,
   format: 'iife',
   platform: 'browser',
