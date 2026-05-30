@@ -747,13 +747,15 @@ const configs = [extensionConfig, webviewConfig, testSuiteConfig];
 > Note: the official sample uses webpack's `require.context` to auto-glob test files. esbuild has no such feature, so we set up Mocha first, then dynamically import each test file explicitly (after the `suite`/`test` globals exist).
 
 > The global `mocha` (BrowserMocha) and the TDD globals `suite`/`test` are typed by `@types/mocha` (enabled via `"types": ["mocha"]` in `tsconfig.json`). The side-effect import below defines `mocha` at runtime.
+>
+> **Reporter:** use the object form `mocha.setup({ ui: 'tdd', reporter: 'spec' })`. The string shorthand `mocha.setup('tdd')` leaves Mocha on its default **HTML reporter**, which calls `document` APIs and throws `ReferenceError: document is not defined` in the web-worker extension host (there is no DOM). The `spec` reporter is DOM-free and writes to the console.
 
 ```ts
 import 'mocha/mocha';
 
 export function run(): Promise<void> {
   return new Promise((resolve, reject) => {
-    mocha.setup('tdd');
+    mocha.setup({ ui: 'tdd', reporter: 'spec' });
 
     // Register suites AFTER mocha.setup so the tdd globals (suite/test) exist.
     import('./extension.test')
