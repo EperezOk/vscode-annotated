@@ -63,4 +63,19 @@ describe('AnnotationView', () => {
     await userEvent.click(screen.getByTestId('save-range-btn'));
     expect(onsaverange).toHaveBeenCalledWith('a1', 5, 9);
   });
+  it('shows the position indicator and fires onprev/onnext', async () => {
+    const onprev = vi.fn();
+    const onnext = vi.fn();
+    render(AnnotationView, { annotation: annotation('# N'), position: { current: 2, total: 3 }, onprev, onnext });
+    expect(screen.getByTestId('position-info')).toHaveTextContent('2 / 3');
+    await userEvent.click(screen.getByTestId('next-btn'));
+    expect(onnext).toHaveBeenCalled();
+    await userEvent.click(screen.getByTestId('prev-btn'));
+    expect(onprev).toHaveBeenCalled();
+  });
+  it('disables prev/next when no handler is given (ends of the list)', () => {
+    render(AnnotationView, { annotation: annotation('# N'), position: { current: 1, total: 1 } });
+    expect(screen.getByTestId('prev-btn')).toBeDisabled();
+    expect(screen.getByTestId('next-btn')).toBeDisabled();
+  });
 });

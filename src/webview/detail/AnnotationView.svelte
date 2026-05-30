@@ -12,6 +12,9 @@
     oncopy,
     oncopyloc,
     onsaverange,
+    onprev,
+    onnext,
+    position,
   }: {
     annotation: Annotation;
     stale?: boolean;
@@ -20,6 +23,9 @@
     oncopy?: (content: string) => void;
     oncopyloc?: (loc: string) => void;
     onsaverange?: (id: string, startLine: number, endLine: number) => void;
+    onprev?: () => void;
+    onnext?: () => void;
+    position?: { current: number; total: number };
   } = $props();
 
   const location = $derived(`${annotation.file}:${annotation.range.startLine}–${annotation.range.endLine}`);
@@ -66,6 +72,12 @@
     <button type="button" class="link" data-testid="copy-loc-btn" onclick={() => oncopyloc?.(location)}>⧉ path</button>
   </div>
 
+  <div class="nav" data-testid="nav-bar">
+    <button type="button" class="nav-btn" data-testid="prev-btn" disabled={!onprev} onclick={() => onprev?.()}>‹ Prev</button>
+    <span class="position" data-testid="position-info">{position?.current ?? 0} / {position?.total ?? 0}</span>
+    <button type="button" class="nav-btn" data-testid="next-btn" disabled={!onnext} onclick={() => onnext?.()}>Next ›</button>
+  </div>
+
   {#if stale}<div class="stale-banner" data-testid="stale-banner">⚠ Lines changed since this was written — content may no longer match.</div>{/if}
 
   <div class="toolbar">
@@ -94,4 +106,8 @@
   .btn.ghost { background: var(--vscode-button-secondaryBackground, #3a3d41); color: var(--vscode-button-secondaryForeground, #ddd); }
   .num { width: 42px; }
   .stale-banner { background: #3a2f12; color: #f0c674; font-size: 11px; padding: 6px 8px; border-radius: 4px; margin-bottom: 8px; }
+  .nav { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .nav-btn { flex: 1; background: var(--vscode-button-secondaryBackground, #3a3d41); color: var(--vscode-button-secondaryForeground, #ddd); border: none; border-radius: 4px; padding: 8px 12px; font-size: 13px; cursor: pointer; }
+  .nav-btn:disabled { opacity: 0.4; cursor: default; }
+  .position { font-size: 12px; color: var(--vscode-descriptionForeground, #9a9a9a); min-width: 48px; text-align: center; }
 </style>

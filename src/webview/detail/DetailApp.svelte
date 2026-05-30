@@ -6,6 +6,7 @@
   } from './state';
   import { postToHost } from './vscodeApi';
   import AnnotationView from './AnnotationView.svelte';
+  import { prevAnnotationId, nextAnnotationId, annotationPosition } from '../../core/detailState';
 
   function openRow(id: string): void {
     openAnnotationView(id);
@@ -15,6 +16,9 @@
   const current = $derived(
     $detail.group?.annotations.find((a) => a.id === $detail.selectedAnnotationId) ?? null,
   );
+  const prevId = $derived(prevAnnotationId($detail));
+  const nextId = $derived(nextAnnotationId($detail));
+  const position = $derived(annotationPosition($detail));
 </script>
 
 <main data-testid="detail">
@@ -30,6 +34,9 @@
         oncopy={(content) => copyToClipboard(content)}
         oncopyloc={(loc) => copyToClipboard(loc)}
         onsaverange={(id, s, e) => saveAnnotationRange(id, s, e)}
+        position={position}
+        onprev={prevId ? () => openRow(prevId) : undefined}
+        onnext={nextId ? () => openRow(nextId) : undefined}
       />
     {/key}
   {:else}
