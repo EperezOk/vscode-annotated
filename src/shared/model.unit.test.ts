@@ -1,0 +1,57 @@
+import { describe, it, expect } from 'vitest';
+import { parseGroup, serializeGroup, type AnnotationGroup } from './model';
+
+const validGroup: AnnotationGroup = {
+  id: 'g1',
+  title: 'Login review',
+  author: 'Ezequiel',
+  tags: ['security', 'question'],
+  gitRef: 'feature/login',
+  status: 'open',
+  createdAt: 1730000000,
+  updatedAt: 1730000001,
+  annotations: [
+    {
+      id: 'a1',
+      file: 'src/auth/login.ts',
+      range: { startLine: 42, endLine: 47 },
+      content: '## note',
+      contentHash: 'abc123',
+    },
+  ],
+};
+
+describe('serializeGroup/parseGroup', () => {
+  it('round-trips a valid group', () => {
+    const text = serializeGroup(validGroup);
+    expect(parseGroup(JSON.parse(text))).toEqual(validGroup);
+  });
+
+  it('serializes as pretty JSON (2-space indent)', () => {
+    expect(serializeGroup(validGroup)).toContain('\n  "id": "g1"');
+  });
+
+  it('accepts gitRef: null', () => {
+    const g = { ...validGroup, gitRef: null };
+    expect(parseGroup(JSON.parse(serializeGroup(g))).gitRef).toBeNull();
+  });
+
+  it('throws on a non-object', () => {
+    expect(() => parseGroup(null)).toThrow();
+    expect(() => parseGroup('nope')).toThrow();
+  });
+
+  it('throws when a required field is missing', () => {
+    const { title, ...noTitle } = validGroup;
+    expect(() => parseGroup(noTitle)).toThrow(/title/);
+  });
+
+  it('throws when status is invalid', () => {
+    expect(() => parseGroup({ ...validGroup, status: 'archived' })).toThrow(/status/);
+  });
+
+  it('throws when an annotation range is malformed', () => {
+    const bad = { ...validGroup, annotations: [{ ...validGroup.annotations[0], range: { startLine: 5, endLine: 2 } }] };
+    expect(() => parseGroup(bad)).toThrow(/range/);
+  });
+});
