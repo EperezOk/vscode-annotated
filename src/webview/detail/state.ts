@@ -10,11 +10,6 @@ export function handleHostMessage(message: HostToDetail): void {
   detail.update((state) => applyDetailMessage(state, message));
 }
 
-/** Record the locally-selected annotation. */
-export function setSelectedAnnotation(id: string): void {
-  detail.update((state) => ({ ...state, selectedAnnotationId: id }));
-}
-
 /** Switch the panel to the annotation view for `id`. */
 export function openAnnotationView(id: string): void {
   detail.update((state) => openAnnotationState(state, id));

@@ -19,13 +19,15 @@
   {#if !$detail.group}
     <p class="empty" data-testid="detail-empty">Select a group to see its annotations.</p>
   {:else if $detail.mode === 'annotation' && current}
-    <AnnotationView
-      annotation={current}
-      onback={showGroupView}
-      onsave={(id, content) => saveAnnotationContent(id, content)}
-      oncopy={(content) => copyToClipboard(content)}
-      oncopyloc={(loc) => copyToClipboard(loc)}
-    />
+    {#key $detail.selectedAnnotationId}
+      <AnnotationView
+        annotation={current}
+        onback={showGroupView}
+        onsave={(id, content) => saveAnnotationContent(id, content)}
+        oncopy={(content) => copyToClipboard(content)}
+        oncopyloc={(loc) => copyToClipboard(loc)}
+      />
+    {/key}
   {:else}
     <header class="head">
       <div class="title" data-testid="detail-title">{$detail.group.title}</div>
