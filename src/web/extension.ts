@@ -11,7 +11,8 @@ import { readGitRefInfo } from './gitRefsSource';
 import { gitRefSuggestions } from '../core/gitRefs';
 import { computeStaleIds } from './staleness';
 import { sha256Hex, anchorText } from '../shared/hash';
-import { type GroupStatus } from '../shared/model';
+import { type AnnotationGroup, type GroupStatus } from '../shared/model';
+import { bulkStatusToggle } from '../core/sidebarState';
 import { CommentStore } from '../core/commentStore';
 import { flattenComments, slugifyAuthor } from '../core/comments';
 import { resolveAuthor, resolveAuthorEmail } from '../core/authorIdentity';
@@ -68,6 +69,108 @@ export function activate(context: vscode.ExtensionContext): void {
   provider.onSelectGroup = async (groupId: string): Promise<void> => {
     await showGroupWithStale(groupId);
     await vscode.commands.executeCommand('annotated.detail.focus');
+  };
+
+  provider.onBulkResolveRestore = async (groupIds): Promise<void> => {
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    if (!folder || groupIds.length === 0) {
+      return;
+    }
+    const store = new GroupStore(new VscodeFileSystem(folder.uri));
+    const groups = (await Promise.all(groupIds.map((id) => store.getGroup(id)))).filter((g): g is AnnotationGroup => g !== null);
+    const status = bulkStatusToggle(groups);
+    for (const id of groupIds) {
+      await store.updateGroup(id, { status }, now());
+    }
+    await provider.refresh();
+  };
+
+  provider.onBulkDelete = async (groupIds): Promise<void> => {
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    if (!folder || groupIds.length === 0) {
+      return;
+    }
+    const choice = await vscode.window.showWarningMessage(
+      `Delete ${groupIds.length} group${groupIds.length === 1 ? '' : 's'}? This cannot be undone.`,
+      { modal: true },
+      'Delete',
+    );
+    if (choice !== 'Delete') {
+      return;
+    }
+    const store = new GroupStore(new VscodeFileSystem(folder.uri));
+    for (const id of groupIds) {
+      await store.deleteGroup(id);
+    }
+    await provider.refresh();
+  };
+
+  provider.onBulkEditTags = async (groupIds): Promise<void> => {
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    if (!folder || groupIds.length === 0) {
+      return;
+    }
+    const palette = readTagPalette();
+    const items: vscode.QuickPickItem[] = [
+      ...palette.map((t) => ({ label: t.name })),
+      { label: NEW_TAG_LABEL, alwaysShow: true },
+    ];
+    const picked = await vscode.window.showQuickPick(items, {
+      canPickMany: true,
+      placeHolder: `Set tags on ${groupIds.length} group(s)`,
+    });
+    if (picked === undefined) {
+      return;
+    }
+    const { names, addNew } = splitPickedTags(picked.map((item) => item.label));
+    if (addNew) {
+      const name = await vscode.window.showInputBox({ prompt: 'New tag name' });
+      if (name && name.trim()) {
+        const color = await vscode.window.showInputBox({ prompt: 'Tag color (hex)', value: '#888888' });
+        await addTagToPalette(name.trim(), color?.trim() || '#888888');
+        names.push(name.trim());
+      }
+    }
+    const store = new GroupStore(new VscodeFileSystem(folder.uri));
+    for (const id of groupIds) {
+      await store.updateGroup(id, { tags: names }, now());
+    }
+    await provider.refresh();
+  };
+
+  provider.onBulkEditGitRef = async (groupIds): Promise<void> => {
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    if (!folder || groupIds.length === 0) {
+      return;
+    }
+    const info = await readGitRefInfo();
+    const suggestions = gitRefSuggestions(info);
+    const CLEAR = '$(close) Clear';
+    const CUSTOM = '$(edit) Custom…';
+    const picked = await vscode.window.showQuickPick(
+      [{ label: CLEAR }, { label: CUSTOM }, ...suggestions.map((s) => ({ label: s.label, description: s.description }))],
+      { placeHolder: `Set the Git ref on ${groupIds.length} group(s)` },
+    );
+    if (!picked) {
+      return;
+    }
+    let gitRef: string | null;
+    if (picked.label === CLEAR) {
+      gitRef = null;
+    } else if (picked.label === CUSTOM) {
+      const custom = await vscode.window.showInputBox({ prompt: 'Git ref (branch / tag / SHA)' });
+      if (custom === undefined) {
+        return;
+      }
+      gitRef = custom.trim() === '' ? null : custom.trim();
+    } else {
+      gitRef = picked.label;
+    }
+    const store = new GroupStore(new VscodeFileSystem(folder.uri));
+    for (const id of groupIds) {
+      await store.updateGroup(id, { gitRef }, now());
+    }
+    await provider.refresh();
   };
 
   detailProvider.onSelectAnnotation = (annotation): void => {
