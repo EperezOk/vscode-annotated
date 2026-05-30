@@ -19,6 +19,18 @@ export type WebviewToHost =
   | { type: 'ready' }
   | { type: 'selectGroup'; groupId: string };
 
+/** Host → detail-panel messages. */
+export type HostToDetail = {
+  type: 'setGroup';
+  group: AnnotationGroup | null;
+  palette: TagColor[];
+};
+
+/** Detail-panel → host messages. */
+export type DetailToHost =
+  | { type: 'ready' }
+  | { type: 'selectAnnotation'; annotationId: string };
+
 function isObject(x: unknown): x is Record<string, unknown> {
   return typeof x === 'object' && x !== null;
 }
@@ -33,6 +45,21 @@ export function parseWebviewMessage(raw: unknown): WebviewToHost | null {
       return { type: 'ready' };
     case 'selectGroup':
       return typeof raw.groupId === 'string' ? { type: 'selectGroup', groupId: raw.groupId } : null;
+    default:
+      return null;
+  }
+}
+
+/** Validate an untrusted detail→host message; returns it narrowed, or null. */
+export function parseDetailMessage(raw: unknown): DetailToHost | null {
+  if (!isObject(raw) || typeof raw.type !== 'string') {
+    return null;
+  }
+  switch (raw.type) {
+    case 'ready':
+      return { type: 'ready' };
+    case 'selectAnnotation':
+      return typeof raw.annotationId === 'string' ? { type: 'selectAnnotation', annotationId: raw.annotationId } : null;
     default:
       return null;
   }
