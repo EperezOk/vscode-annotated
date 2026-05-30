@@ -4,7 +4,8 @@ import { registerCreateAnnotationCommand } from './createAnnotationCommand';
 import { DetailPanelProvider } from './detailPanelProvider';
 import { GroupStore } from '../core/groupStore';
 import { VscodeFileSystem } from './vscodeFileSystem';
-import { readTagPalette } from './tagPalette';
+import { readTagPalette, addTagToPalette } from './tagPalette';
+import { NEW_TAG_LABEL, splitPickedTags } from '../core/tags';
 import { revealAnnotation } from './navigateToCode';
 import { readGitRefInfo } from './gitRefsSource';
 import { gitRefSuggestions } from '../core/gitRefs';
@@ -116,14 +117,27 @@ export function activate(context: vscode.ExtensionContext): void {
       return;
     }
     const palette = readTagPalette();
-    const picked = await vscode.window.showQuickPick(
-      palette.map((t) => ({ label: t.name, picked: group.tags.includes(t.name) })),
-      { canPickMany: true, placeHolder: 'Select tags for this group' },
-    );
+    const items: vscode.QuickPickItem[] = [
+      ...palette.map((t) => ({ label: t.name, picked: group.tags.includes(t.name) })),
+      { label: NEW_TAG_LABEL, alwaysShow: true },
+    ];
+    const picked = await vscode.window.showQuickPick(items, {
+      canPickMany: true,
+      placeHolder: 'Select tags for this group',
+    });
     if (picked === undefined) {
       return;
     }
-    await patchGroup(groupId, { tags: picked.map((p) => p.label) });
+    const { names, addNew } = splitPickedTags(picked.map((item) => item.label));
+    if (addNew) {
+      const name = await vscode.window.showInputBox({ prompt: 'New tag name' });
+      if (name && name.trim()) {
+        const color = await vscode.window.showInputBox({ prompt: 'Tag color (hex)', value: '#888888' });
+        await addTagToPalette(name.trim(), color?.trim() || '#888888');
+        names.push(name.trim());
+      }
+    }
+    await patchGroup(groupId, { tags: names });
   };
 
   detailProvider.onEditGitRef = async (groupId): Promise<void> => {
