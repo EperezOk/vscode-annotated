@@ -1,4 +1,6 @@
 import esbuild from 'esbuild';
+import esbuildSvelte from 'esbuild-svelte';
+import { sveltePreprocess } from 'svelte-preprocess';
 
 const production = process.argv.includes('--production');
 const watch = process.argv.includes('--watch');
@@ -18,8 +20,28 @@ const extensionConfig = {
   logLevel: 'info',
 };
 
-// Later tasks push more configs (webview, test suite) into this array.
-const configs = [extensionConfig];
+/** @type {import('esbuild').BuildOptions} */
+const webviewConfig = {
+  entryPoints: { 'sidebar/main': 'src/webview/sidebar/main.ts' },
+  bundle: true,
+  format: 'iife',
+  platform: 'browser',
+  target: 'es2022',
+  outdir: 'dist/webview',
+  mainFields: ['svelte', 'browser', 'module', 'main'],
+  conditions: ['svelte', 'browser'],
+  sourcemap: !production,
+  minify: production,
+  logLevel: 'info',
+  plugins: [
+    esbuildSvelte({
+      preprocess: sveltePreprocess(),
+      compilerOptions: { dev: !production },
+    }),
+  ],
+};
+
+const configs = [extensionConfig, webviewConfig];
 
 async function run() {
   const contexts = await Promise.all(configs.map((c) => esbuild.context(c)));

@@ -10,6 +10,16 @@
   "activationEvents": [],
   "browser": "./dist/web/extension.js",
   "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        { "id": "annotated", "title": "Annotated", "icon": "media/icon.svg" }
+      ]
+    },
+    "views": {
+      "annotated": [
+        { "type": "webview", "id": "annotated.sidebar", "name": "Annotations" }
+      ]
+    },
     "commands": [
       { "command": "annotated.ping", "title": "Annotated: Ping" }
     ]
