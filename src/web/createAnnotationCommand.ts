@@ -13,9 +13,9 @@ import {
 import { VscodeFileSystem } from './vscodeFileSystem';
 import { VscodeAuthorNameSources } from './authorSources';
 import { readTagPalette, addTagToPalette } from './tagPalette';
+import { NEW_TAG_LABEL, splitPickedTags } from '../core/tags';
 
 const CREATE_NEW_LABEL = '$(add) Create new group…';
-const NEW_TAG_LABEL = '$(add) New tag…';
 
 /** Register the `annotated.createAnnotation` command. */
 export function registerCreateAnnotationCommand(): vscode.Disposable {
@@ -103,15 +103,7 @@ async function pickTags(): Promise<string[] | undefined> {
   if (picked === undefined) {
     return undefined;
   }
-  const names: string[] = [];
-  let addNew = false;
-  for (const item of picked) {
-    if (item.label === NEW_TAG_LABEL) {
-      addNew = true;
-    } else {
-      names.push(item.label);
-    }
-  }
+  const { names, addNew } = splitPickedTags(picked.map((item) => item.label));
   if (addNew) {
     const name = await vscode.window.showInputBox({ prompt: 'New tag name' });
     if (name && name.trim()) {
