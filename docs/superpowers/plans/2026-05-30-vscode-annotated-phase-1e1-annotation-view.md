@@ -294,7 +294,9 @@ Expected: FAIL — cannot resolve `./MarkdownPreview.svelte`.
 
   let { source }: { source: string } = $props();
 
-  const md = new MarkdownIt({ linkify: true, typographer: true });
+  // html:true lets users include inline HTML; DOMPurify (below) is the sanitization
+  // boundary. (With html:false markdown-it escapes raw HTML and DOMPurify is redundant.)
+  const md = new MarkdownIt({ html: true, linkify: true, typographer: true });
 
   const html = $derived(
     DOMPurify.sanitize(md.render(source ?? ''), {
