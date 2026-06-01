@@ -12,7 +12,7 @@ import {
 } from '../core/createAnnotationFlow';
 import { VscodeFileSystem } from './vscodeFileSystem';
 import { VscodeAuthorNameSources } from './authorSources';
-import { readTagPalette, addTagToPalette } from './tagPalette';
+import { readTagPalette, promptNewTag } from './tagPalette';
 import { NEW_TAG_LABEL, splitPickedTags } from '../core/tags';
 
 const CREATE_NEW_LABEL = '$(add) Create new group…';
@@ -105,11 +105,9 @@ async function pickTags(): Promise<string[] | undefined> {
   }
   const { names, addNew } = splitPickedTags(picked.map((item) => item.label));
   if (addNew) {
-    const name = await vscode.window.showInputBox({ prompt: 'New tag name' });
-    if (name && name.trim()) {
-      const color = await vscode.window.showInputBox({ prompt: 'Tag color (hex)', value: '#888888' });
-      await addTagToPalette(name.trim(), color?.trim() || '#888888');
-      names.push(name.trim());
+    const tag = await promptNewTag();
+    if (tag) {
+      names.push(tag.name);
     }
   }
   return names;

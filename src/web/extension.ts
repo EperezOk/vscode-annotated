@@ -4,7 +4,7 @@ import { registerCreateAnnotationCommand } from './createAnnotationCommand';
 import { DetailPanelProvider } from './detailPanelProvider';
 import { GroupStore } from '../core/groupStore';
 import { VscodeFileSystem } from './vscodeFileSystem';
-import { readTagPalette, addTagToPalette } from './tagPalette';
+import { readTagPalette, promptNewTag } from './tagPalette';
 import { NEW_TAG_LABEL, splitPickedTags } from '../core/tags';
 import { revealAnnotation } from './navigateToCode';
 import { readGitRefInfo } from './gitRefsSource';
@@ -124,11 +124,9 @@ export function activate(context: vscode.ExtensionContext): void {
     }
     const { names, addNew } = splitPickedTags(picked.map((item) => item.label));
     if (addNew) {
-      const name = await vscode.window.showInputBox({ prompt: 'New tag name' });
-      if (name && name.trim()) {
-        const color = await vscode.window.showInputBox({ prompt: 'Tag color (hex)', value: '#888888' });
-        await addTagToPalette(name.trim(), color?.trim() || '#888888');
-        names.push(name.trim());
+      const tag = await promptNewTag();
+      if (tag) {
+        names.push(tag.name);
       }
     }
     const store = new GroupStore(new VscodeFileSystem(folder.uri));
@@ -233,11 +231,9 @@ export function activate(context: vscode.ExtensionContext): void {
     }
     const { names, addNew } = splitPickedTags(picked.map((item) => item.label));
     if (addNew) {
-      const name = await vscode.window.showInputBox({ prompt: 'New tag name' });
-      if (name && name.trim()) {
-        const color = await vscode.window.showInputBox({ prompt: 'Tag color (hex)', value: '#888888' });
-        await addTagToPalette(name.trim(), color?.trim() || '#888888');
-        names.push(name.trim());
+      const tag = await promptNewTag();
+      if (tag) {
+        names.push(tag.name);
       }
     }
     await patchGroup(groupId, { tags: names });
