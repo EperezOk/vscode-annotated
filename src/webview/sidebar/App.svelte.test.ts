@@ -99,4 +99,14 @@ describe('App.svelte', () => {
     await userEvent.click(screen.getByTestId('refresh-btn'));
     expect(postToHost).toHaveBeenCalledWith({ type: 'refresh' });
   });
+
+  it('shows transient "Refreshed" feedback after clicking refresh', async () => {
+    sidebar.set({ ...initialSidebarState(), groups: [group('g1', 'One')], palette: [] });
+    render(App);
+    const btn = screen.getByTestId('refresh-btn');
+    expect(btn).toHaveTextContent('↻ Refresh');
+    await userEvent.click(btn);
+    expect(btn).toHaveTextContent('✓ Refreshed');
+    expect(postToHost).toHaveBeenCalledWith({ type: 'refresh' });
+  });
 });
