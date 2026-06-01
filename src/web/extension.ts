@@ -6,7 +6,7 @@ import { GroupStore } from '../core/groupStore';
 import { VscodeFileSystem } from './vscodeFileSystem';
 import { readTagPalette, promptNewTag } from './tagPalette';
 import { NEW_TAG_LABEL, splitPickedTags } from '../core/tags';
-import { revealAnnotation } from './navigateToCode';
+import { revealAnnotation, clearHighlight } from './navigateToCode';
 import { readGitRefInfo } from './gitRefsSource';
 import { gitRefSuggestions } from '../core/gitRefs';
 import { computeStaleIds } from './staleness';
@@ -176,6 +176,9 @@ export function activate(context: vscode.ExtensionContext): void {
     if (folder) {
       void revealAnnotation(folder.uri, annotation);
     }
+  };
+  detailProvider.onNavigationClosed = (): void => {
+    clearHighlight();
   };
 
   detailProvider.onUpdateAnnotation = async (groupId, annotationId, content): Promise<void> => {
