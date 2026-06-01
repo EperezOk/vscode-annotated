@@ -53,7 +53,7 @@ export const markdownKeymap: readonly KeyBinding[] = [
  * colors are nearly invisible on the dark input background.
  */
 export const markdownHighlightStyle = HighlightStyle.define([
-  { tag: t.heading, fontWeight: 'bold', color: 'var(--vscode-textPreformat-foreground, #4ec9b0)' },
+  { tag: t.heading, fontWeight: 'bold', color: 'var(--vscode-symbolIcon-keywordForeground, #569cd6)' },
   { tag: t.strong, fontWeight: 'bold' },
   { tag: t.emphasis, fontStyle: 'italic' },
   { tag: [t.link, t.url], color: 'var(--vscode-textLink-foreground, #3794ff)' },

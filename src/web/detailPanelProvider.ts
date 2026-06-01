@@ -140,6 +140,9 @@ export class DetailPanelProvider implements vscode.WebviewViewProvider {
     const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(base, 'main.js'));
     const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(base, 'main.css'));
     const nonce = getNonce();
+    // CodeMirror injects <style> elements at runtime, which `style-src ${webview.cspSource}`
+    // alone would block. 'unsafe-inline' permits them. TODO(phase-4 follow-up): tighten this
+    // by threading the existing nonce via EditorView.cspNonce + `style-src 'nonce-...'`.
     const csp =
       `default-src 'none'; ` +
       `style-src ${webview.cspSource} 'unsafe-inline'; ` +

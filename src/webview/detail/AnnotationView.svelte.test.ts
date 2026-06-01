@@ -89,6 +89,7 @@ describe('AnnotationView', () => {
     await userEvent.click(screen.getByTestId('edit-btn'));
     expect(screen.getByTestId('md-editor')).toHaveAttribute('data-autofocus', 'false');
   });
+
   it('renders the comment thread', () => {
     render(AnnotationView, { annotation: annotation('# Note'), comments: [], currentAuthor: 'Me' });
     expect(screen.getByTestId('comment-thread')).toBeInTheDocument();

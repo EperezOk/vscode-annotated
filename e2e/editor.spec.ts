@@ -7,6 +7,7 @@ async function openEditor(page: import('@playwright/test').Page) {
   await page.locator('.activitybar').getByRole('tab', { name: /Annotated/i }).click();
   await page.waitForFunction(() => document.querySelectorAll('iframe.webview').length >= 1);
   const sidebar = page.locator('iframe.webview').nth(0).contentFrame().locator('iframe#active-frame').contentFrame();
+  await sidebar.getByTestId('group-card').waitFor({ state: 'visible', timeout: 30_000 });
   await sidebar.getByTestId('group-card').click();
   await page.waitForFunction(() => document.querySelectorAll('iframe.webview').length >= 2);
   const detail = page.locator('iframe.webview').nth(1).contentFrame().locator('iframe#active-frame').contentFrame();
@@ -23,10 +24,11 @@ test('markdown headings render bold (theme-aware highlighting is applied)', asyn
   await page.keyboard.press('ControlOrMeta+A');
   await page.keyboard.type('# Heading');
   // Some token span is rendered bold by markdownHighlightStyle, and it covers the heading text.
-  const boldText = await detail.locator('[data-testid="md-editor"] .cm-content span').evaluateAll(
-    (els) => els.filter((e) => Number(getComputedStyle(e).fontWeight) >= 700).map((e) => e.textContent ?? '').join(''),
-  );
-  expect(boldText).toContain('Heading');
+  await expect.poll(async () =>
+    detail.locator('[data-testid="md-editor"] .cm-content span').evaluateAll(
+      (els) => els.filter((e) => Number(getComputedStyle(e).fontWeight) >= 700).map((e) => e.textContent ?? '').join(''),
+    ),
+  ).toContain('Heading');
 });
 
 test('clicking the blank area below the text focuses the editor with the cursor at the end', async ({ page }) => {
