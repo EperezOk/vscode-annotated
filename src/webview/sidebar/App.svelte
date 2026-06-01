@@ -13,19 +13,26 @@
     setSelected(id);
     postToHost({ type: 'selectGroup', groupId: id });
   }
+
+  function refreshFiles(): void {
+    postToHost({ type: 'refresh' });
+  }
 </script>
 
 <main data-testid="sidebar">
+  <header class="bar">
+    <button type="button" class="link" data-testid="refresh-btn" title="Reload annotations from disk" onclick={refreshFiles}>↻ Refresh</button>
+    {#if $sidebar.groups.length > 0}
+      <button type="button" class="link" data-testid="bulk-toggle" onclick={toggleBulkMode}>
+        {$sidebar.bulkMode ? 'Done' : 'Select'}
+      </button>
+    {/if}
+  </header>
   {#if $sidebar.groups.length === 0}
     <p class="empty" data-testid="empty">
       No annotations yet. Select code and run "Annotated: Create Annotation".
     </p>
   {:else}
-    <header class="bar">
-      <button type="button" class="link" data-testid="bulk-toggle" onclick={toggleBulkMode}>
-        {$sidebar.bulkMode ? 'Done' : 'Select'}
-      </button>
-    </header>
     {#if $sidebar.bulkMode}
       <div class="bulk-bar" data-testid="bulk-action-bar">
         <span class="count" data-testid="bulk-count">{$sidebar.selectedGroupIds.length} selected</span>
@@ -41,6 +48,7 @@
         selectedTags={$sidebar.selectedTags}
         selectedAuthors={$sidebar.selectedAuthors}
         showResolved={$sidebar.showResolved}
+        palette={$sidebar.palette}
         ontoggletag={toggleTagFilter}
         ontoggleauthor={toggleAuthorFilter}
         onshowresolved={setShowResolved}
@@ -75,7 +83,7 @@
     font-size: 12px;
     padding: 8px 2px;
   }
-  .bar { display: flex; justify-content: flex-end; padding: 2px 2px 6px; }
+  .bar { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 2px 2px 6px; }
   .link { background: none; border: none; color: var(--vscode-textLink-foreground, #3794ff); cursor: pointer; font-size: 11.5px; padding: 0; }
   .bulk-bar { position: sticky; top: 0; z-index: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 6px 4px 8px; border-bottom: 1px solid var(--vscode-sideBar-border, #333); margin-bottom: 8px; background: var(--vscode-sideBar-background, #1e1e1e); }
   .count { font-size: 11px; color: var(--vscode-descriptionForeground, #9a9a9a); margin-right: auto; }

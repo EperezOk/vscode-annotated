@@ -51,13 +51,14 @@ describe('App.svelte', () => {
     expect(screen.getAllByTestId('group-card')).toHaveLength(2);
   });
 
-  it('filters by tag when a tag chip is selected', async () => {
+  it('filters by tag selected from the dropdown', async () => {
     sidebar.set({
       ...initialSidebarState(),
       groups: [group('g1', 'Sec', { tags: ['security'] }), group('g2', 'Todo', { tags: ['todo'] })],
       palette: [],
     });
     render(App);
+    await userEvent.click(screen.getByTestId('picker-input-Tags'));
     await userEvent.click(screen.getByRole('button', { name: 'security' }));
     const cards = screen.getAllByTestId('group-card');
     expect(cards).toHaveLength(1);
@@ -90,5 +91,12 @@ describe('App.svelte', () => {
     render(App);
     await userEvent.click(screen.getByTestId('bulk-resolve-btn'));
     expect(postToHost).toHaveBeenCalledWith({ type: 'bulkResolveRestore', groupIds: ['g1'] });
+  });
+
+  it('posts a refresh message when the refresh button is clicked', async () => {
+    sidebar.set({ ...initialSidebarState(), groups: [group('g1', 'One')], palette: [] });
+    render(App);
+    await userEvent.click(screen.getByTestId('refresh-btn'));
+    expect(postToHost).toHaveBeenCalledWith({ type: 'refresh' });
   });
 });
