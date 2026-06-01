@@ -20,7 +20,7 @@ The items cluster into six work areas:
 | B. Tag color & contrast | #1, #7 | Swatch QuickPick for new-tag color; auto black/white text on chips |
 | C. Navigation highlight | #6, #8 | Stronger line highlight; clear it when the detail view closes |
 | D. Copy feedback | #5 | Inline "Copied ✓" confirmation on copy buttons |
-| E. Gutter indicators | #4 | Stacked colored bars in the editor gutter for annotated lines |
+| E. Gutter indicators | #4 | Stacked colored bars in the gutter + overview-ruler marks + hover/cursor click-to-open |
 | F. Sidebar | #9, #10 | Searchable tag-filter dropdown; manual refresh button |
 
 ## Architectural principles (unchanged from the project)
@@ -115,17 +115,21 @@ The new-tag color is currently a raw hex `showInputBox`, duplicated in **three**
 (`createAnnotationCommand.pickTags`, `extension.onEditTags`, `extension.onBulkEditTags`).
 
 - Add a curated swatch list to `src/core/tags.ts` (pure data):
-  `TAG_SWATCHES: { name: string; hex: string }[]` — e.g. Red, Orange, Amber, Yellow, Green,
-  Teal, Blue, Indigo, Purple, Pink, Gray (≈10–12 named colors).
+  `TAG_SWATCHES: { name: string; hex: string }[]` — exactly these eight, in order:
+  **Red, Amber, Yellow, Green, Teal, Blue, Indigo, Gray** (representative hexes, tunable:
+  `#E5484D`, `#F5A623`, `#E5C100`, `#3FB950`, `#14B8A6`, `#3794FF`, `#5B5BD6`, `#8B949E`).
+- Add a tiny shared `src/core/svgIcon.ts` with a `svgDataUri(svg: string): string` encoder and
+  a pure `swatchIconSvg(hex: string): string` that renders a small filled rounded square
+  `data:` URI for use as a QuickPick item `iconPath` — so **each color option is shown
+  visually** in the picker. (4g's `buildGutterSvg` reuses `svgDataUri` from here, so this
+  module lands in 4a before the gutter work.)
 - Add a shared host helper `promptNewTag(): Promise<Tag | undefined>` in
   `src/web/tagPalette.ts` that:
   1. prompts for the tag **name** (`showInputBox`),
-  2. shows a `showQuickPick` of the swatches (label = name; `description` = hex; each item
-     carries its hex) plus a pinned **"Custom hex…"** item that falls back to the old hex
-     `showInputBox`,
+  2. shows a `showQuickPick` of the eight swatches — `label` = name, `description` = hex,
+     `iconPath` = `swatchIconSvg(hex)` (the colored square), each item carrying its hex —
+     plus a pinned **"Custom hex…"** item that falls back to the hex `showInputBox`,
   3. returns the resulting `Tag`, or `undefined` if cancelled.
-  - *Optional polish:* generate a tiny colored-square SVG `data:` URI as each item's
-    `iconPath` so the QuickPick actually shows the color. Nice-to-have, not required.
 - Replace all three duplicated blocks with `promptNewTag()`. This removes the duplication and
   is the single behavioral change point.
 
@@ -205,7 +209,9 @@ Indicators are shown for **all annotation groups except resolved ones** (per dec
 do **not** follow the sidebar tag/author filter — they're a persistent "this code is
 annotated" signal. One bar per annotation covering the line; the bar color is the group's
 **first tag** color (via the palette), falling back to a neutral default (`#888888`) for
-groups with no tags.
+groups with no tags. Annotated lines are also marked on the **overview ruler** (the scrollbar
+lane) so they're visible while scrolling — using the line's **primary** (first) bar color
+when multiple annotations stack.
 
 ### E3. Pure logic (`src/core/gutterIndicators.ts`)
 
@@ -215,9 +221,10 @@ groups with no tags.
   that line). Deterministic ordering (e.g. by group/annotation creation order) so colors are
   stable.
 - `buildGutterSvg(colors: string[]): string` — return a `data:image/svg+xml;base64,…` URI
-  drawing thin vertical bars side by side (each ~3px wide, full height, 1px gap), sized to the
-  gutter. **Cap** at `MAX_BARS` (e.g. 4); beyond the cap, render the cap'd bars only (extra
-  annotations still navigable via the sidebar). The cap is documented, not silent.
+  (via `svgDataUri` from `svgIcon.ts`) drawing thin vertical bars side by side (each ~3px
+  wide, full height, 1px gap), sized to the gutter. **Cap** at `MAX_BARS` (e.g. 4); beyond the
+  cap, render the cap'd bars only (extra annotations still navigable via the sidebar/hover).
+  The cap is documented, not silent.
 
 Both functions are pure and unit-tested (coverage logic, color mapping, ordering, cap,
 empty/edge cases, SVG well-formedness).
@@ -226,11 +233,20 @@ empty/edge cases, SVG well-formedness).
 
 - A `GutterDecorationManager` holds a cache of `TextEditorDecorationType` keyed by **color
   signature** (the joined color list) so lines sharing a signature reuse one decoration type
-  (decoration types are limited/expensive). Each type's `gutterIconPath` is the composed SVG
-  for that signature; `gutterIconSize: 'contain'`.
+  (decoration types are limited/expensive). Each type sets:
+  - `gutterIconPath` = the composed multi-bar SVG `data:` URI for that signature,
+    `gutterIconSize: 'contain'`;
+  - `overviewRulerColor` = the signature's **first** color + `overviewRulerLane: Center`, so
+    annotated lines also appear on the scrollbar ruler (a different lane from the transient
+    navigation highlight in Cluster C, to avoid clobbering it).
+- The **per-line** `hoverMessage` (which lists *that line's* specific annotations as
+  clickable command links — see E6) cannot live on the type, so each line is applied as a
+  `DecorationOptions{ range, hoverMessage }`. The gutter SVG comes from the type (keyed by
+  signature); the hover comes from the per-line option. The decoration range is the full line
+  (no background tint — the bar is the only visible mark).
 - `refresh(editors, groups, palette)` recomputes `gutterBarsByLine` per visible editor and
-  applies decorations (grouping the editor's lines by signature). Stale signatures are
-  disposed.
+  applies decorations (grouping the editor's lines by signature, building each line's
+  `DecorationOptions`). Stale signatures are disposed.
 - **Update triggers** (wired in `extension.ts`):
   - `window.onDidChangeActiveTextEditor` / `onDidChangeVisibleTextEditors`,
   - the existing `.annotations/**/*.json` file watcher (already drives sidebar refresh),
@@ -240,11 +256,37 @@ empty/edge cases, SVG well-formedness).
 ### E5. Testing note (honest)
 
 VSCode exposes **no read-back** for applied decorations, so rendering can't be asserted via
-the integration API. We unit-test all pure logic (`gutterBarsByLine`, `buildGutterSvg`) and
-keep the wiring thin; visual correctness (bars appear, stack, colored correctly) is verified
-by a Playwright screenshot and/or manual check. This limitation is called out so coverage
-isn't overstated. Clicking a bar to open its annotation is **out of scope** (possible future
-enhancement).
+the integration API. We unit-test all pure logic (`gutterBarsByLine`, `buildGutterSvg`,
+`swatchIconSvg`, the hover-markdown builder, `annotationsAtLine` — see E6) and keep the wiring
+thin; visual correctness (bars appear, stack, colored correctly; ruler marks) is verified by
+a Playwright screenshot and/or manual check. This limitation is called out so coverage isn't
+overstated.
+
+### E6. Click-to-open from the gutter (#4 follow-up)
+
+VSCode's public API has **no gutter-icon click/hover event** (open requests: vscode #224134,
+#5455), so we can't intercept a raw click on the bar. We deliver the same outcome two ways:
+
+- **Hover command links.** Each annotated line's `hoverMessage` (E4) is a *trusted*
+  `MarkdownString` listing the annotations covering that line as `command:` links. Clicking a
+  link runs a new command `annotated.openAnnotation` with `{ groupId, annotationId }` args,
+  which reuses the create-flow open path (Cluster A1): load the group → `openAnnotation`
+  message → focus the panel → reveal + highlight the code.
+  - 1 annotation on the line → a single "📝 Open annotation" link.
+  - N annotations → one link per annotation, labeled `group title · file:lines`.
+  - `isTrusted` is enabled; args are our own ids and are validated in the command handler.
+  - Known minor UX wrinkle (vscode #158711): the hover can dismiss while moving the mouse to
+    the link; VSCode's sticky-hover default makes it usable in practice.
+- **Cursor command + QuickPick.** A command `annotated.openAnnotationAtCursor` (Command
+  Palette + keybinding) reads the active editor's cursor line and the annotations covering it:
+  **0** → info message; **1** → open directly; **N** → a **QuickPick** (`group title ·
+  file:lines`) to choose, then open. This is the keyboard path and the explicit QuickPick
+  behavior requested.
+
+Pure helper `annotationsAtLine(groups, file, line): { group, annotation }[]` (non-resolved
+only) backs both paths and is unit-tested. The hover-markdown builder (annotations → command
+links) is pure and unit-tested. The two commands are registered in `extension.ts` and added
+to `package.json` `contributes.commands` (+ a keybinding for the cursor command).
 
 ---
 
@@ -259,11 +301,15 @@ Replace the always-rendered chip rows with a compact, searchable picker. New reu
 `FilterPicker.svelte`:
 
 - Collapsed default: a slim input/placeholder ("＋ Filter by tag") — **no chip spam**.
-- Focus/typing reveals a dropdown of matching available options; selecting one adds it.
+- **On focus (before typing), the dropdown shows the full list** of available options (minus
+  already-selected ones), so the menu is browsable without typing. If the list is long it's
+  **truncated to a cap** (e.g. 50) with a "+N more — type to filter…" hint at the bottom.
+  Typing narrows the list by case-insensitive substring; selecting an option adds it.
 - Selected values render as **removable pills** (✕ to remove). Tag pills use the tag color +
   `contrastColor` text (Cluster B2).
-- Pure filtering helper (substring match, case-insensitive) lives in `core` and is unit-
-  tested; the component handles open/close + keyboard (Esc closes, Enter selects highlighted).
+- Pure filtering helper `filterOptions(all, selected, query, cap)` (returns the visible slice
+  + a "more" count; empty query → all, capped) lives in `core` and is unit-tested; the
+  component handles open/close + keyboard (Esc closes, Enter selects highlighted, ↑/↓ move).
 
 Apply the same picker to the **authors** filter for consistency (the chip-spam problem is
 identical), keeping the existing "Show resolved" checkbox. Selection state (`selectedTags`,
@@ -292,24 +338,34 @@ presentation changes.
 All three get validation arms in `parseDetailMessage` / `parseWebviewMessage` and protocol
 unit tests.
 
+## Command additions (`package.json` `contributes.commands`)
+
+| Command | Trigger | Behavior |
+|---|---|---|
+| `annotated.openAnnotation` | Hover command links (E6) | Open the annotation given `{ groupId, annotationId }` args |
+| `annotated.openAnnotationAtCursor` | Command Palette + keybinding | Open the annotation at the cursor line; QuickPick if multiple (E6) |
+
 ## Out of scope / non-goals
 
 - No change to the on-disk annotation/comment format or the core model.
 - No light/dark theme work beyond using `--vscode-*` variables and theme colors.
-- Gutter-bar **click-to-open** behavior (future enhancement).
+- Raw mouse-click capture on a gutter icon (not exposed by VSCode; delivered via hover links +
+  cursor command instead — E6).
 - Filtering gutter indicators by the sidebar filter (decision: show all non-resolved).
 
 ## Testing strategy
 
-- **Unit (Vitest):** `contrastColor`, `TAG_SWATCHES`, `gutterBarsByLine`, `buildGutterSvg`,
-  filter substring helper, `runCreateAnnotation` returning the new annotation id, new protocol
-  validation arms.
-- **Svelte component tests:** `FilterPicker` (reveal/filter/add/remove pill, keyboard),
-  `AnnotationView` copy "Copied ✓" transient, `MarkdownEditor` autofocus prop wiring, sidebar
-  refresh button posts `refresh`.
+- **Unit (Vitest):** `contrastColor`, `TAG_SWATCHES`, `swatchIconSvg`, `gutterBarsByLine`,
+  `buildGutterSvg`, `annotationsAtLine`, the hover-markdown builder, `filterOptions`
+  (default-all + cap + substring), `runCreateAnnotation` returning the new annotation id, new
+  protocol validation arms.
+- **Svelte component tests:** `FilterPicker` (full-list-on-focus, typing filters, add/remove
+  pill, keyboard), `AnnotationView` copy "Copied ✓" transient, `MarkdownEditor` autofocus prop
+  wiring, sidebar refresh button posts `refresh`.
 - **Integration (`@vscode/test-web`):** create → detail opens the new annotation in edit mode;
-  `refresh` reloads; `navigationClosed` / panel-hidden invokes the clear-highlight callback
-  (decoration state itself isn't queryable — assert the wiring).
+  `refresh` reloads; `navigationClosed` / panel-hidden invokes the clear-highlight callback;
+  `annotated.openAnnotation` / `annotated.openAnnotationAtCursor` open the right annotation
+  (single vs QuickPick path) — decoration state itself isn't queryable, so assert the wiring.
 - **E2E (Playwright):** screenshot the gutter bars (single + stacked) and the strengthened
   navigation highlight for visual confirmation.
 
@@ -318,9 +374,10 @@ unit tests.
 Built subagent-driven (fresh subagent per task, spec + code-quality review between tasks),
 proceeding autonomously across sub-plans per the project working agreement.
 
-1. **4a — Tag color & contrast (#1, #7):** `contrastColor`, `TAG_SWATCHES`, `promptNewTag`,
-   de-duplicate the 3 call sites, apply contrast to chips. *(No webview round-trips; safe
-   first step.)*
+1. **4a — Tag color & contrast (#1, #7):** `src/core/svgIcon.ts` (`svgDataUri` +
+   `swatchIconSvg`), `contrastColor`, `TAG_SWATCHES` (the 8 named colors), `promptNewTag` with
+   visual swatch icons, de-duplicate the 3 call sites, apply contrast to chips. *(No webview
+   round-trips; safe first step; lands the shared SVG helper used by 4g.)*
 2. **4b — Markdown editor (#3 + #2's editor prop):** theme-aware highlight style,
    click-below-to-end, `autofocus` prop.
 3. **4c — Create → focus flow (#2):** `runCreateAnnotation` return shape, `openAnnotation`
@@ -329,5 +386,8 @@ proceeding autonomously across sub-plans per the project working agreement.
    panel-visibility clear.
 5. **4e — Copy feedback (#5):** inline "Copied ✓".
 6. **4f — Sidebar (#9, #10):** `FilterPicker`, refresh button + `refresh` message.
-7. **4g — Gutter indicators (#4):** pure `gutterIndicators.ts` → `GutterDecorationManager` →
-   wiring + update triggers. *(Largest; verify SVG render early.)*
+7. **4g — Gutter indicators + click-to-open (#4):** pure `gutterIndicators.ts`
+   (`gutterBarsByLine`, `buildGutterSvg`, `annotationsAtLine`, hover-markdown builder) →
+   `GutterDecorationManager` (gutter SVG + overview-ruler marks + per-line hover) → wiring +
+   update triggers → `annotated.openAnnotation` / `annotated.openAnnotationAtCursor` commands
+   (+ keybinding). *(Largest; verify SVG render + hover links early.)*
