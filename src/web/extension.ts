@@ -348,7 +348,21 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('annotated.ping', () => 'pong'),
   );
 
-  context.subscriptions.push(registerCreateAnnotationCommand());
+  const onAnnotationCreated = async (groupId: string, annotationId: string): Promise<void> => {
+    await showGroupWithStale(groupId);
+    detailProvider.openAnnotation(annotationId);
+    await vscode.commands.executeCommand('annotated.detail.focus');
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    if (!folder) {
+      return;
+    }
+    const group = await new GroupStore(new VscodeFileSystem(folder.uri)).getGroup(groupId);
+    const annotation = group?.annotations.find((a) => a.id === annotationId);
+    if (annotation) {
+      await revealAnnotation(folder.uri, annotation);
+    }
+  };
+  context.subscriptions.push(registerCreateAnnotationCommand(onAnnotationCreated));
 }
 
 export function deactivate(): void {
