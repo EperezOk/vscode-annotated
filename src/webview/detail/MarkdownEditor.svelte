@@ -3,9 +3,9 @@
   import { EditorState } from '@codemirror/state';
   import { EditorView, keymap } from '@codemirror/view';
   import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
-  import { syntaxHighlighting, defaultHighlightStyle } from '@codemirror/language';
+  import { syntaxHighlighting } from '@codemirror/language';
   import { markdown } from '@codemirror/lang-markdown';
-  import { markdownKeymap, urlPasteHandler } from './editorExtensions';
+  import { markdownKeymap, urlPasteHandler, markdownHighlightStyle, fillHeightTheme } from './editorExtensions';
 
   let { doc = '', onChange }: { doc?: string; onChange?: (value: string) => void } = $props();
 
@@ -19,8 +19,9 @@
         doc,
         extensions: [
           history(),
-          syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+          syntaxHighlighting(markdownHighlightStyle, { fallback: true }),
           markdown(),
+          fillHeightTheme,
           urlPasteHandler,
           keymap.of([...markdownKeymap, ...defaultKeymap, ...historyKeymap]),
           EditorView.lineWrapping,

@@ -68,7 +68,7 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
     const nonce = getNonce();
     const csp =
       `default-src 'none'; ` +
-      `style-src ${webview.cspSource}; ` +
+      `style-src ${webview.cspSource} 'unsafe-inline'; ` +
       `script-src 'nonce-${nonce}'; ` +
       `font-src ${webview.cspSource}; ` +
       `img-src ${webview.cspSource} https: data:;`;
