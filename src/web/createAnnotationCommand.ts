@@ -13,6 +13,7 @@ import {
 import { VscodeFileSystem } from './vscodeFileSystem';
 import { VscodeAuthorNameSources } from './authorSources';
 import { readTagPalette, promptNewTag } from './tagPalette';
+import { swatchIconSvg } from '../shared/svgIcon';
 import { NEW_TAG_LABEL, splitPickedTags } from '../core/tags';
 
 const CREATE_NEW_LABEL = '$(add) Create new group…';
@@ -98,7 +99,7 @@ async function promptGroupTitle(): Promise<string | undefined> {
 async function pickTags(): Promise<string[] | undefined> {
   const palette = readTagPalette();
   const items: vscode.QuickPickItem[] = [
-    ...palette.map((t) => ({ label: t.name })),
+    ...palette.map((t) => ({ label: t.name, iconPath: vscode.Uri.parse(swatchIconSvg(t.color)) })),
     { label: NEW_TAG_LABEL, alwaysShow: true },
   ];
   const picked = await vscode.window.showQuickPick(items, {

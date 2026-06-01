@@ -19,6 +19,7 @@ import { resolveAuthor, resolveAuthorEmail } from '../core/authorIdentity';
 import { VscodeAuthorNameSources } from './authorSources';
 import { newId } from '../shared/ids';
 import { annotationsAtLine } from '../core/gutterIndicators';
+import { swatchIconSvg } from '../shared/svgIcon';
 import { GutterDecorationManager } from './gutterDecorations';
 
 export function activate(context: vscode.ExtensionContext): void {
@@ -127,7 +128,7 @@ export function activate(context: vscode.ExtensionContext): void {
     }
     const palette = readTagPalette();
     const items: vscode.QuickPickItem[] = [
-      ...palette.map((t) => ({ label: t.name })),
+      ...palette.map((t) => ({ label: t.name, iconPath: vscode.Uri.parse(swatchIconSvg(t.color)) })),
       { label: NEW_TAG_LABEL, alwaysShow: true },
     ];
     const picked = await vscode.window.showQuickPick(items, {
@@ -237,7 +238,7 @@ export function activate(context: vscode.ExtensionContext): void {
     }
     const palette = readTagPalette();
     const items: vscode.QuickPickItem[] = [
-      ...palette.map((t) => ({ label: t.name, picked: group.tags.includes(t.name) })),
+      ...palette.map((t) => ({ label: t.name, picked: group.tags.includes(t.name), iconPath: vscode.Uri.parse(swatchIconSvg(t.color)) })),
       { label: NEW_TAG_LABEL, alwaysShow: true },
     ];
     const picked = await vscode.window.showQuickPick(items, {
