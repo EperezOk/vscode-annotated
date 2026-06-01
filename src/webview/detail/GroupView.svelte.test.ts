@@ -84,6 +84,14 @@ describe('GroupView', () => {
     expect(onreorder).not.toHaveBeenCalled();
   });
 
+  it('uses readable (auto-contrast) text color on tag chips', () => {
+    const dark = render(GroupView, { group: group(), palette: [{ name: 'security', color: '#c0392b' }] });
+    expect(screen.getByTestId('tag-chip')).toHaveStyle('color: rgb(255, 255, 255)'); // dark bg → white
+    dark.unmount();
+    render(GroupView, { group: group(), palette: [{ name: 'security', color: '#ffff00' }] });
+    expect(screen.getByTestId('tag-chip')).toHaveStyle('color: rgb(0, 0, 0)'); // light bg → black
+  });
+
   it('shows a Resolve button for an open group and requests resolved on click', async () => {
     const onsetstatus = vi.fn();
     render(GroupView, { group: group(), palette, onsetstatus });
