@@ -127,6 +127,12 @@ export class DetailPanelProvider implements vscode.WebviewViewProvider {
     this.post();
   }
 
+  /** Tell the webview to open a specific annotation in the annotation view. */
+  openAnnotation(annotationId: string): void {
+    const message: HostToDetail = { type: 'openAnnotation', annotationId };
+    void this.view?.webview.postMessage(message);
+  }
+
   private post(): void {
     if (!this.view) {
       return;

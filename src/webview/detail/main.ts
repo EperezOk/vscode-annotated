@@ -5,7 +5,7 @@ import { postToHost } from './vscodeApi';
 
 window.addEventListener('message', (event: MessageEvent) => {
   const message = event.data;
-  if (message && typeof message === 'object' && message.type === 'setGroup') {
+  if (message && typeof message === 'object' && (message.type === 'setGroup' || message.type === 'openAnnotation')) {
     handleHostMessage(message);
   }
 });
