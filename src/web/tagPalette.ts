@@ -46,7 +46,10 @@ export async function promptNewTag(): Promise<Tag | undefined> {
   let color: string;
   if (picked.label === CUSTOM_HEX_LABEL) {
     const hex = await vscode.window.showInputBox({ prompt: 'Tag color (hex)', value: DEFAULT_COLOR });
-    color = hex?.trim() || DEFAULT_COLOR;
+    if (hex === undefined) {
+      return undefined;
+    }
+    color = hex.trim() || DEFAULT_COLOR;
   } else {
     color = picked.description ?? DEFAULT_COLOR;
   }

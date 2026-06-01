@@ -87,7 +87,8 @@
 
     <div class="tags-row">
       {#each group.tags as tag (tag)}
-        <span class="chip" data-testid="tag-chip" style="background:{tagColor(palette, tag)}; color:{contrastColor(tagColor(palette, tag))}">{tag}</span>
+        {@const bg = tagColor(palette, tag)}
+        <span class="chip" data-testid="tag-chip" style="background:{bg}; color:{contrastColor(bg)}">{tag}</span>
       {/each}
       <button type="button" class="link" data-testid="edit-tags-btn" onclick={() => onedittags?.()}>＋ edit tags</button>
     </div>

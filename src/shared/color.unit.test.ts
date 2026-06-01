@@ -6,6 +6,7 @@ describe('contrastColor', () => {
     expect(contrastColor('#ffffff')).toBe('#000000');
     expect(contrastColor('#ffff00')).toBe('#000000'); // yellow
     expect(contrastColor('#fff')).toBe('#000000');     // shorthand
+    expect(contrastColor('#808080')).toBe('#000000'); // boundary: BT.601 brightness exactly 128 → black
   });
 
   it('returns white on dark backgrounds', () => {

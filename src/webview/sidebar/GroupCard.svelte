@@ -42,7 +42,8 @@
   {#if group.tags.length > 0}
     <div class="chips">
       {#each group.tags as tag (tag)}
-        <span class="chip" data-testid="tag-chip" style="background:{tagColor(palette, tag)}; color:{contrastColor(tagColor(palette, tag))}">{tag}</span>
+        {@const bg = tagColor(palette, tag)}
+        <span class="chip" data-testid="tag-chip" style="background:{bg}; color:{contrastColor(bg)}">{tag}</span>
       {/each}
     </div>
   {/if}
