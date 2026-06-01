@@ -1,0 +1,10 @@
+- Al crear un nuevo tag despues de crear una nueva annotation y un nuevo grupo, para el color picker, podemos poner un color picker en vez de un hex code input?
+- Inmediatamente despues de crear una nueva annotation, se deberia abrir la view de annotation details con el focus en el Markdown editor, listo para escribir el content.
+- En el Markdown editor, clickear debajo de donde termina el content no tiene efecto; deberia hacer focus al final del contenido. Ademas, probandolo en el browser, no veo que el editor tenga syntax highlighting.
+- Como se veria si agregaramos un indicador visual en el editor de las lineas en las que hay annotations? Quiero poner algo minimalista y que sea posible stackear multiples indicadores de anotaciones que apliquen a la misma linea. Quizas algo como un fino border que se expanda por las lineas a un costadito, usando el color del primer tag del grupo (por si hay muchos)? Y si hay muchas anotaciones sobre la misma linea, se pondrian varios bordes.
+- Copiar el path en una annotation detail no da ningun tipo de feedback de exito. Copiar el Mardown content lo mismo.
+- El highlight del rango de lineas de una annotation al abrir la detailed view no es lo suficientemente notorio.
+- Si el color de un tag es muy clarito, no se llega a ver el texto. El mismo deberia ser blanco o negro (automaticamente) para lograr buen contraste.
+- Al cerrar el detailed annotation view, no se sale el highlight de las lineas correspondientes en el editor.
+- El filtro de tags muestra chips con todos los tags. Me gustaria que solo se muestren los tags una vez que se hace click en un boton de filtrar.
+- Agreguemos un boton de refresh en el main sidebar para recargar todos los archivos del filesystem, por si hubo algun cambio que no detectamos automaticamente por algun motivo.
