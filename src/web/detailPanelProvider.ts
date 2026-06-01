@@ -14,6 +14,9 @@ export class DetailPanelProvider implements vscode.WebviewViewProvider {
   /** Set by the extension to navigate to a selected annotation. */
   public onSelectAnnotation?: (annotation: Annotation) => void;
 
+  /** Set by the extension: the annotation view closed (Back) or the panel was hidden. */
+  public onNavigationClosed?: () => void;
+
   /** Set by the extension to persist an annotation's edited content. */
   public onUpdateAnnotation?: (groupId: string, annotationId: string, content: string) => void;
 
@@ -75,6 +78,8 @@ export class DetailPanelProvider implements vscode.WebviewViewProvider {
         }
       } else if (message.type === 'copyText') {
         void vscode.env.clipboard.writeText(message.text);
+      } else if (message.type === 'navigationClosed') {
+        this.onNavigationClosed?.();
       } else if (message.type === 'setGroupTitle') {
         if (this.group) {
           this.onSetGroupTitle?.(this.group.id, message.title);
@@ -107,6 +112,11 @@ export class DetailPanelProvider implements vscode.WebviewViewProvider {
         if (this.group) {
           this.onDeleteComment?.(this.group.id, message.commentId);
         }
+      }
+    });
+    webviewView.onDidChangeVisibility(() => {
+      if (!webviewView.visible) {
+        this.onNavigationClosed?.();
       }
     });
   }
