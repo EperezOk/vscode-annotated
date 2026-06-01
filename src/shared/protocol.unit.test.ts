@@ -126,4 +126,7 @@ describe('parseDetailMessage', () => {
     expect(parseDetailMessage({ type: 'editComment', commentId: 1, content: 'x' })).toBeNull();
     expect(parseDetailMessage({ type: 'deleteComment' })).toBeNull();
   });
+  it('accepts navigationClosed', () => {
+    expect(parseDetailMessage({ type: 'navigationClosed' })).toEqual({ type: 'navigationClosed' });
+  });
 });

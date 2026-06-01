@@ -49,7 +49,8 @@ export type DetailToHost =
   | { type: 'updateGroupStatus'; status: GroupStatus }
   | { type: 'addComment'; annotationId: string; content: string }
   | { type: 'editComment'; commentId: string; content: string }
-  | { type: 'deleteComment'; commentId: string };
+  | { type: 'deleteComment'; commentId: string }
+  | { type: 'navigationClosed' };
 
 function isObject(x: unknown): x is Record<string, unknown> {
   return typeof x === 'object' && x !== null;
@@ -125,6 +126,8 @@ export function parseDetailMessage(raw: unknown): DetailToHost | null {
       return typeof raw.commentId === 'string'
         ? { type: 'deleteComment', commentId: raw.commentId }
         : null;
+    case 'navigationClosed':
+      return { type: 'navigationClosed' };
     default:
       return null;
   }
