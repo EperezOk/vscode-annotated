@@ -28,7 +28,8 @@
     },
     "commands": [
       { "command": "annotated.ping", "title": "Annotated: Ping" },
-      { "command": "annotated.createAnnotation", "title": "Annotated: Create Annotation" }
+      { "command": "annotated.createAnnotation", "title": "Annotated: Create Annotation" },
+      { "command": "annotated.openAnnotationAtCursor", "title": "Annotated: Open Annotation at Cursor" }
     ],
     "keybindings": [
       {
@@ -36,6 +37,12 @@
         "key": "ctrl+alt+a",
         "mac": "cmd+alt+a",
         "when": "editorTextFocus && editorHasSelection"
+      },
+      {
+        "command": "annotated.openAnnotationAtCursor",
+        "key": "ctrl+alt+o",
+        "mac": "cmd+alt+o",
+        "when": "editorTextFocus"
       }
     ],
     "configuration": {

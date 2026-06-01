@@ -18,6 +18,7 @@ import { flattenComments, slugifyAuthor } from '../core/comments';
 import { resolveAuthor, resolveAuthorEmail } from '../core/authorIdentity';
 import { VscodeAuthorNameSources } from './authorSources';
 import { newId } from '../shared/ids';
+import { annotationsAtLine } from '../core/gutterIndicators';
 
 export function activate(context: vscode.ExtensionContext): void {
   const provider = new SidebarViewProvider(context.extensionUri);
@@ -351,7 +352,7 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('annotated.ping', () => 'pong'),
   );
 
-  const onAnnotationCreated = async (groupId: string, annotationId: string): Promise<void> => {
+  const openAnnotationInPanel = async (groupId: string, annotationId: string): Promise<void> => {
     await showGroupWithStale(groupId);
     detailProvider.openAnnotation(annotationId);
     await vscode.commands.executeCommand('annotated.detail.focus');
@@ -365,7 +366,53 @@ export function activate(context: vscode.ExtensionContext): void {
       await revealAnnotation(folder.uri, annotation);
     }
   };
-  context.subscriptions.push(registerCreateAnnotationCommand(onAnnotationCreated));
+  context.subscriptions.push(registerCreateAnnotationCommand(openAnnotationInPanel));
+
+  // Invoked by gutter-hover command links (not contributed to the palette — needs args).
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      'annotated.openAnnotation',
+      async (args?: { groupId?: string; annotationId?: string }) => {
+        if (args && typeof args.groupId === 'string' && typeof args.annotationId === 'string') {
+          await openAnnotationInPanel(args.groupId, args.annotationId);
+        }
+      },
+    ),
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('annotated.openAnnotationAtCursor', async () => {
+      const editor = vscode.window.activeTextEditor;
+      const folder = vscode.workspace.workspaceFolders?.[0];
+      if (!editor || !folder) {
+        return;
+      }
+      const file = vscode.workspace.asRelativePath(editor.document.uri, false);
+      const line = editor.selection.active.line + 1; // model lines are 1-based
+      const groups = await new GroupStore(new VscodeFileSystem(folder.uri)).listGroups();
+      const matches = annotationsAtLine(groups, file, line);
+      if (matches.length === 0) {
+        void vscode.window.showInformationMessage('No annotation on this line.');
+        return;
+      }
+      if (matches.length === 1) {
+        await openAnnotationInPanel(matches[0].group.id, matches[0].annotation.id);
+        return;
+      }
+      const picked = await vscode.window.showQuickPick(
+        matches.map((m) => ({
+          label: m.group.title,
+          description: `${m.annotation.file}:${m.annotation.range.startLine}–${m.annotation.range.endLine}`,
+          groupId: m.group.id,
+          annotationId: m.annotation.id,
+        })),
+        { placeHolder: 'Open annotation…' },
+      );
+      if (picked) {
+        await openAnnotationInPanel(picked.groupId, picked.annotationId);
+      }
+    }),
+  );
 }
 
 export function deactivate(): void {
