@@ -74,6 +74,12 @@ describe('buildGutterSvg', () => {
     const svg = decode(buildGutterSvg(many));
     expect((svg.match(/<rect /g) ?? [])).toHaveLength(MAX_BARS);
   });
+
+  it('produces a valid svg with no rects for an empty color list', () => {
+    const svg = decode(buildGutterSvg([]));
+    expect(svg).toContain('<svg');
+    expect(svg.match(/<rect /g)).toBeNull();
+  });
 });
 
 describe('annotationsAtLine', () => {
