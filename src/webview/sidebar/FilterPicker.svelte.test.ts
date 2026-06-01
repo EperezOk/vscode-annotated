@@ -50,4 +50,11 @@ describe('FilterPicker', () => {
     await userEvent.keyboard('{Escape}');
     expect(screen.queryByTestId('picker-menu-Tags')).toBeNull();
   });
+
+  it('applies colorFor to selected pills with readable contrast text', () => {
+    render(FilterPicker, { ...base, selected: ['security'], colorFor: () => '#ffff00' });
+    const pill = screen.getByTestId('pill-Tags');
+    expect(pill).toHaveStyle('background: rgb(255, 255, 0)');
+    expect(pill).toHaveStyle('color: rgb(0, 0, 0)'); // contrastColor(light yellow) → black
+  });
 });

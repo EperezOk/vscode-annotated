@@ -24,6 +24,13 @@
 
   const result = $derived(filterOptions(options, selected, query));
 
+  $effect(() => {
+    const max = Math.max(0, result.visible.length - 1);
+    if (highlighted > max) {
+      highlighted = max;
+    }
+  });
+
   function choose(value: string): void {
     onToggle?.(value);
     query = '';
@@ -36,7 +43,7 @@
       query = '';
     } else if (event.key === 'ArrowDown') {
       event.preventDefault();
-      highlighted = Math.min(highlighted + 1, result.visible.length - 1);
+      highlighted = result.visible.length === 0 ? 0 : Math.min(highlighted + 1, result.visible.length - 1);
     } else if (event.key === 'ArrowUp') {
       event.preventDefault();
       highlighted = Math.max(highlighted - 1, 0);
