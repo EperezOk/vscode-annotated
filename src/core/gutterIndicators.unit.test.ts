@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { gutterBarsByLine, buildGutterSvg, MAX_BARS } from './gutterIndicators';
+import { gutterBarsByLine, buildGutterSvg, MAX_BARS, annotationsAtLine, hoverMarkdown } from './gutterIndicators';
 import { type AnnotationGroup } from '../shared/model';
 import { type TagColor } from '../shared/protocol';
 
@@ -73,5 +73,40 @@ describe('buildGutterSvg', () => {
     const many = Array.from({ length: MAX_BARS + 3 }, (_, i) => `#0000${i}0`);
     const svg = decode(buildGutterSvg(many));
     expect((svg.match(/<rect /g) ?? [])).toHaveLength(MAX_BARS);
+  });
+});
+
+describe('annotationsAtLine', () => {
+  it('returns non-resolved annotations whose range covers the line', () => {
+    const g1 = group({ id: 'g1', tags: ['security'], annotations: [
+      { id: 'a1', file: 'a.ts', range: { startLine: 2, endLine: 4 }, content: '', contentHash: 'h' },
+    ] });
+    const g2 = group({ id: 'g2', status: 'resolved', annotations: [
+      { id: 'a2', file: 'a.ts', range: { startLine: 3, endLine: 3 }, content: '', contentHash: 'h' },
+    ] });
+    const at3 = annotationsAtLine([g1, g2], 'a.ts', 3);
+    expect(at3).toHaveLength(1);
+    expect(at3[0].group.id).toBe('g1');
+    expect(at3[0].annotation.id).toBe('a1');
+    expect(annotationsAtLine([g1, g2], 'a.ts', 1)).toHaveLength(0);
+    expect(annotationsAtLine([g1, g2], 'other.ts', 3)).toHaveLength(0);
+  });
+});
+
+describe('hoverMarkdown', () => {
+  it('builds one openAnnotation command link per item with encoded args', () => {
+    const md = hoverMarkdown([
+      { label: 'Login · a.ts:2–4', groupId: 'g1', annotationId: 'a1' },
+      { label: 'Perf · a.ts:2', groupId: 'g2', annotationId: 'a2' },
+    ]);
+    const lines = md.split('\n\n');
+    expect(lines).toHaveLength(2);
+    expect(md).toContain('command:annotated.openAnnotation?');
+    expect(md).toContain(encodeURIComponent(JSON.stringify({ groupId: 'g1', annotationId: 'a1' })));
+    expect(md).toContain('📝 Login · a.ts:2–4');
+  });
+
+  it('returns an empty string for no items', () => {
+    expect(hoverMarkdown([])).toBe('');
   });
 });
