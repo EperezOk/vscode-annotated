@@ -83,6 +83,31 @@ export function annotationsAtLine(
 }
 
 /**
+ * Group a file's per-line bars by color signature: each distinct signature (the colors
+ * joined by `|`) maps to those colors plus the sorted lines that have exactly that
+ * signature. The VSCode layer creates one decoration type per signature.
+ */
+export function decorationGroups(
+  barsByLine: Map<number, string[]>,
+): { signature: string; colors: string[]; lines: number[] }[] {
+  const bySignature = new Map<string, { colors: string[]; lines: number[] }>();
+  for (const [line, colors] of barsByLine) {
+    const signature = colors.join('|');
+    const entry = bySignature.get(signature);
+    if (entry) {
+      entry.lines.push(line);
+    } else {
+      bySignature.set(signature, { colors, lines: [line] });
+    }
+  }
+  return [...bySignature.entries()].map(([signature, { colors, lines }]) => ({
+    signature,
+    colors,
+    lines: lines.sort((a, b) => a - b),
+  }));
+}
+
+/**
  * A trusted-MarkdownString body: one `command:` link per annotation covering a line,
  * each invoking `annotated.openAnnotation` with its `{ groupId, annotationId }` args.
  */

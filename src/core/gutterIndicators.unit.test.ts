@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { gutterBarsByLine, buildGutterSvg, MAX_BARS, annotationsAtLine, hoverMarkdown } from './gutterIndicators';
+import { gutterBarsByLine, buildGutterSvg, MAX_BARS, annotationsAtLine, hoverMarkdown, decorationGroups } from './gutterIndicators';
 import { type AnnotationGroup } from '../shared/model';
 import { type TagColor } from '../shared/protocol';
 
@@ -114,5 +114,27 @@ describe('hoverMarkdown', () => {
 
   it('returns an empty string for no items', () => {
     expect(hoverMarkdown([])).toBe('');
+  });
+});
+
+describe('decorationGroups', () => {
+  it('groups lines by color signature, with sorted lines', () => {
+    const byLine = new Map<number, string[]>([
+      [3, ['#aa0000']],
+      [1, ['#aa0000']],
+      [2, ['#aa0000', '#00aa00']],
+      [5, ['#aa0000', '#00aa00']],
+    ]);
+    const groups = decorationGroups(byLine);
+    const single = groups.find((g) => g.signature === '#aa0000');
+    const stacked = groups.find((g) => g.signature === '#aa0000|#00aa00');
+    expect(single?.colors).toEqual(['#aa0000']);
+    expect(single?.lines).toEqual([1, 3]);
+    expect(stacked?.colors).toEqual(['#aa0000', '#00aa00']);
+    expect(stacked?.lines).toEqual([2, 5]);
+  });
+
+  it('returns an empty array for an empty map', () => {
+    expect(decorationGroups(new Map())).toEqual([]);
   });
 });
