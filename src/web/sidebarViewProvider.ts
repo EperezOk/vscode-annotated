@@ -16,6 +16,9 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
   public onBulkResolveRestore?: (groupIds: string[]) => Promise<void>;
   public onBulkDelete?: (groupIds: string[]) => Promise<void>;
 
+  /** Set by the extension: also fired when the user clicks the manual refresh button. */
+  public onRefreshRequested?: () => void;
+
   constructor(private readonly extensionUri: vscode.Uri) {}
 
   resolveWebviewView(
@@ -38,6 +41,7 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
         await this.refresh();
       } else if (message.type === 'refresh') {
         await this.refresh();
+        this.onRefreshRequested?.();
       } else if (message.type === 'selectGroup') {
         this.onSelectGroup?.(message.groupId);
       } else if (message.type === 'bulkEditTags') {

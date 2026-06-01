@@ -19,6 +19,7 @@ import { resolveAuthor, resolveAuthorEmail } from '../core/authorIdentity';
 import { VscodeAuthorNameSources } from './authorSources';
 import { newId } from '../shared/ids';
 import { annotationsAtLine } from '../core/gutterIndicators';
+import { GutterDecorationManager } from './gutterDecorations';
 
 export function activate(context: vscode.ExtensionContext): void {
   const provider = new SidebarViewProvider(context.extensionUri);
@@ -27,18 +28,31 @@ export function activate(context: vscode.ExtensionContext): void {
   );
 
   const watcher = vscode.workspace.createFileSystemWatcher('**/.annotations/**/*.json');
-  const refreshSidebar = (): void => {
-    void provider.refresh();
-  };
-  watcher.onDidCreate(refreshSidebar);
-  watcher.onDidChange(refreshSidebar);
-  watcher.onDidDelete(refreshSidebar);
   context.subscriptions.push(watcher);
 
   const detailProvider = new DetailPanelProvider(context.extensionUri);
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider(DetailPanelProvider.viewType, detailProvider),
   );
+
+  const gutter = new GutterDecorationManager();
+  context.subscriptions.push({ dispose: () => gutter.dispose() });
+
+  const refreshDecorations = async (): Promise<void> => {
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    const groups = folder
+      ? await new GroupStore(new VscodeFileSystem(folder.uri)).listGroups()
+      : [];
+    gutter.refresh(vscode.window.visibleTextEditors, groups, readTagPalette());
+  };
+
+  const onAnnotationsChanged = (): void => {
+    void provider.refresh();
+    void refreshDecorations();
+  };
+  watcher.onDidCreate(onAnnotationsChanged);
+  watcher.onDidChange(onAnnotationsChanged);
+  watcher.onDidDelete(onAnnotationsChanged);
 
   const now = (): number => Math.floor(Date.now() / 1000);
 
@@ -413,6 +427,18 @@ export function activate(context: vscode.ExtensionContext): void {
       }
     }),
   );
+
+  context.subscriptions.push(
+    vscode.window.onDidChangeActiveTextEditor(() => void refreshDecorations()),
+    vscode.window.onDidChangeVisibleTextEditors(() => void refreshDecorations()),
+    vscode.workspace.onDidChangeConfiguration((e) => {
+      if (e.affectsConfiguration('annotated.tags')) {
+        void refreshDecorations();
+      }
+    }),
+  );
+  provider.onRefreshRequested = (): void => void refreshDecorations();
+  void refreshDecorations(); // initial paint for already-open editors
 }
 
 export function deactivate(): void {
