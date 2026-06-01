@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { gutterBarsByLine } from './gutterIndicators';
+import { gutterBarsByLine, buildGutterSvg, MAX_BARS } from './gutterIndicators';
 import { type AnnotationGroup } from '../shared/model';
 import { type TagColor } from '../shared/protocol';
 
@@ -54,5 +54,24 @@ describe('gutterBarsByLine', () => {
       { id: 'a1', file: 'a.ts', range: { startLine: 1, endLine: 1 }, content: '', contentHash: 'h' },
     ] });
     expect(gutterBarsByLine([g], 'a.ts', palette).get(1)).toEqual(['#888888']);
+  });
+});
+
+describe('buildGutterSvg', () => {
+  const PREFIX = 'data:image/svg+xml;base64,';
+  const decode = (uri: string) => atob(uri.slice(PREFIX.length));
+
+  it('draws one rect per color with the given fill', () => {
+    const svg = decode(buildGutterSvg(['#aa0000', '#00aa00']));
+    expect(svg).toContain('<svg');
+    expect((svg.match(/<rect /g) ?? [])).toHaveLength(2);
+    expect(svg).toContain('fill="#aa0000"');
+    expect(svg).toContain('fill="#00aa00"');
+  });
+
+  it('caps the number of bars at MAX_BARS', () => {
+    const many = Array.from({ length: MAX_BARS + 3 }, (_, i) => `#0000${i}0`);
+    const svg = decode(buildGutterSvg(many));
+    expect((svg.match(/<rect /g) ?? [])).toHaveLength(MAX_BARS);
   });
 });
