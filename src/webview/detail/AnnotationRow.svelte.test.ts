@@ -9,11 +9,13 @@ function annotation(content: string): Annotation {
 }
 
 describe('AnnotationRow', () => {
-  it('renders the one-line content and file:range', () => {
+  it('renders the one-line content and filename:range (full path on hover)', () => {
     render(AnnotationRow, { annotation: annotation('## First line\nsecond') });
     const row = screen.getByTestId('annotation-row');
     expect(row).toHaveTextContent('## First line');
-    expect(row).toHaveTextContent('src/auth/login.ts:42–47');
+    expect(row).toHaveTextContent('login.ts:42–47');
+    expect(row).not.toHaveTextContent('src/auth/login.ts');
+    expect(screen.getByTestId('annotation-loc')).toHaveAttribute('title', 'src/auth/login.ts:42–47');
   });
 
   it('shows "(empty)" for an annotation with no content', () => {

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { type Annotation } from '../../shared/model';
   import { oneLine } from '../../core/detailState';
+  import { fileName } from '../../shared/path';
 
   let {
     annotation,
@@ -15,7 +16,9 @@
   } = $props();
 
   const summary = $derived(oneLine(annotation.content) || '(empty)');
-  const location = $derived(`${annotation.file}:${annotation.range.startLine}–${annotation.range.endLine}`);
+  const range = $derived(`${annotation.range.startLine}–${annotation.range.endLine}`);
+  const shortLoc = $derived(`${fileName(annotation.file)}:${range}`);
+  const fullLoc = $derived(`${annotation.file}:${range}`);
 </script>
 
 <button
@@ -27,7 +30,7 @@
 >
   {#if stale}<span class="stale-dot" data-testid="stale-dot" title="Lines changed since this was written">●</span>{/if}
   <span class="summary">{summary}</span>
-  <span class="loc">{location}</span>
+  <span class="loc" data-testid="annotation-loc" title={fullLoc}>{shortLoc}</span>
 </button>
 
 <style>
