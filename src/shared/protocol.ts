@@ -24,14 +24,16 @@ export type WebviewToHost =
   | { type: 'bulkDelete'; groupIds: string[] };
 
 /** Host → detail-panel messages. */
-export type HostToDetail = {
-  type: 'setGroup';
-  group: AnnotationGroup | null;
-  palette: TagColor[];
-  staleIds?: string[];
-  comments?: ThreadComment[];
-  currentAuthor?: string;
-};
+export type HostToDetail =
+  | {
+      type: 'setGroup';
+      group: AnnotationGroup | null;
+      palette: TagColor[];
+      staleIds?: string[];
+      comments?: ThreadComment[];
+      currentAuthor?: string;
+    }
+  | { type: 'openAnnotation'; annotationId: string };
 
 /** Detail-panel → host messages. */
 export type DetailToHost =
