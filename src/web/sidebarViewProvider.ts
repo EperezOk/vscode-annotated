@@ -36,6 +36,8 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
       }
       if (message.type === 'ready') {
         await this.refresh();
+      } else if (message.type === 'refresh') {
+        await this.refresh();
       } else if (message.type === 'selectGroup') {
         this.onSelectGroup?.(message.groupId);
       } else if (message.type === 'bulkEditTags') {
