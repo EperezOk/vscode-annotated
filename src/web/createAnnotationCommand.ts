@@ -18,7 +18,9 @@ import { NEW_TAG_LABEL, splitPickedTags } from '../core/tags';
 const CREATE_NEW_LABEL = '$(add) Create new group…';
 
 /** Register the `annotated.createAnnotation` command. */
-export function registerCreateAnnotationCommand(): vscode.Disposable {
+export function registerCreateAnnotationCommand(
+  onCreated?: (groupId: string, annotationId: string) => void | Promise<void>,
+): vscode.Disposable {
   return vscode.commands.registerCommand('annotated.createAnnotation', async () => {
     const folder = vscode.workspace.workspaceFolders?.[0];
     if (!folder) {
@@ -43,7 +45,10 @@ export function registerCreateAnnotationCommand(): vscode.Disposable {
       showWarning: (message) => void vscode.window.showWarningMessage(message),
     };
 
-    await runCreateAnnotation(deps);
+    const result = await runCreateAnnotation(deps);
+    if (result && onCreated) {
+      await onCreated(result.group.id, result.annotationId);
+    }
   });
 }
 
