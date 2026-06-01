@@ -1,0 +1,58 @@
+import { describe, it, expect } from 'vitest';
+import { gutterBarsByLine } from './gutterIndicators';
+import { type AnnotationGroup } from '../shared/model';
+import { type TagColor } from '../shared/protocol';
+
+const palette: TagColor[] = [{ name: 'security', color: '#aa0000' }, { name: 'perf', color: '#00aa00' }];
+
+function group(over: Partial<AnnotationGroup> & { id: string }): AnnotationGroup {
+  return {
+    id: over.id, title: over.title ?? 'G', author: 'A', tags: over.tags ?? [], gitRef: null,
+    status: over.status ?? 'open', createdAt: 1, updatedAt: 1, annotations: over.annotations ?? [],
+  };
+}
+
+describe('gutterBarsByLine', () => {
+  it('marks every line in an annotation range with the group first-tag color', () => {
+    const g = group({ id: 'g1', tags: ['security'], annotations: [
+      { id: 'a1', file: 'a.ts', range: { startLine: 2, endLine: 4 }, content: '', contentHash: 'h' },
+    ] });
+    const map = gutterBarsByLine([g], 'a.ts', palette);
+    expect(map.get(2)).toEqual(['#aa0000']);
+    expect(map.get(3)).toEqual(['#aa0000']);
+    expect(map.get(4)).toEqual(['#aa0000']);
+    expect(map.has(1)).toBe(false);
+    expect(map.has(5)).toBe(false);
+  });
+
+  it('ignores annotations in other files', () => {
+    const g = group({ id: 'g1', tags: ['security'], annotations: [
+      { id: 'a1', file: 'other.ts', range: { startLine: 1, endLine: 1 }, content: '', contentHash: 'h' },
+    ] });
+    expect(gutterBarsByLine([g], 'a.ts', palette).size).toBe(0);
+  });
+
+  it('excludes resolved groups', () => {
+    const g = group({ id: 'g1', tags: ['security'], status: 'resolved', annotations: [
+      { id: 'a1', file: 'a.ts', range: { startLine: 1, endLine: 1 }, content: '', contentHash: 'h' },
+    ] });
+    expect(gutterBarsByLine([g], 'a.ts', palette).size).toBe(0);
+  });
+
+  it('stacks one color per annotation covering the same line, in group then annotation order', () => {
+    const g1 = group({ id: 'g1', tags: ['security'], annotations: [
+      { id: 'a1', file: 'a.ts', range: { startLine: 5, endLine: 5 }, content: '', contentHash: 'h' },
+    ] });
+    const g2 = group({ id: 'g2', tags: ['perf'], annotations: [
+      { id: 'a2', file: 'a.ts', range: { startLine: 5, endLine: 5 }, content: '', contentHash: 'h' },
+    ] });
+    expect(gutterBarsByLine([g1, g2], 'a.ts', palette).get(5)).toEqual(['#aa0000', '#00aa00']);
+  });
+
+  it('uses a neutral default color for a group with no tags', () => {
+    const g = group({ id: 'g1', tags: [], annotations: [
+      { id: 'a1', file: 'a.ts', range: { startLine: 1, endLine: 1 }, content: '', contentHash: 'h' },
+    ] });
+    expect(gutterBarsByLine([g], 'a.ts', palette).get(1)).toEqual(['#888888']);
+  });
+});
