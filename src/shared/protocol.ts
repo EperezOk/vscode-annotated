@@ -17,6 +17,7 @@ export type HostToWebview = {
 /** Webview → host messages. */
 export type WebviewToHost =
   | { type: 'ready' }
+  | { type: 'refresh' }
   | { type: 'selectGroup'; groupId: string }
   | { type: 'bulkEditTags'; groupIds: string[] }
   | { type: 'bulkEditGitRef'; groupIds: string[] }
@@ -64,6 +65,8 @@ export function parseWebviewMessage(raw: unknown): WebviewToHost | null {
   switch (raw.type) {
     case 'ready':
       return { type: 'ready' };
+    case 'refresh':
+      return { type: 'refresh' };
     case 'selectGroup':
       return typeof raw.groupId === 'string' ? { type: 'selectGroup', groupId: raw.groupId } : null;
     case 'bulkEditTags':
