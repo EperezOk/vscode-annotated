@@ -53,6 +53,14 @@ describe('GroupCard', () => {
     await userEvent.click(screen.getByTestId('group-card'));
     expect(oncheck).toHaveBeenCalledWith('g1');
   });
+  it('uses readable (auto-contrast) text color on tag chips', () => {
+    const dark = render(GroupCard, { group: group(), palette: [{ name: 'security', color: '#c0392b' }] });
+    expect(screen.getByTestId('tag-chip')).toHaveStyle('color: rgb(255, 255, 255)'); // dark bg → white
+    dark.unmount();
+    render(GroupCard, { group: group(), palette: [{ name: 'security', color: '#ffff00' }] });
+    expect(screen.getByTestId('tag-chip')).toHaveStyle('color: rgb(0, 0, 0)'); // light bg → black
+  });
+
   it('reflects the checked state and has no checkbox outside bulk mode', () => {
     const { unmount } = render(GroupCard, { group: group(), palette: [], bulkMode: true, checked: true });
     expect(screen.getByTestId('bulk-checkbox')).toBeChecked();
