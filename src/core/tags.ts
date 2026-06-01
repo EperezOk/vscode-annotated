@@ -23,6 +23,18 @@ export function splitPickedTags(labels: string[]): { names: string[]; addNew: bo
 
 const DEFAULT_COLOR = '#888888';
 
+/** The fixed set of named color swatches offered when creating a new tag. */
+export const TAG_SWATCHES: readonly { name: string; hex: string }[] = [
+  { name: 'Red', hex: '#E5484D' },
+  { name: 'Amber', hex: '#F5A623' },
+  { name: 'Yellow', hex: '#E5C100' },
+  { name: 'Green', hex: '#3FB950' },
+  { name: 'Teal', hex: '#14B8A6' },
+  { name: 'Blue', hex: '#3794FF' },
+  { name: 'Indigo', hex: '#5B5BD6' },
+  { name: 'Gray', hex: '#8B949E' },
+];
+
 /** Validate/normalize the raw `annotated.tags` config value into a Tag[]. */
 export function parseTagPalette(raw: unknown): Tag[] {
   if (!Array.isArray(raw)) {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseTagPalette, NEW_TAG_LABEL, splitPickedTags } from './tags';
+import { parseTagPalette, NEW_TAG_LABEL, splitPickedTags, TAG_SWATCHES } from './tags';
 
 describe('parseTagPalette', () => {
   it('returns [] for non-array input', () => {
@@ -25,5 +25,16 @@ describe('splitPickedTags', () => {
     expect(splitPickedTags(['security', NEW_TAG_LABEL])).toEqual({ names: ['security'], addNew: true });
     expect(splitPickedTags([NEW_TAG_LABEL])).toEqual({ names: [], addNew: true });
     expect(splitPickedTags([])).toEqual({ names: [], addNew: false });
+  });
+});
+
+describe('TAG_SWATCHES', () => {
+  it('lists the eight named swatches in order with valid 6-digit hex colors', () => {
+    expect(TAG_SWATCHES.map((s) => s.name)).toEqual([
+      'Red', 'Amber', 'Yellow', 'Green', 'Teal', 'Blue', 'Indigo', 'Gray',
+    ]);
+    for (const s of TAG_SWATCHES) {
+      expect(s.hex).toMatch(/^#[0-9A-Fa-f]{6}$/);
+    }
   });
 });
