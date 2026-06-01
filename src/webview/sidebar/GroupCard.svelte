@@ -41,9 +41,9 @@
   <div class="meta">{group.author} · {group.annotations.length} annotation{group.annotations.length === 1 ? '' : 's'}</div>
   {#if group.tags.length > 0}
     <div class="chips">
-      {#each group.tags as tag (tag)}
-        {@const bg = tagColor(palette, tag)}
-        <span class="chip" data-testid="tag-chip" style="background:{bg}; color:{contrastColor(bg)}">{tag}</span>
+      {#each group.tags as tag (tag.name)}
+        {@const bg = tagColor(palette, tag.name)}
+        <span class="chip" data-testid="tag-chip" style="background:{bg}; color:{contrastColor(bg)}">{tag.name}</span>
       {/each}
     </div>
   {/if}

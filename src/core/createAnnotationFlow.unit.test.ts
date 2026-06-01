@@ -35,13 +35,13 @@ describe('runCreateAnnotation', () => {
     const saveGroup = vi.fn<(group: AnnotationGroup) => Promise<void>>(async () => {});
     let nextId = 0;
     const result = await runCreateAnnotation(
-      deps({ saveGroup, newId: () => `id-${++nextId}`, pickTags: async () => ['security'] }),
+      deps({ saveGroup, newId: () => `id-${++nextId}`, pickTags: async () => [{ name: 'security', color: '#888888' }] }),
     );
     expect(saveGroup).toHaveBeenCalledTimes(1);
     const saved = saveGroup.mock.calls[0][0] as AnnotationGroup;
     expect(saved.title).toBe('New Group');
     expect(saved.author).toBe('Author');
-    expect(saved.tags).toEqual(['security']);
+    expect(saved.tags).toEqual([{ name: 'security', color: '#888888' }]);
     expect(saved.annotations).toHaveLength(1);
     expect(saved.annotations[0]).toMatchObject({ file: 'src/x.ts', range: { startLine: 1, endLine: 2 }, content: '', contentHash: 'HASH' });
     expect(saved.createdAt).toBe(saved.updatedAt); // a brand-new group's first annotation shares one timestamp

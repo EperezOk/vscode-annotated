@@ -86,9 +86,9 @@
     <div class="meta">{group.author} · {group.status}</div>
 
     <div class="tags-row">
-      {#each group.tags as tag (tag)}
-        {@const bg = tagColor(palette, tag)}
-        <span class="chip" data-testid="tag-chip" style="background:{bg}; color:{contrastColor(bg)}">{tag}</span>
+      {#each group.tags as tag (tag.name)}
+        {@const bg = tagColor(palette, tag.name)}
+        <span class="chip" data-testid="tag-chip" style="background:{bg}; color:{contrastColor(bg)}">{tag.name}</span>
       {/each}
       <button type="button" class="link" data-testid="edit-tags-btn" onclick={() => onedittags?.()}>＋ edit tags</button>
     </div>

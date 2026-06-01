@@ -16,12 +16,12 @@ suite('GroupStore.updateGroup (vscode.workspace.fs)', () => {
     };
     try {
       await store.saveGroup(g);
-      const ok = await store.updateGroup('grp-itest', { title: 'After', tags: ['x'], gitRef: 'main' }, 42);
+      const ok = await store.updateGroup('grp-itest', { title: 'After', tags: [{ name: 'x', color: '#888888' }], gitRef: 'main' }, 42);
       if (!ok) {
         throw new Error('updateGroup returned false');
       }
       const reloaded = await store.getGroup('grp-itest');
-      if (reloaded?.title !== 'After' || reloaded?.gitRef !== 'main' || reloaded?.tags[0] !== 'x' || reloaded?.updatedAt !== 42) {
+      if (reloaded?.title !== 'After' || reloaded?.gitRef !== 'main' || reloaded?.tags[0]?.name !== 'x' || reloaded?.updatedAt !== 42) {
         throw new Error(`patch not persisted: ${JSON.stringify(reloaded)}`);
       }
     } finally {

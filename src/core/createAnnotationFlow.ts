@@ -1,4 +1,4 @@
-import { type AnnotationGroup, type LineRange } from '../shared/model';
+import { type AnnotationGroup, type LineRange, type Tag } from '../shared/model';
 import { anchorText } from '../shared/hash';
 import { addAnnotation, createGroup, makeAnnotation } from './annotationFactory';
 
@@ -23,8 +23,8 @@ export interface CreateAnnotationDeps {
   pickGroup(groups: AnnotationGroup[]): Promise<GroupChoice | undefined>;
   /** New-group title; undefined = cancelled. */
   promptGroupTitle(): Promise<string | undefined>;
-  /** Tag names for a new group; [] = none, undefined = cancelled. */
-  pickTags(): Promise<string[] | undefined>;
+  /** Tag list for a new group; [] = none, undefined = cancelled. */
+  pickTags(): Promise<Tag[] | undefined>;
   saveGroup(group: AnnotationGroup): Promise<void>;
   newId(): string;
   /** Current time, epoch seconds. */

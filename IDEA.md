@@ -32,6 +32,7 @@ VSCode Commands:
 - Extension packs can be created, pairing this extension with complementary ones (eg. for security review scope management and progress tracking).
 - Unless an annotation is open on the side view, we don't show anything on the editor. This avoids clutter and issues like showing signs of multiple annotations on the same lines.
 - We don't want to clutter the vscode command list unnecessarily. We only add dedicated commands for things that users need to do quickly/frequently outside of the sidebars.
+- Testing: The agent should be able to test the extension it's developing as thoroughly as possible, including the UI interactions, without intervention of the human developer. This will speed up the development of the extension.
 
 ## Use cases
 
@@ -51,7 +52,7 @@ VSCode Commands:
 
 ### Complementary Extensions
 
-- Scope manager: parse scope file and show marks in file tree. Mark regions and whole files as reviewed. Editor shows reviewed code via markers or subtle highlighting.
+- Scope manager: parse scope file and show marks in file tree. Mark regions and whole files as reviewed. Editor shows reviewed code via markers or subtle highlighting. Maybe could be stretched to cover all other relevant features from [WeAudit](https://github.com/trailofbits/vscode-weaudit).
 
 ## References
 

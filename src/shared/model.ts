@@ -8,6 +8,12 @@ export interface LineRange {
   endLine: number;
 }
 
+/** A tag on a group: a display name + color. (Colors are also resolved from user config.) */
+export interface Tag {
+  name: string;
+  color: string;
+}
+
 export interface Annotation {
   id: string;
   /** Workspace-relative POSIX path. */
@@ -25,8 +31,8 @@ export interface AnnotationGroup {
   id: string;
   title: string;
   author: string;
-  /** Tag names (colors live in user config). */
-  tags: string[];
+  /** Tags with their stored colors (display color is resolved from config, then this). */
+  tags: Tag[];
   /** Branch / tag / SHA, or null. */
   gitRef: string | null;
   status: GroupStatus;
@@ -66,6 +72,18 @@ function parseAnnotation(raw: unknown): Annotation {
   return { id, file, range: parseRange(range), content, contentHash };
 }
 
+function parseTag(raw: unknown): Tag {
+  if (typeof raw === 'string') {
+    // Legacy `string[]` tags → migrate; real color resolves from config / is stamped on next save.
+    return { name: raw, color: '#888888' };
+  }
+  if (isObject(raw) && typeof (raw as { name?: unknown }).name === 'string') {
+    const r = raw as { name: string; color?: unknown };
+    return { name: r.name, color: typeof r.color === 'string' ? r.color : '#888888' };
+  }
+  return fail('tags[]', 'must be a string or { name, color }');
+}
+
 /** Validate an untrusted parsed value as an AnnotationGroup. Throws Error on any problem. */
 export function parseGroup(raw: unknown): AnnotationGroup {
   if (!isObject(raw)) fail('root', 'is not an object');
@@ -73,7 +91,7 @@ export function parseGroup(raw: unknown): AnnotationGroup {
   if (typeof id !== 'string') fail('id', 'must be a string');
   if (typeof title !== 'string') fail('title', 'must be a string');
   if (typeof author !== 'string') fail('author', 'must be a string');
-  if (!Array.isArray(tags) || !tags.every((t) => typeof t === 'string')) fail('tags', 'must be a string[]');
+  if (!Array.isArray(tags)) fail('tags', 'must be an array');
   if (gitRef !== null && typeof gitRef !== 'string') fail('gitRef', 'must be a string or null');
   if (status !== 'open' && status !== 'resolved') fail('status', "must be 'open' or 'resolved'");
   if (typeof createdAt !== 'number') fail('createdAt', 'must be a number');
@@ -83,7 +101,7 @@ export function parseGroup(raw: unknown): AnnotationGroup {
     id,
     title,
     author,
-    tags: [...tags] as string[],
+    tags: tags.map(parseTag),
     gitRef,
     status,
     createdAt,

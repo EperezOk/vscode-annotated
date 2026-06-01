@@ -4,7 +4,7 @@ import { type AnnotationGroup } from '../shared/model';
 
 function group(
   id: string,
-  opts: { author?: string; tags?: string[]; status?: 'open' | 'resolved' } = {},
+  opts: { author?: string; tags?: { name: string; color: string }[]; status?: 'open' | 'resolved' } = {},
 ): AnnotationGroup {
   return {
     id, title: id, author: opts.author ?? 'A', tags: opts.tags ?? [],
@@ -58,7 +58,7 @@ describe('tagColor', () => {
 
 describe('availableTags / availableAuthors', () => {
   it('returns sorted, de-duplicated tags across all groups', () => {
-    const groups = [group('g1', { tags: ['security', 'todo'] }), group('g2', { tags: ['todo', 'arch'] })];
+    const groups = [group('g1', { tags: [{ name: 'security', color: '#888888' }, { name: 'todo', color: '#888888' }] }), group('g2', { tags: [{ name: 'todo', color: '#888888' }, { name: 'arch', color: '#888888' }] })];
     expect(availableTags(groups)).toEqual(['arch', 'security', 'todo']);
   });
   it('returns sorted, de-duplicated authors', () => {
@@ -79,9 +79,9 @@ describe('toggleInList', () => {
 describe('filterGroups', () => {
   const base = initialSidebarState();
   const groups = [
-    group('open-sec', { author: 'Ana', tags: ['security'], status: 'open' }),
-    group('open-todo', { author: 'Zoe', tags: ['todo'], status: 'open' }),
-    group('res-sec', { author: 'Ana', tags: ['security'], status: 'resolved' }),
+    group('open-sec', { author: 'Ana', tags: [{ name: 'security', color: '#888888' }], status: 'open' }),
+    group('open-todo', { author: 'Zoe', tags: [{ name: 'todo', color: '#888888' }], status: 'open' }),
+    group('res-sec', { author: 'Ana', tags: [{ name: 'security', color: '#888888' }], status: 'resolved' }),
   ];
 
   it('hides resolved groups by default', () => {
@@ -120,7 +120,7 @@ describe('applyHostMessage preserves + prunes filters', () => {
     };
     const next = applyHostMessage(state, {
       type: 'setState',
-      groups: [group('g1', { author: 'Ana', tags: ['security'] })],
+      groups: [group('g1', { author: 'Ana', tags: [{ name: 'security', color: '#888888' }] })],
       palette: [],
     });
     expect(next.selectedTags).toEqual(['security']);

@@ -11,8 +11,8 @@ import { readGitRefInfo } from './gitRefsSource';
 import { gitRefSuggestions } from '../core/gitRefs';
 import { computeStaleIds } from './staleness';
 import { sha256Hex, anchorText } from '../shared/hash';
-import { type AnnotationGroup, type GroupStatus } from '../shared/model';
-import { bulkStatusToggle } from '../core/sidebarState';
+import { type AnnotationGroup, type GroupStatus, type Tag } from '../shared/model';
+import { bulkStatusToggle, tagColor } from '../core/sidebarState';
 import { CommentStore } from '../core/commentStore';
 import { flattenComments, slugifyAuthor } from '../core/comments';
 import { resolveAuthor, resolveAuthorEmail } from '../core/authorIdentity';
@@ -139,15 +139,16 @@ export function activate(context: vscode.ExtensionContext): void {
       return;
     }
     const { names, addNew } = splitPickedTags(picked.map((item) => item.label));
+    const tags: Tag[] = names.map((name) => ({ name, color: tagColor(palette, name) }));
     if (addNew) {
-      const tag = await promptNewTag();
-      if (tag) {
-        names.push(tag.name);
+      const created = await promptNewTag();
+      if (created) {
+        tags.push(created);
       }
     }
     const store = new GroupStore(new VscodeFileSystem(folder.uri));
     for (const id of groupIds) {
-      await store.updateGroup(id, { tags: names }, now());
+      await store.updateGroup(id, { tags }, now());
     }
     await provider.refresh();
   };
@@ -211,7 +212,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
   const patchGroup = async (
     groupId: string,
-    patch: { title?: string; tags?: string[]; gitRef?: string | null; status?: GroupStatus },
+    patch: { title?: string; tags?: Tag[]; gitRef?: string | null; status?: GroupStatus },
   ): Promise<void> => {
     const folder = vscode.workspace.workspaceFolders?.[0];
     if (!folder) {
@@ -238,7 +239,7 @@ export function activate(context: vscode.ExtensionContext): void {
     }
     const palette = readTagPalette();
     const items: vscode.QuickPickItem[] = [
-      ...palette.map((t) => ({ label: t.name, picked: group.tags.includes(t.name), iconPath: vscode.Uri.parse(swatchIconSvg(t.color)) })),
+      ...palette.map((t) => ({ label: t.name, picked: group.tags.some((gt) => gt.name === t.name), iconPath: vscode.Uri.parse(swatchIconSvg(t.color)) })),
       { label: NEW_TAG_LABEL, alwaysShow: true },
     ];
     const picked = await vscode.window.showQuickPick(items, {
@@ -249,13 +250,14 @@ export function activate(context: vscode.ExtensionContext): void {
       return;
     }
     const { names, addNew } = splitPickedTags(picked.map((item) => item.label));
+    const tags: Tag[] = names.map((name) => ({ name, color: tagColor(palette, name) }));
     if (addNew) {
-      const tag = await promptNewTag();
-      if (tag) {
-        names.push(tag.name);
+      const created = await promptNewTag();
+      if (created) {
+        tags.push(created);
       }
     }
-    await patchGroup(groupId, { tags: names });
+    await patchGroup(groupId, { tags });
   };
 
   detailProvider.onEditGitRef = async (groupId): Promise<void> => {

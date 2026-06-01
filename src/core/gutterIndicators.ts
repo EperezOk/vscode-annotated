@@ -11,7 +11,7 @@ export const MAX_BARS = 4;
 
 /** A group's bar color: its first tag's palette color, or a neutral default if untagged. */
 function groupBarColor(group: AnnotationGroup, palette: TagColor[]): string {
-  return group.tags.length > 0 ? tagColor(palette, group.tags[0]) : DEFAULT_BAR_COLOR;
+  return group.tags.length > 0 ? tagColor(palette, group.tags[0].name) : DEFAULT_BAR_COLOR;
 }
 
 /**

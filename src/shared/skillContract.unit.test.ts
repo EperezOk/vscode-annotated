@@ -78,7 +78,7 @@ describe('annotated-agent contract: schema round-trip', () => {
       id: '550e8400-e29b-41d4-a716-446655440000',
       title: 'Login review',
       author: 'Claude',
-      tags: ['security'],
+      tags: [{ name: 'security', color: '#888888' }],
       gitRef: null,
       status: 'open',
       createdAt: 1730000000,

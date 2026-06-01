@@ -1,11 +1,11 @@
-import { type Annotation, type AnnotationGroup, type LineRange } from '../shared/model';
+import { type Annotation, type AnnotationGroup, type LineRange, type Tag } from '../shared/model';
 
 /** Build a new, empty open group. Caller supplies id, timestamps (`now`), and tags. */
 export function createGroup(input: {
   id: string;
   title: string;
   author: string;
-  tags: string[];
+  tags: Tag[];
   gitRef?: string | null;
   now: number;
 }): AnnotationGroup {

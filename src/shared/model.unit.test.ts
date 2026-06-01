@@ -5,7 +5,10 @@ const validGroup: AnnotationGroup = {
   id: 'g1',
   title: 'Login review',
   author: 'Ezequiel',
-  tags: ['security', 'question'],
+  tags: [
+    { name: 'security', color: '#E5484D' },
+    { name: 'question', color: '#3794FF' },
+  ],
   gitRef: 'feature/login',
   status: 'open',
   createdAt: 1730000000,
@@ -53,6 +56,18 @@ describe('serializeGroup/parseGroup', () => {
   it('throws when an annotation range is malformed', () => {
     const bad = { ...validGroup, annotations: [{ ...validGroup.annotations[0], range: { startLine: 5, endLine: 2 } }] };
     expect(() => parseGroup(bad)).toThrow(/range/);
+  });
+
+  it('migrates legacy string[] tags to {name, color} with the default color', () => {
+    const legacy = { ...validGroup, tags: ['security', 'todo'] };
+    expect(parseGroup(legacy).tags).toEqual([
+      { name: 'security', color: '#888888' },
+      { name: 'todo', color: '#888888' },
+    ]);
+  });
+
+  it('throws when a tag is neither a string nor a {name} object', () => {
+    expect(() => parseGroup({ ...validGroup, tags: [42] })).toThrow(/tags/);
   });
 });
 

@@ -7,7 +7,7 @@ import { type TagColor } from '../../shared/protocol';
 
 function group(): AnnotationGroup {
   return {
-    id: 'g1', title: 'Login review', author: 'Ezequiel', tags: ['security'], gitRef: 'main', status: 'open',
+    id: 'g1', title: 'Login review', author: 'Ezequiel', tags: [{ name: 'security', color: '#888888' }], gitRef: 'main', status: 'open',
     createdAt: 1, updatedAt: 1,
     annotations: [{ id: 'a1', file: 'a.ts', range: { startLine: 1, endLine: 2 }, content: '', contentHash: 'h' }],
   };

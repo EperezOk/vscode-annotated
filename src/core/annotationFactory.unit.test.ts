@@ -3,21 +3,21 @@ import { createGroup, makeAnnotation, addAnnotation } from './annotationFactory'
 
 describe('createGroup', () => {
   it('builds an open group with timestamps and copied tags', () => {
-    const tags = ['security'];
+    const tags = [{ name: 'security', color: '#888888' }];
     const g = createGroup({ id: 'g1', title: 'T', author: 'A', tags, now: 100 });
     expect(g).toEqual({
       id: 'g1',
       title: 'T',
       author: 'A',
-      tags: ['security'],
+      tags: [{ name: 'security', color: '#888888' }],
       gitRef: null,
       status: 'open',
       createdAt: 100,
       updatedAt: 100,
       annotations: [],
     });
-    tags.push('mutated');
-    expect(g.tags).toEqual(['security']); // input array not aliased
+    tags.push({ name: 'mutated', color: '#888888' });
+    expect(g.tags).toEqual([{ name: 'security', color: '#888888' }]); // input array not aliased
   });
 
   it('accepts an explicit gitRef', () => {
