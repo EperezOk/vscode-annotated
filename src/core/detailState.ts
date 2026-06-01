@@ -33,6 +33,8 @@ export function applyDetailMessage(state: DetailState, message: HostToDetail): D
         currentAuthor: message.currentAuthor ?? '',
       };
     }
+    case 'openAnnotation':
+      return openAnnotation(state, message.annotationId);
     default:
       return state;
   }
