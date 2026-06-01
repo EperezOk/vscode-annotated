@@ -14,6 +14,9 @@ export class DetailPanelProvider implements vscode.WebviewViewProvider {
   /** Set by the extension to navigate to a selected annotation. */
   public onSelectAnnotation?: (annotation: Annotation) => void;
 
+  /** Set by the extension: the annotation view closed (Back) or the panel was hidden. */
+  public onNavigationClosed?: () => void;
+
   /** Set by the extension to persist an annotation's edited content. */
   public onUpdateAnnotation?: (groupId: string, annotationId: string, content: string) => void;
 
@@ -75,6 +78,8 @@ export class DetailPanelProvider implements vscode.WebviewViewProvider {
         }
       } else if (message.type === 'copyText') {
         void vscode.env.clipboard.writeText(message.text);
+      } else if (message.type === 'navigationClosed') {
+        this.onNavigationClosed?.();
       } else if (message.type === 'setGroupTitle') {
         if (this.group) {
           this.onSetGroupTitle?.(this.group.id, message.title);
@@ -109,6 +114,11 @@ export class DetailPanelProvider implements vscode.WebviewViewProvider {
         }
       }
     });
+    webviewView.onDidChangeVisibility(() => {
+      if (!webviewView.visible) {
+        this.onNavigationClosed?.();
+      }
+    });
   }
 
   /** Set the group shown by the panel and push it to the webview (if resolved). */
@@ -127,6 +137,12 @@ export class DetailPanelProvider implements vscode.WebviewViewProvider {
     this.post();
   }
 
+  /** Tell the webview to open a specific annotation in the annotation view. */
+  openAnnotation(annotationId: string): void {
+    const message: HostToDetail = { type: 'openAnnotation', annotationId };
+    void this.view?.webview.postMessage(message);
+  }
+
   private post(): void {
     if (!this.view) {
       return;
@@ -140,9 +156,12 @@ export class DetailPanelProvider implements vscode.WebviewViewProvider {
     const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(base, 'main.js'));
     const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(base, 'main.css'));
     const nonce = getNonce();
+    // CodeMirror injects <style> elements at runtime, which `style-src ${webview.cspSource}`
+    // alone would block. 'unsafe-inline' permits them. TODO(phase-4 follow-up): tighten this
+    // by threading the existing nonce via EditorView.cspNonce + `style-src 'nonce-...'`.
     const csp =
       `default-src 'none'; ` +
-      `style-src ${webview.cspSource}; ` +
+      `style-src ${webview.cspSource} 'unsafe-inline'; ` +
       `script-src 'nonce-${nonce}'; ` +
       `font-src ${webview.cspSource}; ` +
       `img-src ${webview.cspSource} https: data:;`;

@@ -1,13 +1,13 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { EditorState } from '@codemirror/state';
+  import { EditorState, EditorSelection } from '@codemirror/state';
   import { EditorView, keymap } from '@codemirror/view';
   import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
-  import { syntaxHighlighting, defaultHighlightStyle } from '@codemirror/language';
+  import { syntaxHighlighting } from '@codemirror/language';
   import { markdown } from '@codemirror/lang-markdown';
-  import { markdownKeymap, urlPasteHandler } from './editorExtensions';
+  import { markdownKeymap, urlPasteHandler, markdownHighlightStyle, fillHeightTheme } from './editorExtensions';
 
-  let { doc = '', onChange }: { doc?: string; onChange?: (value: string) => void } = $props();
+  let { doc = '', autofocus = false, onChange }: { doc?: string; autofocus?: boolean; onChange?: (value: string) => void } = $props();
 
   let host: HTMLDivElement;
   let view: EditorView | undefined;
@@ -19,8 +19,9 @@
         doc,
         extensions: [
           history(),
-          syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+          syntaxHighlighting(markdownHighlightStyle, { fallback: true }),
           markdown(),
+          fillHeightTheme,
           urlPasteHandler,
           keymap.of([...markdownKeymap, ...defaultKeymap, ...historyKeymap]),
           EditorView.lineWrapping,
@@ -32,6 +33,10 @@
         ],
       }),
     });
+    if (autofocus) {
+      view.focus();
+      view.dispatch({ selection: EditorSelection.cursor(view.state.doc.length) });
+    }
     return () => view?.destroy();
   });
 </script>

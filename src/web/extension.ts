@@ -4,9 +4,9 @@ import { registerCreateAnnotationCommand } from './createAnnotationCommand';
 import { DetailPanelProvider } from './detailPanelProvider';
 import { GroupStore } from '../core/groupStore';
 import { VscodeFileSystem } from './vscodeFileSystem';
-import { readTagPalette, addTagToPalette } from './tagPalette';
+import { readTagPalette, promptNewTag } from './tagPalette';
 import { NEW_TAG_LABEL, splitPickedTags } from '../core/tags';
-import { revealAnnotation } from './navigateToCode';
+import { revealAnnotation, clearHighlight } from './navigateToCode';
 import { readGitRefInfo } from './gitRefsSource';
 import { gitRefSuggestions } from '../core/gitRefs';
 import { computeStaleIds } from './staleness';
@@ -18,6 +18,8 @@ import { flattenComments, slugifyAuthor } from '../core/comments';
 import { resolveAuthor, resolveAuthorEmail } from '../core/authorIdentity';
 import { VscodeAuthorNameSources } from './authorSources';
 import { newId } from '../shared/ids';
+import { annotationsAtLine } from '../core/gutterIndicators';
+import { GutterDecorationManager } from './gutterDecorations';
 
 export function activate(context: vscode.ExtensionContext): void {
   const provider = new SidebarViewProvider(context.extensionUri);
@@ -26,18 +28,31 @@ export function activate(context: vscode.ExtensionContext): void {
   );
 
   const watcher = vscode.workspace.createFileSystemWatcher('**/.annotations/**/*.json');
-  const refreshSidebar = (): void => {
-    void provider.refresh();
-  };
-  watcher.onDidCreate(refreshSidebar);
-  watcher.onDidChange(refreshSidebar);
-  watcher.onDidDelete(refreshSidebar);
   context.subscriptions.push(watcher);
 
   const detailProvider = new DetailPanelProvider(context.extensionUri);
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider(DetailPanelProvider.viewType, detailProvider),
   );
+
+  const gutter = new GutterDecorationManager();
+  context.subscriptions.push({ dispose: () => gutter.dispose() });
+
+  const refreshDecorations = async (): Promise<void> => {
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    const groups = folder
+      ? await new GroupStore(new VscodeFileSystem(folder.uri)).listGroups()
+      : [];
+    gutter.refresh(vscode.window.visibleTextEditors, groups, readTagPalette());
+  };
+
+  const onAnnotationsChanged = (): void => {
+    void provider.refresh();
+    void refreshDecorations();
+  };
+  watcher.onDidCreate(onAnnotationsChanged);
+  watcher.onDidChange(onAnnotationsChanged);
+  watcher.onDidDelete(onAnnotationsChanged);
 
   const now = (): number => Math.floor(Date.now() / 1000);
 
@@ -124,11 +139,9 @@ export function activate(context: vscode.ExtensionContext): void {
     }
     const { names, addNew } = splitPickedTags(picked.map((item) => item.label));
     if (addNew) {
-      const name = await vscode.window.showInputBox({ prompt: 'New tag name' });
-      if (name && name.trim()) {
-        const color = await vscode.window.showInputBox({ prompt: 'Tag color (hex)', value: '#888888' });
-        await addTagToPalette(name.trim(), color?.trim() || '#888888');
-        names.push(name.trim());
+      const tag = await promptNewTag();
+      if (tag) {
+        names.push(tag.name);
       }
     }
     const store = new GroupStore(new VscodeFileSystem(folder.uri));
@@ -178,6 +191,9 @@ export function activate(context: vscode.ExtensionContext): void {
     if (folder) {
       void revealAnnotation(folder.uri, annotation);
     }
+  };
+  detailProvider.onNavigationClosed = (): void => {
+    clearHighlight();
   };
 
   detailProvider.onUpdateAnnotation = async (groupId, annotationId, content): Promise<void> => {
@@ -233,11 +249,9 @@ export function activate(context: vscode.ExtensionContext): void {
     }
     const { names, addNew } = splitPickedTags(picked.map((item) => item.label));
     if (addNew) {
-      const name = await vscode.window.showInputBox({ prompt: 'New tag name' });
-      if (name && name.trim()) {
-        const color = await vscode.window.showInputBox({ prompt: 'Tag color (hex)', value: '#888888' });
-        await addTagToPalette(name.trim(), color?.trim() || '#888888');
-        names.push(name.trim());
+      const tag = await promptNewTag();
+      if (tag) {
+        names.push(tag.name);
       }
     }
     await patchGroup(groupId, { tags: names });
@@ -352,7 +366,79 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('annotated.ping', () => 'pong'),
   );
 
-  context.subscriptions.push(registerCreateAnnotationCommand());
+  const openAnnotationInPanel = async (groupId: string, annotationId: string): Promise<void> => {
+    await showGroupWithStale(groupId);
+    detailProvider.openAnnotation(annotationId);
+    await vscode.commands.executeCommand('annotated.detail.focus');
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    if (!folder) {
+      return;
+    }
+    const group = await new GroupStore(new VscodeFileSystem(folder.uri)).getGroup(groupId);
+    const annotation = group?.annotations.find((a) => a.id === annotationId);
+    if (annotation) {
+      await revealAnnotation(folder.uri, annotation);
+    }
+  };
+  context.subscriptions.push(registerCreateAnnotationCommand(openAnnotationInPanel));
+
+  // Invoked by gutter-hover command links (not contributed to the palette — needs args).
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      'annotated.openAnnotation',
+      async (args?: { groupId?: string; annotationId?: string }) => {
+        if (args && typeof args.groupId === 'string' && typeof args.annotationId === 'string') {
+          await openAnnotationInPanel(args.groupId, args.annotationId);
+        }
+      },
+    ),
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('annotated.openAnnotationAtCursor', async () => {
+      const editor = vscode.window.activeTextEditor;
+      const folder = vscode.workspace.workspaceFolders?.[0];
+      if (!editor || !folder) {
+        return;
+      }
+      const file = vscode.workspace.asRelativePath(editor.document.uri, false);
+      const line = editor.selection.active.line + 1; // model lines are 1-based
+      const groups = await new GroupStore(new VscodeFileSystem(folder.uri)).listGroups();
+      const matches = annotationsAtLine(groups, file, line);
+      if (matches.length === 0) {
+        void vscode.window.showInformationMessage('No annotation on this line.');
+        return;
+      }
+      if (matches.length === 1) {
+        await openAnnotationInPanel(matches[0].group.id, matches[0].annotation.id);
+        return;
+      }
+      const picked = await vscode.window.showQuickPick(
+        matches.map((m) => ({
+          label: m.group.title,
+          description: `${m.annotation.file}:${m.annotation.range.startLine}–${m.annotation.range.endLine}`,
+          groupId: m.group.id,
+          annotationId: m.annotation.id,
+        })),
+        { placeHolder: 'Open annotation…' },
+      );
+      if (picked) {
+        await openAnnotationInPanel(picked.groupId, picked.annotationId);
+      }
+    }),
+  );
+
+  context.subscriptions.push(
+    vscode.window.onDidChangeActiveTextEditor(() => void refreshDecorations()),
+    vscode.window.onDidChangeVisibleTextEditors(() => void refreshDecorations()),
+    vscode.workspace.onDidChangeConfiguration((e) => {
+      if (e.affectsConfiguration('annotated.tags')) {
+        void refreshDecorations();
+      }
+    }),
+  );
+  provider.onRefreshRequested = (): void => void refreshDecorations();
+  void refreshDecorations(); // initial paint for already-open editors
 }
 
 export function deactivate(): void {

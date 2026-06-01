@@ -29,6 +29,14 @@ describe('applyDetailMessage', () => {
     const next = applyDetailMessage(initialDetailState(), { type: 'setGroup', group: null, palette: [] });
     expect(next.group).toBeNull();
   });
+
+  it('openAnnotation switches to annotation mode for the given id and keeps the group', () => {
+    const start = { ...initialDetailState(), group: group() };
+    const next = applyDetailMessage(start, { type: 'openAnnotation', annotationId: 'a1' });
+    expect(next.mode).toBe('annotation');
+    expect(next.selectedAnnotationId).toBe('a1');
+    expect(next.group?.id).toBe('g1');
+  });
 });
 
 describe('mode transitions', () => {

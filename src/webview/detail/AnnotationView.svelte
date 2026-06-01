@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { untrack } from 'svelte';
+  import { untrack, onDestroy } from 'svelte';
   import { type Annotation, type ThreadComment } from '../../shared/model';
   import MarkdownPreview from './MarkdownPreview.svelte';
   import MarkdownEditor from './MarkdownEditor.svelte';
@@ -47,6 +47,10 @@
   let editing = $state(untrack(() => annotation.content.length === 0));
   let draft = $state(untrack(() => annotation.content));
 
+  // Autofocus the editor only when we auto-open in edit mode because the annotation is
+  // empty (the just-created case) — never steal focus on a manual "Edit" of existing content.
+  const autofocusEditor = untrack(() => annotation.content.length === 0);
+
   let editingRange = $state(false);
   let rangeStart = $state(untrack(() => annotation.range.startLine));
   let rangeEnd = $state(untrack(() => annotation.range.endLine));
@@ -66,6 +70,29 @@
     onsave?.(annotation.id, draft);
     editing = false;
   }
+
+  let copiedPath = $state(false);
+  let copiedMd = $state(false);
+  let pathTimer: ReturnType<typeof setTimeout> | undefined;
+  let mdTimer: ReturnType<typeof setTimeout> | undefined;
+
+  function copyPath(): void {
+    oncopyloc?.(location);
+    copiedPath = true;
+    clearTimeout(pathTimer);
+    pathTimer = setTimeout(() => (copiedPath = false), 1500);
+  }
+  function copyMd(): void {
+    oncopy?.(annotation.content);
+    copiedMd = true;
+    clearTimeout(mdTimer);
+    mdTimer = setTimeout(() => (copiedMd = false), 1500);
+  }
+
+  onDestroy(() => {
+    clearTimeout(pathTimer);
+    clearTimeout(mdTimer);
+  });
 </script>
 
 <section class="annotation-view" data-testid="annotation-view">
@@ -80,7 +107,7 @@
       <span class="loc" data-testid="annotation-loc">{location}</span>
       <button type="button" class="link" data-testid="edit-range-btn" onclick={startRangeEdit}>edit range</button>
     {/if}
-    <button type="button" class="link" data-testid="copy-loc-btn" onclick={() => oncopyloc?.(location)}>⧉ path</button>
+    <button type="button" class="link" data-testid="copy-loc-btn" onclick={copyPath}>{copiedPath ? '✓ Copied' : '⧉ path'}</button>
   </div>
 
   <div class="nav" data-testid="nav-bar">
@@ -97,11 +124,11 @@
     {:else}
       <button type="button" class="btn" data-testid="edit-btn" onclick={startEdit}>✎ Edit</button>
     {/if}
-    <button type="button" class="btn ghost" data-testid="copy-md-btn" onclick={() => oncopy?.(annotation.content)}>⧉ Copy markdown</button>
+    <button type="button" class="btn ghost" data-testid="copy-md-btn" onclick={copyMd}>{copiedMd ? '✓ Copied' : '⧉ Copy markdown'}</button>
   </div>
 
   {#if editing}
-    <MarkdownEditor doc={draft} onChange={(v) => (draft = v)} />
+    <MarkdownEditor doc={draft} autofocus={autofocusEditor} onChange={(v) => (draft = v)} />
   {:else}
     <MarkdownPreview source={annotation.content} />
   {/if}

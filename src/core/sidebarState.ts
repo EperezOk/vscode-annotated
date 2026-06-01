@@ -86,3 +86,21 @@ export function filterGroups(state: SidebarState): AnnotationGroup[] {
 export function bulkStatusToggle(groups: AnnotationGroup[]): GroupStatus {
   return groups.length > 0 && groups.every((g) => g.status === 'resolved') ? 'open' : 'resolved';
 }
+
+/**
+ * Visible options for a filter dropdown: options not already selected that match the
+ * (case-insensitive, trimmed) query, capped to `cap`. An empty query returns all
+ * unselected options. `more` is how many matches were dropped past the cap.
+ */
+export function filterOptions(
+  all: string[],
+  selected: string[],
+  query: string,
+  cap = 50,
+): { visible: string[]; more: number } {
+  const q = query.trim().toLowerCase();
+  const matches = all.filter(
+    (o) => !selected.includes(o) && (q === '' || o.toLowerCase().includes(q)),
+  );
+  return { visible: matches.slice(0, cap), more: Math.max(0, matches.length - cap) };
+}

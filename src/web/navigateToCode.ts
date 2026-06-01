@@ -7,8 +7,13 @@ let lastEditor: vscode.TextEditor | undefined;
 function decorationType(): vscode.TextEditorDecorationType {
   if (!highlightType) {
     highlightType = vscode.window.createTextEditorDecorationType({
-      backgroundColor: new vscode.ThemeColor('editor.rangeHighlightBackground'),
       isWholeLine: true,
+      backgroundColor: new vscode.ThemeColor('editor.findMatchHighlightBackground'),
+      borderWidth: '0 0 0 3px',
+      borderStyle: 'solid',
+      borderColor: new vscode.ThemeColor('focusBorder'),
+      overviewRulerColor: new vscode.ThemeColor('editorOverviewRuler.findMatchForeground'),
+      overviewRulerLane: vscode.OverviewRulerLane.Full,
     });
   }
   return highlightType;

@@ -45,7 +45,8 @@ describe('runCreateAnnotation', () => {
     expect(saved.annotations).toHaveLength(1);
     expect(saved.annotations[0]).toMatchObject({ file: 'src/x.ts', range: { startLine: 1, endLine: 2 }, content: '', contentHash: 'HASH' });
     expect(saved.createdAt).toBe(saved.updatedAt); // a brand-new group's first annotation shares one timestamp
-    expect(result?.id).toBe(saved.id);
+    expect(result?.group.id).toBe(saved.id);
+    expect(result?.annotationId).toBe(saved.annotations[0].id);
   });
 
   it('hashes the anchored code lines (not the whole file)', async () => {

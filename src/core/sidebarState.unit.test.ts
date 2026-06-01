@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { initialSidebarState, applyHostMessage, tagColor, filterGroups, availableTags, availableAuthors, toggleInList, bulkStatusToggle } from './sidebarState';
+import { initialSidebarState, applyHostMessage, tagColor, filterGroups, availableTags, availableAuthors, toggleInList, bulkStatusToggle, filterOptions } from './sidebarState';
 import { type AnnotationGroup } from '../shared/model';
 
 function group(
@@ -154,5 +154,28 @@ describe('bulkStatusToggle', () => {
   });
   it('empty → resolved', () => {
     expect(bulkStatusToggle([])).toBe('resolved');
+  });
+});
+
+describe('filterOptions', () => {
+  const all = ['security', 'todo', 'perf', 'bug'];
+
+  it('returns all unselected options for an empty query', () => {
+    expect(filterOptions(all, ['todo'], '')).toEqual({ visible: ['security', 'perf', 'bug'], more: 0 });
+  });
+
+  it('filters by case-insensitive substring', () => {
+    expect(filterOptions(all, [], 'E')).toEqual({ visible: ['security', 'perf'], more: 0 });
+  });
+
+  it('excludes already-selected options', () => {
+    expect(filterOptions(all, ['security'], 'se')).toEqual({ visible: [], more: 0 });
+  });
+
+  it('caps the list and reports how many more matched', () => {
+    const many = Array.from({ length: 60 }, (_, i) => `t${i}`);
+    const result = filterOptions(many, [], '', 50);
+    expect(result.visible).toHaveLength(50);
+    expect(result.more).toBe(10);
   });
 });

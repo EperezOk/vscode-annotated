@@ -78,9 +78,40 @@ describe('AnnotationView', () => {
     expect(screen.getByTestId('prev-btn')).toBeDisabled();
     expect(screen.getByTestId('next-btn')).toBeDisabled();
   });
+
+  it('autofocuses the editor when auto-opening an empty (new) annotation', () => {
+    render(AnnotationView, { annotation: annotation('') });
+    expect(screen.getByTestId('md-editor')).toHaveAttribute('data-autofocus', 'true');
+  });
+
+  it('does not autofocus when manually editing an existing annotation', async () => {
+    render(AnnotationView, { annotation: annotation('original') });
+    await userEvent.click(screen.getByTestId('edit-btn'));
+    expect(screen.getByTestId('md-editor')).toHaveAttribute('data-autofocus', 'false');
+  });
+
   it('renders the comment thread', () => {
     render(AnnotationView, { annotation: annotation('# Note'), comments: [], currentAuthor: 'Me' });
     expect(screen.getByTestId('comment-thread')).toBeInTheDocument();
     expect(screen.getByTestId('comment-reply-trigger')).toBeInTheDocument();
+  });
+
+  it('shows transient "Copied" feedback after Copy markdown (and still calls oncopy)', async () => {
+    const oncopy = vi.fn();
+    render(AnnotationView, { annotation: annotation('# Note'), oncopy });
+    const btn = screen.getByTestId('copy-md-btn');
+    expect(btn).toHaveTextContent('Copy markdown');
+    await userEvent.click(btn);
+    expect(oncopy).toHaveBeenCalledWith('# Note');
+    expect(btn).toHaveTextContent('Copied');
+  });
+
+  it('shows transient "Copied" feedback after copying the path (and still calls oncopyloc)', async () => {
+    const oncopyloc = vi.fn();
+    render(AnnotationView, { annotation: annotation('# Note'), oncopyloc });
+    const btn = screen.getByTestId('copy-loc-btn');
+    await userEvent.click(btn);
+    expect(oncopyloc).toHaveBeenCalledWith('src/x.ts:2–4');
+    expect(btn).toHaveTextContent('Copied');
   });
 });

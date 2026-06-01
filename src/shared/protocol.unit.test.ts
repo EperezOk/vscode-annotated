@@ -21,6 +21,10 @@ describe('parseWebviewMessage', () => {
     expect(parseWebviewMessage('ready')).toBeNull();
   });
 
+  it('accepts a refresh message', () => {
+    expect(parseWebviewMessage({ type: 'refresh' })).toEqual({ type: 'refresh' });
+  });
+
   it('accepts bulk messages with a string[] groupIds', () => {
     for (const type of ['bulkEditTags', 'bulkEditGitRef', 'bulkResolveRestore', 'bulkDelete'] as const) {
       expect(parseWebviewMessage({ type, groupIds: ['g1', 'g2'] })).toEqual({ type, groupIds: ['g1', 'g2'] });
@@ -125,5 +129,8 @@ describe('parseDetailMessage', () => {
     expect(parseDetailMessage({ type: 'addComment', annotationId: 'a1' })).toBeNull();
     expect(parseDetailMessage({ type: 'editComment', commentId: 1, content: 'x' })).toBeNull();
     expect(parseDetailMessage({ type: 'deleteComment' })).toBeNull();
+  });
+  it('accepts navigationClosed', () => {
+    expect(parseDetailMessage({ type: 'navigationClosed' })).toEqual({ type: 'navigationClosed' });
   });
 });

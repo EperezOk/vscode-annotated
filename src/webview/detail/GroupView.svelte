@@ -2,6 +2,7 @@
   import { type AnnotationGroup, type GroupStatus } from '../../shared/model';
   import { type TagColor } from '../../shared/protocol';
   import { tagColor } from '../../core/sidebarState';
+  import { contrastColor } from '../../shared/color';
   import { moveBefore } from '../../core/detailState';
   import AnnotationRow from './AnnotationRow.svelte';
 
@@ -86,7 +87,8 @@
 
     <div class="tags-row">
       {#each group.tags as tag (tag)}
-        <span class="chip" style="background:{tagColor(palette, tag)}">{tag}</span>
+        {@const bg = tagColor(palette, tag)}
+        <span class="chip" data-testid="tag-chip" style="background:{bg}; color:{contrastColor(bg)}">{tag}</span>
       {/each}
       <button type="button" class="link" data-testid="edit-tags-btn" onclick={() => onedittags?.()}>＋ edit tags</button>
     </div>
@@ -132,7 +134,7 @@
   .icon { background: none; border: none; color: var(--vscode-descriptionForeground, #9a9a9a); cursor: pointer; font-size: 12px; padding: 0; }
   .meta { color: var(--vscode-descriptionForeground, #9a9a9a); font-size: 11.5px; margin-top: 3px; }
   .tags-row { display: flex; gap: 5px; flex-wrap: wrap; align-items: center; margin-top: 8px; }
-  .chip { font-size: 10.5px; padding: 1px 8px; border-radius: 9px; color: #fff; }
+  .chip { font-size: 10.5px; padding: 1px 8px; border-radius: 9px; }
   .gitref-row { font-size: 11.5px; color: #bbb; margin-top: 8px; }
   .gitref-row code { background: var(--vscode-textCodeBlock-background, #333); padding: 1px 6px; border-radius: 3px; }
   .none { color: var(--vscode-descriptionForeground, #9a9a9a); }

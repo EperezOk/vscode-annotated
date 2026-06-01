@@ -15,9 +15,10 @@ export function openAnnotationView(id: string): void {
   detail.update((state) => openAnnotationState(state, id));
 }
 
-/** Return to the group view. */
+/** Return to the group view, and tell the host to clear the code highlight. */
 export function showGroupView(): void {
   detail.update((state) => backToGroupState(state));
+  postToHost({ type: 'navigationClosed' });
 }
 
 /** Persist an annotation's content (host saves + re-posts the group). */

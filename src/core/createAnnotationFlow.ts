@@ -38,7 +38,9 @@ export interface CreateAnnotationDeps {
  * Drive the create-annotation flow. Returns the saved group, or undefined if the
  * user cancelled or there was nothing to annotate.
  */
-export async function runCreateAnnotation(deps: CreateAnnotationDeps): Promise<AnnotationGroup | undefined> {
+export async function runCreateAnnotation(
+  deps: CreateAnnotationDeps,
+): Promise<{ group: AnnotationGroup; annotationId: string } | undefined> {
   const selection = deps.getSelection();
   if (!selection) {
     deps.showWarning('Select one or more lines to annotate.');
@@ -68,7 +70,7 @@ export async function runCreateAnnotation(deps: CreateAnnotationDeps): Promise<A
     const updated = addAnnotation(group, annotation, deps.now());
     await deps.saveGroup(updated);
     deps.showInfo(`Annotation added to "${updated.title}".`);
-    return updated;
+    return { group: updated, annotationId: annotation.id };
   }
 
   const title = await deps.promptGroupTitle();
@@ -85,5 +87,5 @@ export async function runCreateAnnotation(deps: CreateAnnotationDeps): Promise<A
   const group = addAnnotation(base, annotation, now);
   await deps.saveGroup(group);
   deps.showInfo(`Created group "${group.title}".`);
-  return group;
+  return { group, annotationId: annotation.id };
 }

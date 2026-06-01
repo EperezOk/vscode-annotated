@@ -2,6 +2,7 @@
   import { type AnnotationGroup } from '../../shared/model';
   import { type TagColor } from '../../shared/protocol';
   import { tagColor } from '../../core/sidebarState';
+  import { contrastColor } from '../../shared/color';
 
   let {
     group,
@@ -41,7 +42,8 @@
   {#if group.tags.length > 0}
     <div class="chips">
       {#each group.tags as tag (tag)}
-        <span class="chip" style="background:{tagColor(palette, tag)}">{tag}</span>
+        {@const bg = tagColor(palette, tag)}
+        <span class="chip" data-testid="tag-chip" style="background:{bg}; color:{contrastColor(bg)}">{tag}</span>
       {/each}
     </div>
   {/if}
@@ -86,7 +88,6 @@
     font-size: 10px;
     padding: 1px 7px;
     border-radius: 9px;
-    color: #fff;
   }
   .bulk-cb { margin-right: 6px; pointer-events: none; vertical-align: middle; }
 </style>

@@ -17,6 +17,7 @@ export type HostToWebview = {
 /** Webview → host messages. */
 export type WebviewToHost =
   | { type: 'ready' }
+  | { type: 'refresh' }
   | { type: 'selectGroup'; groupId: string }
   | { type: 'bulkEditTags'; groupIds: string[] }
   | { type: 'bulkEditGitRef'; groupIds: string[] }
@@ -24,14 +25,16 @@ export type WebviewToHost =
   | { type: 'bulkDelete'; groupIds: string[] };
 
 /** Host → detail-panel messages. */
-export type HostToDetail = {
-  type: 'setGroup';
-  group: AnnotationGroup | null;
-  palette: TagColor[];
-  staleIds?: string[];
-  comments?: ThreadComment[];
-  currentAuthor?: string;
-};
+export type HostToDetail =
+  | {
+      type: 'setGroup';
+      group: AnnotationGroup | null;
+      palette: TagColor[];
+      staleIds?: string[];
+      comments?: ThreadComment[];
+      currentAuthor?: string;
+    }
+  | { type: 'openAnnotation'; annotationId: string };
 
 /** Detail-panel → host messages. */
 export type DetailToHost =
@@ -47,7 +50,8 @@ export type DetailToHost =
   | { type: 'updateGroupStatus'; status: GroupStatus }
   | { type: 'addComment'; annotationId: string; content: string }
   | { type: 'editComment'; commentId: string; content: string }
-  | { type: 'deleteComment'; commentId: string };
+  | { type: 'deleteComment'; commentId: string }
+  | { type: 'navigationClosed' };
 
 function isObject(x: unknown): x is Record<string, unknown> {
   return typeof x === 'object' && x !== null;
@@ -61,6 +65,8 @@ export function parseWebviewMessage(raw: unknown): WebviewToHost | null {
   switch (raw.type) {
     case 'ready':
       return { type: 'ready' };
+    case 'refresh':
+      return { type: 'refresh' };
     case 'selectGroup':
       return typeof raw.groupId === 'string' ? { type: 'selectGroup', groupId: raw.groupId } : null;
     case 'bulkEditTags':
@@ -123,6 +129,8 @@ export function parseDetailMessage(raw: unknown): DetailToHost | null {
       return typeof raw.commentId === 'string'
         ? { type: 'deleteComment', commentId: raw.commentId }
         : null;
+    case 'navigationClosed':
+      return { type: 'navigationClosed' };
     default:
       return null;
   }
