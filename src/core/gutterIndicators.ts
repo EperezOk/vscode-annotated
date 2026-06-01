@@ -1,6 +1,7 @@
 import { type AnnotationGroup, type Annotation } from '../shared/model';
 import { type TagColor } from '../shared/protocol';
 import { tagColor } from './sidebarState';
+import { oneLine } from './detailState';
 import { svgDataUri } from '../shared/svgIcon';
 
 const DEFAULT_BAR_COLOR = '#888888';
@@ -120,4 +121,18 @@ export function hoverMarkdown(
       return `[📝 ${it.label}](command:annotated.openAnnotation?${args})`;
     })
     .join('\n\n');
+}
+
+/**
+ * Build the hover command-link items for a line's annotations: each label is the group
+ * title plus a one-line snippet of the annotation content (or '(empty)').
+ */
+export function hoverItems(
+  matches: { group: AnnotationGroup; annotation: Annotation }[],
+): { label: string; groupId: string; annotationId: string }[] {
+  return matches.map(({ group, annotation }) => ({
+    label: `${group.title} · ${oneLine(annotation.content) || '(empty)'}`,
+    groupId: group.id,
+    annotationId: annotation.id,
+  }));
 }

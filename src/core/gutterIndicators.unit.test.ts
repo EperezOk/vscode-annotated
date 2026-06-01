@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { gutterBarsByLine, buildGutterSvg, MAX_BARS, annotationsAtLine, hoverMarkdown, decorationGroups } from './gutterIndicators';
+import { gutterBarsByLine, buildGutterSvg, MAX_BARS, annotationsAtLine, hoverMarkdown, decorationGroups, hoverItems } from './gutterIndicators';
 import { type AnnotationGroup } from '../shared/model';
 import { type TagColor } from '../shared/protocol';
 
@@ -136,5 +136,23 @@ describe('decorationGroups', () => {
 
   it('returns an empty array for an empty map', () => {
     expect(decorationGroups(new Map())).toEqual([]);
+  });
+});
+
+describe('hoverItems', () => {
+  it('labels each item with group title + a one-line content snippet', () => {
+    const g = group({ id: 'g1', title: 'Login', annotations: [
+      { id: 'a1', file: 'a.ts', range: { startLine: 1, endLine: 1 }, content: '# Heading\nmore', contentHash: 'h' },
+    ] });
+    expect(hoverItems([{ group: g, annotation: g.annotations[0] }])).toEqual([
+      { label: 'Login · # Heading', groupId: 'g1', annotationId: 'a1' },
+    ]);
+  });
+
+  it('uses (empty) for blank content', () => {
+    const g = group({ id: 'g1', title: 'T', annotations: [
+      { id: 'a1', file: 'a.ts', range: { startLine: 1, endLine: 1 }, content: '', contentHash: 'h' },
+    ] });
+    expect(hoverItems([{ group: g, annotation: g.annotations[0] }])[0].label).toBe('T · (empty)');
   });
 });
