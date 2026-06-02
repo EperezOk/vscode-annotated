@@ -1,7 +1,5 @@
-import { type AnnotationGroup } from '../shared/model';
+import { type AnnotationGroup, DEFAULT_TAG_COLOR } from '../shared/model';
 import { type TagColor } from '../shared/protocol';
-
-const DEFAULT_COLOR = '#888888';
 
 /** First-seen JSON color per tag name across the given groups. */
 export function jsonTagColors(groups: AnnotationGroup[]): Map<string, string> {
@@ -22,7 +20,7 @@ export function resolveTagColor(
   sources: { local: TagColor[]; global: TagColor[]; json: Map<string, string> },
 ): string {
   const find = (arr: TagColor[]): string | undefined => arr.find((t) => t.name === name)?.color;
-  return find(sources.local) ?? find(sources.global) ?? sources.json.get(name) ?? DEFAULT_COLOR;
+  return find(sources.local) ?? find(sources.global) ?? sources.json.get(name) ?? DEFAULT_TAG_COLOR;
 }
 
 /** The full display palette: every tag name (config ∪ groups), each color precedence-resolved. */
@@ -54,7 +52,7 @@ export function missingWorkspaceTags(
     for (const tag of group.tags) {
       if (!have.has(tag.name) && !seen.has(tag.name)) {
         seen.add(tag.name);
-        out.push({ name: tag.name, color: json.get(tag.name) ?? DEFAULT_COLOR });
+        out.push({ name: tag.name, color: json.get(tag.name) ?? DEFAULT_TAG_COLOR });
       }
     }
   }

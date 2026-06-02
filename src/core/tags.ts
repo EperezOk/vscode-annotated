@@ -1,4 +1,4 @@
-import { type Tag } from '../shared/model';
+import { type Tag, DEFAULT_TAG_COLOR } from '../shared/model';
 export type { Tag };
 
 /** The pinned QuickPick item label that triggers inline tag creation. */
@@ -17,8 +17,6 @@ export function splitPickedTags(labels: string[]): { names: string[]; addNew: bo
   }
   return { names, addNew };
 }
-
-const DEFAULT_COLOR = '#888888';
 
 /** The fixed set of named color swatches offered when creating a new tag. */
 export const TAG_SWATCHES: readonly { name: string; hex: string }[] = [
@@ -42,7 +40,7 @@ export function parseTagPalette(raw: unknown): Tag[] {
     if (item && typeof item === 'object' && typeof (item as { name?: unknown }).name === 'string') {
       const name = (item as { name: string }).name;
       const colorValue = (item as { color?: unknown }).color;
-      tags.push({ name, color: typeof colorValue === 'string' ? colorValue : DEFAULT_COLOR });
+      tags.push({ name, color: typeof colorValue === 'string' ? colorValue : DEFAULT_TAG_COLOR });
     }
   }
   return tags;

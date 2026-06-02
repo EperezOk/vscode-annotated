@@ -1,14 +1,12 @@
 import * as vscode from 'vscode';
 import { type Tag, parseTagPalette, TAG_SWATCHES } from '../core/tags';
 import { swatchIconSvg } from '../shared/svgIcon';
-import { type AnnotationGroup } from '../shared/model';
+import { type AnnotationGroup, DEFAULT_TAG_COLOR } from '../shared/model';
 import { type TagColor } from '../shared/protocol';
 import { resolveDisplayPalette, missingWorkspaceTags } from '../core/tagResolve';
 
-const DEFAULT_COLOR = '#888888';
-
 /** Add a tag to the palette if its name isn't already present. */
-export async function addTagToPalette(name: string, color = DEFAULT_COLOR): Promise<void> {
+export async function addTagToPalette(name: string, color = DEFAULT_TAG_COLOR): Promise<void> {
   const config = vscode.workspace.getConfiguration('annotated');
   const current = parseTagPalette(config.get('tags'));
   if (current.some((t) => t.name === name)) {
@@ -43,13 +41,13 @@ export async function promptNewTag(): Promise<Tag | undefined> {
   }
   let color: string;
   if (picked.label === CUSTOM_HEX_LABEL) {
-    const hex = await vscode.window.showInputBox({ prompt: 'Tag color (hex)', value: DEFAULT_COLOR });
+    const hex = await vscode.window.showInputBox({ prompt: 'Tag color (hex)', value: DEFAULT_TAG_COLOR });
     if (hex === undefined) {
       return undefined;
     }
-    color = hex.trim() || DEFAULT_COLOR;
+    color = hex.trim() || DEFAULT_TAG_COLOR;
   } else {
-    color = picked.description ?? DEFAULT_COLOR;
+    color = picked.description ?? DEFAULT_TAG_COLOR;
   }
   const tag: Tag = { name: name.trim(), color };
   await addTagToPalette(tag.name, tag.color);

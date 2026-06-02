@@ -14,6 +14,9 @@ export interface Tag {
   color: string;
 }
 
+/** Neutral fallback color for a tag with no configured/known color. */
+export const DEFAULT_TAG_COLOR = '#888888';
+
 export interface Annotation {
   id: string;
   /** Workspace-relative POSIX path. */
@@ -75,11 +78,11 @@ function parseAnnotation(raw: unknown): Annotation {
 function parseTag(raw: unknown): Tag {
   if (typeof raw === 'string') {
     // Legacy `string[]` tags → migrate; real color resolves from config / is stamped on next save.
-    return { name: raw, color: '#888888' };
+    return { name: raw, color: DEFAULT_TAG_COLOR };
   }
   if (isObject(raw) && typeof (raw as { name?: unknown }).name === 'string') {
     const r = raw as { name: string; color?: unknown };
-    return { name: r.name, color: typeof r.color === 'string' ? r.color : '#888888' };
+    return { name: r.name, color: typeof r.color === 'string' ? r.color : DEFAULT_TAG_COLOR };
   }
   return fail('tags[]', 'must be a string or { name, color }');
 }
