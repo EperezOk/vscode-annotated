@@ -1,6 +1,9 @@
 import * as vscode from 'vscode';
 import { type Tag, parseTagPalette, TAG_SWATCHES } from '../core/tags';
 import { swatchIconSvg } from '../shared/svgIcon';
+import { type AnnotationGroup } from '../shared/model';
+import { type TagColor } from '../shared/protocol';
+import { resolveDisplayPalette, missingWorkspaceTags } from '../core/tagResolve';
 
 const DEFAULT_COLOR = '#888888';
 
@@ -56,4 +59,31 @@ export async function promptNewTag(): Promise<Tag | undefined> {
   const tag: Tag = { name: name.trim(), color };
   await addTagToPalette(tag.name, tag.color);
   return tag;
+}
+
+/** Local (workspace) and global (user) tag palettes, read separately for precedence. */
+export function readTagSources(): { local: Tag[]; global: Tag[] } {
+  const inspected = vscode.workspace.getConfiguration('annotated').inspect('tags');
+  return {
+    local: parseTagPalette(inspected?.workspaceValue),
+    global: parseTagPalette(inspected?.globalValue),
+  };
+}
+
+/** The precedence-resolved display palette (local > global > JSON) for the given groups. */
+export function displayPalette(groups: AnnotationGroup[]): TagColor[] {
+  const { local, global } = readTagSources();
+  return resolveDisplayPalette(local, global, groups);
+}
+
+/** Add group tags missing from both configs to the workspace config (idempotent — no-op if none). */
+export async function reconcileWorkspaceTags(groups: AnnotationGroup[]): Promise<void> {
+  const { local, global } = readTagSources();
+  const missing = missingWorkspaceTags(local, global, groups);
+  if (missing.length === 0) {
+    return;
+  }
+  await vscode.workspace
+    .getConfiguration('annotated')
+    .update('tags', [...local, ...missing], vscode.ConfigurationTarget.Workspace);
 }
