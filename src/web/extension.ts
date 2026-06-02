@@ -5,6 +5,7 @@ import { DetailPanelProvider } from './detailPanelProvider';
 import { GroupStore } from '../core/groupStore';
 import { VscodeFileSystem } from './vscodeFileSystem';
 import { displayPalette, reconcileWorkspaceTags, promptNewTag } from './tagPalette';
+import { manageTags } from './tagAdminCommand';
 import { NEW_TAG_LABEL, splitPickedTags } from '../core/tags';
 import { revealAnnotation, clearHighlight } from './navigateToCode';
 import { readGitRefInfo } from './gitRefsSource';
@@ -379,6 +380,15 @@ export function activate(context: vscode.ExtensionContext): void {
 
   context.subscriptions.push(
     vscode.commands.registerCommand('annotated.ping', () => 'pong'),
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('annotated.manageTags', async () => {
+      await manageTags(async () => {
+        await provider.refresh();
+        await refreshDecorations();
+      });
+    }),
   );
 
   const openAnnotationInPanel = async (groupId: string, annotationId: string): Promise<void> => {

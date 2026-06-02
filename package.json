@@ -29,7 +29,12 @@
     "commands": [
       { "command": "annotated.ping", "title": "Annotated: Ping" },
       { "command": "annotated.createAnnotation", "title": "Annotated: Create Annotation" },
-      { "command": "annotated.openAnnotationAtCursor", "title": "Annotated: Open Annotation at Cursor" }
+      { "command": "annotated.openAnnotationAtCursor", "title": "Annotated: Open Annotation at Cursor" },
+      {
+        "command": "annotated.manageTags",
+        "title": "Annotated: Manage Tags…",
+        "icon": "$(tag)"
+      }
     ],
     "keybindings": [
       {
@@ -45,6 +50,15 @@
         "when": "editorTextFocus"
       }
     ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "annotated.manageTags",
+          "when": "view == annotated.sidebar",
+          "group": "navigation"
+        }
+      ]
+    },
     "configuration": {
       "title": "Annotated",
       "properties": {
