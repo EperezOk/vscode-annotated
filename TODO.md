@@ -1,5 +1,0 @@
-- Tag selection QuickPick should show the tag color apart from the name.
-- Similar to the feedback on copy success, show a success feedback when clicking the "Refresh" button in the sidebar.
-- Let's store the tag colors in the JSON files to make annotations more self-contained. Also, if the user config (either global or local) does not contain tags that are used for groups, let's make sure to add those tags in the local config. If there's a mismatch in colors among configs/JSON, the precedence should be local > global > JSON.
-- Al listar las annotations en el group view, solo poner el nombre del archivo y el line range, no todo el relative path.
-- Hovering on an annotation shows the group names and the relative path + line range. However, it should show the group names + the annotation content (truncated).
