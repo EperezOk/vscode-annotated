@@ -21,7 +21,7 @@ describe('FilterBar', () => {
     const ontoggletag = vi.fn();
     render(FilterBar, { ...base, tags: ['security'], ontoggletag });
     await userEvent.click(screen.getByTestId('picker-input-Tags'));
-    await userEvent.click(screen.getByRole('button', { name: 'security' }));
+    await userEvent.click(screen.getByRole('option', { name: 'security' }));
     expect(ontoggletag).toHaveBeenCalledWith('security');
   });
 
@@ -29,7 +29,7 @@ describe('FilterBar', () => {
     const ontoggleauthor = vi.fn();
     render(FilterBar, { ...base, authors: ['Ana'], ontoggleauthor });
     await userEvent.click(screen.getByTestId('picker-input-Authors'));
-    await userEvent.click(screen.getByRole('button', { name: 'Ana' }));
+    await userEvent.click(screen.getByRole('option', { name: 'Ana' }));
     expect(ontoggleauthor).toHaveBeenCalledWith('Ana');
   });
 
