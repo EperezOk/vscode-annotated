@@ -21,6 +21,7 @@ import { newId } from '../shared/ids';
 import { annotationsAtLine } from '../core/gutterIndicators';
 import { swatchIconSvg } from '../shared/svgIcon';
 import { GutterDecorationManager } from './gutterDecorations';
+import { debounce } from '../shared/debounce';
 
 export function activate(context: vscode.ExtensionContext): void {
   const provider = new SidebarViewProvider(context.extensionUri);
@@ -56,11 +57,11 @@ export function activate(context: vscode.ExtensionContext): void {
     await reconcileWorkspaceTags(groups);
   };
 
-  const onAnnotationsChanged = (): void => {
+  const onAnnotationsChanged = debounce((): void => {
     void reconcile();
     void provider.refresh();
     void refreshDecorations();
-  };
+  }, 200);
   watcher.onDidCreate(onAnnotationsChanged);
   watcher.onDidChange(onAnnotationsChanged);
   watcher.onDidDelete(onAnnotationsChanged);
