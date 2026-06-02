@@ -13,8 +13,8 @@ describe('FilterBar', () => {
   it('shows the show-resolved checkbox and no options until a picker is focused', () => {
     render(FilterBar, { ...base, tags: ['security'], authors: ['Ana'] });
     expect(screen.getByTestId('show-resolved')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'security' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'Ana' })).toBeNull();
+    expect(screen.queryByRole('option', { name: 'security' })).toBeNull();
+    expect(screen.queryByRole('option', { name: 'Ana' })).toBeNull();
   });
 
   it('toggles a tag when chosen from the tag picker', async () => {
