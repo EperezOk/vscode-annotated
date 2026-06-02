@@ -18,15 +18,10 @@ export async function addTagToPalette(name: string, color = DEFAULT_TAG_COLOR): 
 const CUSTOM_HEX_LABEL = '$(paintcan) Custom hex…';
 
 /**
- * Prompt for a new tag's name + color (visual swatch QuickPick, with a custom-hex
- * fallback), persist it to the palette, and return it. Returns undefined if the user
- * cancels at any step or leaves the name blank.
+ * Prompt for a tag color via the visual swatch QuickPick (with a custom-hex fallback).
+ * `initial` pre-fills the custom-hex input box. Returns undefined if the user cancels.
  */
-export async function promptNewTag(): Promise<Tag | undefined> {
-  const name = await vscode.window.showInputBox({ prompt: 'New tag name' });
-  if (!name || !name.trim()) {
-    return undefined;
-  }
+export async function promptTagColor(initial: string = DEFAULT_TAG_COLOR): Promise<string | undefined> {
   const items: vscode.QuickPickItem[] = [
     ...TAG_SWATCHES.map((s) => ({
       label: s.name,
@@ -39,15 +34,28 @@ export async function promptNewTag(): Promise<Tag | undefined> {
   if (!picked) {
     return undefined;
   }
-  let color: string;
   if (picked.label === CUSTOM_HEX_LABEL) {
-    const hex = await vscode.window.showInputBox({ prompt: 'Tag color (hex)', value: DEFAULT_TAG_COLOR });
+    const hex = await vscode.window.showInputBox({ prompt: 'Tag color (hex)', value: initial });
     if (hex === undefined) {
       return undefined;
     }
-    color = hex.trim() || DEFAULT_TAG_COLOR;
-  } else {
-    color = picked.description ?? DEFAULT_TAG_COLOR;
+    return hex.trim() || DEFAULT_TAG_COLOR;
+  }
+  return picked.description ?? DEFAULT_TAG_COLOR;
+}
+
+/**
+ * Prompt for a new tag's name + color, persist it to the palette, and return it.
+ * Returns undefined if the user cancels at any step or leaves the name blank.
+ */
+export async function promptNewTag(): Promise<Tag | undefined> {
+  const name = await vscode.window.showInputBox({ prompt: 'New tag name' });
+  if (!name || !name.trim()) {
+    return undefined;
+  }
+  const color = await promptTagColor();
+  if (color === undefined) {
+    return undefined;
   }
   const tag: Tag = { name: name.trim(), color };
   await addTagToPalette(tag.name, tag.color);
