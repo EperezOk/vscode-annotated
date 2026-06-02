@@ -19,7 +19,7 @@ match this contract **exactly** or the extension won't read them back.
   "id": "550e8400-e29b-41d4-a716-446655440000",   // MUST equal the filename stem
   "title": "Login review",
   "author": "Claude",                              // your agent identity for groups you create
-  "tags": ["security"],                            // tag names (colors live in config)
+  "tags": [{ "name": "security", "color": "#E5484D" }], // tags carry their color (self-contained)
   "gitRef": null,                                  // branch / tag / SHA, or null
   "status": "open",                                // "open" | "resolved"
   "createdAt": 1730000000,                         // epoch SECONDS
@@ -35,6 +35,10 @@ match this contract **exactly** or the extension won't read them back.
   ]
 }
 ```
+
+> **Tags** are objects `{ name, color }` — colors travel with the group so it's self-contained.
+> The displayed color resolves **local config > global config > this JSON**. Legacy `"tags":
+> ["security"]` string arrays still load (auto-migrated), but write the object form.
 
 ## Comment file — `.annotations/comments/<author-slug>.json`
 
@@ -112,16 +116,17 @@ Examples: `Claude` → `claude`; `Ana Díaz!` → `ana-d-az`; `` (empty) → `an
 ## Config — VSCode settings
 
 - `annotated.tags`: `[{ "name": string, "color": string }]` — the tag palette.
-  **Tag writes may target the workspace OR the user's global config — ask the user which**
-  (default: workspace):
+  The extension **auto-reconciles** group tags missing from settings into the **workspace** config
+  on load, so writing colors into the group JSON is sufficient and updating `annotated.tags` is
+  **optional**. Use it only to set or override a tag's color centrally.
+
+  When you do need to write to config, choose the target:
   - **Workspace:** `.vscode/settings.json` in the repo (shared/committed).
   - **Global (user):** the user's `settings.json` — path varies by OS + VSCode flavor:
     - macOS: `~/Library/Application Support/Code/User/settings.json`
     - Linux: `~/.config/Code/User/settings.json`
     - Windows: `%APPDATA%\Code\User\settings.json`
     - (swap the `Code` segment for `Code - Insiders` / `VSCodium` / `Cursor` as needed)
-
-    **Resolve the path and confirm it with the user before writing.**
 
   Either target: read-merge-write `annotated.tags`, **dedup by `name`**, preserve other keys.
   Both files may be absent — create with `{ }` if needed.

@@ -41,7 +41,7 @@ You may reply to **any** annotation, but only ever write your **own** slug file.
      "id": "<uuidgen>",
      "title": "<title>",
      "author": "<agentName>",
-     "tags": [<tag names — must exist in the palette, or add them first (op 5)>],
+     "tags": [{ "name": "...", "color": "#rrggbb" }, …],  // include each tag's color; no need to pre-register in config
      "gitRef": null,            // or a branch/tag/SHA string
      "status": "open",
      "createdAt": <date +%s>,
@@ -67,9 +67,12 @@ Never modify or delete a group authored by someone else, or another author's com
 ## 5. Update config (tags / identity)
 
 - **Add a tag** to `annotated.tags` (`{ "name": "...", "color": "#rrggbb" }`), dedup by `name`:
-  - Ask the user whether to write the **workspace** config (`.vscode/settings.json`) or the
-    **global** user config. For global, resolve the OS/flavor path (see `data-contract.md`) and
-    **confirm it before writing**.
+  > **Optional step** — the extension auto-reconciles group tags written into the JSON into the
+  > workspace config on load. You only need this step to set or override a tag's color centrally
+  > rather than relying on the per-group value.
+  - Choose the target: **workspace** config (`.vscode/settings.json`) or the **global** user
+    config. For global, resolve the OS/flavor path (see `data-contract.md`) and confirm it before
+    writing.
   - Read the target settings JSON (create `{}` if absent), merge `annotated.tags` (append or
     replace-by-name), write it back preserving other keys.
 - **Set agent identity:** write `annotated.agentName` to the workspace `.vscode/settings.json`.
