@@ -1,7 +1,5 @@
-import { type AnnotationGroup, type GroupStatus } from '../shared/model';
+import { type AnnotationGroup, type GroupStatus, DEFAULT_TAG_COLOR } from '../shared/model';
 import { type HostToWebview, type TagColor } from '../shared/protocol';
-
-const DEFAULT_COLOR = '#888888';
 
 export interface SidebarState {
   groups: AnnotationGroup[];
@@ -43,7 +41,7 @@ export function applyHostMessage(state: SidebarState, message: HostToWebview): S
 
 /** Resolve a tag name to its palette color, or a neutral default. */
 export function tagColor(palette: TagColor[], name: string): string {
-  return palette.find((t) => t.name === name)?.color ?? DEFAULT_COLOR;
+  return palette.find((t) => t.name === name)?.color ?? DEFAULT_TAG_COLOR;
 }
 
 /** Sorted, de-duplicated tag names across all groups (filter options). */

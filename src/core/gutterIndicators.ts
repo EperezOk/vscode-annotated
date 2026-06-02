@@ -1,17 +1,15 @@
-import { type AnnotationGroup, type Annotation } from '../shared/model';
+import { type AnnotationGroup, type Annotation, DEFAULT_TAG_COLOR } from '../shared/model';
 import { type TagColor } from '../shared/protocol';
 import { tagColor } from './sidebarState';
 import { oneLine } from './detailState';
 import { svgDataUri } from '../shared/svgIcon';
-
-const DEFAULT_BAR_COLOR = '#888888';
 
 /** Max bars drawn in one line's gutter icon; extra annotations still appear in the hover. */
 export const MAX_BARS = 4;
 
 /** A group's bar color: its first tag's palette color, or a neutral default if untagged. */
 function groupBarColor(group: AnnotationGroup, palette: TagColor[]): string {
-  return group.tags.length > 0 ? tagColor(palette, group.tags[0].name) : DEFAULT_BAR_COLOR;
+  return group.tags.length > 0 ? tagColor(palette, group.tags[0].name) : DEFAULT_TAG_COLOR;
 }
 
 /**

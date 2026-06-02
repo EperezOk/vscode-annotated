@@ -59,7 +59,7 @@ describe('App.svelte', () => {
     });
     render(App);
     await userEvent.click(screen.getByTestId('picker-input-Tags'));
-    await userEvent.click(screen.getByRole('button', { name: 'security' }));
+    await userEvent.click(screen.getByRole('option', { name: 'security' }));
     const cards = screen.getAllByTestId('group-card');
     expect(cards).toHaveLength(1);
     expect(cards[0]).toHaveTextContent('Sec');

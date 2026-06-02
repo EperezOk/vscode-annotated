@@ -14,25 +14,37 @@ describe('FilterPicker', () => {
   it('reveals the full option list on focus', async () => {
     render(FilterPicker, { ...base });
     await userEvent.click(screen.getByTestId('picker-input-Tags'));
-    expect(screen.getByRole('button', { name: 'security' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'todo' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'perf' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'security' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'todo' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'perf' })).toBeInTheDocument();
   });
 
   it('filters the list as you type', async () => {
     render(FilterPicker, { ...base });
     await userEvent.click(screen.getByTestId('picker-input-Tags'));
     await userEvent.type(screen.getByTestId('picker-input-Tags'), 'se');
-    expect(screen.getByRole('button', { name: 'security' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'todo' })).toBeNull();
+    expect(screen.getByRole('option', { name: 'security' })).toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: 'todo' })).toBeNull();
   });
 
   it('calls onToggle when an option is chosen', async () => {
     const onToggle = vi.fn();
     render(FilterPicker, { ...base, onToggle });
     await userEvent.click(screen.getByTestId('picker-input-Tags'));
-    await userEvent.click(screen.getByRole('button', { name: 'security' }));
+    await userEvent.click(screen.getByRole('option', { name: 'security' }));
     expect(onToggle).toHaveBeenCalledWith('security');
+  });
+
+  it('exposes combobox/listbox/option ARIA roles', async () => {
+    render(FilterPicker, { ...base });
+    const input = screen.getByTestId('picker-input-Tags');
+    expect(input).toHaveAttribute('role', 'combobox');
+    expect(input).toHaveAttribute('aria-expanded', 'false');
+    await userEvent.click(input);
+    expect(input).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByTestId('picker-menu-Tags')).toHaveAttribute('role', 'listbox');
+    const first = screen.getByRole('option', { name: 'security' });
+    expect(first).toHaveAttribute('aria-selected', 'true'); // highlighted index 0
   });
 
   it('renders selected values as removable pills and removes on ✕', async () => {

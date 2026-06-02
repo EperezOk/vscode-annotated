@@ -71,6 +71,11 @@
       type="text"
       class="picker-input"
       data-testid="picker-input-{label}"
+      role="combobox"
+      aria-expanded={open}
+      aria-controls="picker-listbox-{label}"
+      aria-autocomplete="list"
+      aria-activedescendant={open && result.visible.length > 0 ? `picker-opt-${label}-${highlighted}` : undefined}
       placeholder={placeholder}
       bind:value={query}
       onfocus={() => (open = true)}
@@ -79,20 +84,21 @@
     />
   </div>
   {#if open}
-    <ul class="menu" data-testid="picker-menu-{label}">
+    <ul class="menu" id="picker-listbox-{label}" role="listbox" data-testid="picker-menu-{label}">
       {#each result.visible as option, i (option)}
         {@const obg = colorFor ? colorFor(option) : undefined}
-        <li>
-          <button
-            type="button"
-            class="option"
-            class:highlighted={i === highlighted}
-            onmousedown={(e) => e.preventDefault()}
-            onclick={() => choose(option)}
-          >
-            {#if obg}<span class="swatch" style="background:{obg}"></span>{/if}
-            {option}
-          </button>
+        <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_noninteractive_element_interactions -->
+        <li
+          class="option"
+          class:highlighted={i === highlighted}
+          id="picker-opt-{label}-{i}"
+          role="option"
+          aria-selected={i === highlighted}
+          onmousedown={(e) => e.preventDefault()}
+          onclick={() => choose(option)}
+        >
+          {#if obg}<span class="swatch" style="background:{obg}"></span>{/if}
+          {option}
         </li>
       {/each}
       {#if result.visible.length === 0}
