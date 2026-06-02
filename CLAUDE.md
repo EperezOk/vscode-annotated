@@ -17,6 +17,14 @@ Project-specific guidance for AI agents working in this repo.
   subagent-driven, review, repeat). Report progress at milestones and merge to `main` when a
   phase is complete, but don't wait for a go-ahead. Only stop for a genuine blocker, an ambiguity
   that truly prevents progress, or when the user interjects.
+- **Pipelining (speed-up):** to save latency you MAY overlap a sub-plan's **review** with the
+  **next** sub-plan's **implementation** — but ONLY when the next sub-plan is *independent* of the
+  one under review: **disjoint files AND no logical/interface dependency** on it. Reviews are
+  read-only, so they can always overlap safely. Stay **strictly sequential** when sub-plans share
+  files or one builds on another (e.g. a model/format change that later sub-plans consume) — there
+  the review gate must pass before building on it. **Never run two implementers writing the same
+  branch at once** (git index races); if a review turns up required fixes, apply them before — or
+  file-isolated from — any concurrent next-sub-plan work. When unsure, stay sequential.
 
 ## Build & test
 
