@@ -28,3 +28,26 @@ export function recolorInConfig(arr: TagColor[], name: string, color: string): T
 export function deleteFromConfig(arr: TagColor[], name: string): TagColor[] {
   return arr.filter((t) => t.name !== name);
 }
+
+/** Per-group new `tags[]` for an op — returns ONLY groups that actually change. */
+export function groupTagPatches(groups: AnnotationGroup[], op: TagOp): { id: string; tags: Tag[] }[] {
+  const out: { id: string; tags: Tag[] }[] = [];
+  for (const g of groups) {
+    if (op.kind === 'rename') {
+      if (!g.tags.some((t) => t.name === op.from)) continue;
+      out.push({ id: g.id, tags: g.tags.map((t) => (t.name === op.from ? { name: op.to, color: t.color } : t)) });
+    } else if (op.kind === 'recolor') {
+      if (!g.tags.some((t) => t.name === op.name && t.color !== op.color)) continue;
+      out.push({ id: g.id, tags: g.tags.map((t) => (t.name === op.name ? { name: t.name, color: op.color } : t)) });
+    } else {
+      if (!g.tags.some((t) => t.name === op.name)) continue;
+      out.push({ id: g.id, tags: g.tags.filter((t) => t.name !== op.name) });
+    }
+  }
+  return out;
+}
+
+/** How many groups currently use the tag. */
+export function groupsUsingTag(groups: AnnotationGroup[], name: string): number {
+  return groups.filter((g) => g.tags.some((t) => t.name === name)).length;
+}
