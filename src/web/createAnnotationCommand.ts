@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { type AnnotationGroup } from '../shared/model';
+import { type AnnotationGroup, type Tag } from '../shared/model';
 import { newId } from '../shared/ids';
 import { sha256Hex } from '../shared/hash';
 import { GroupStore } from '../core/groupStore';
@@ -12,8 +12,11 @@ import {
 } from '../core/createAnnotationFlow';
 import { VscodeFileSystem } from './vscodeFileSystem';
 import { VscodeAuthorNameSources } from './authorSources';
-import { readTagPalette, promptNewTag } from './tagPalette';
+import { displayPalette, promptNewTag } from './tagPalette';
+import { type TagColor } from '../shared/protocol';
+import { swatchIconSvg } from '../shared/svgIcon';
 import { NEW_TAG_LABEL, splitPickedTags } from '../core/tags';
+import { tagColor } from '../core/sidebarState';
 
 const CREATE_NEW_LABEL = '$(add) Create new group…';
 
@@ -36,7 +39,7 @@ export function registerCreateAnnotationCommand(
       listGroups: () => store.listGroups(),
       pickGroup: (groups) => pickGroup(groups),
       promptGroupTitle: () => promptGroupTitle(),
-      pickTags: () => pickTags(),
+      pickTags: async () => pickTags(displayPalette(await store.listGroups())),
       saveGroup: (group) => store.saveGroup(group),
       newId,
       now: () => Math.floor(Date.now() / 1000),
@@ -77,7 +80,7 @@ async function pickGroup(groups: AnnotationGroup[]): Promise<GroupChoice | undef
     { label: CREATE_NEW_LABEL, alwaysShow: true },
     ...groups.map((g) => ({
       label: g.title,
-      description: `${g.annotations.length} annotation(s)${g.tags.length ? ` · ${g.tags.join(', ')}` : ''}`,
+      description: `${g.annotations.length} annotation(s)${g.tags.length ? ` · ${g.tags.map((t) => t.name).join(', ')}` : ''}`,
       groupId: g.id,
     })),
   ];
@@ -95,10 +98,9 @@ async function promptGroupTitle(): Promise<string | undefined> {
   });
 }
 
-async function pickTags(): Promise<string[] | undefined> {
-  const palette = readTagPalette();
+async function pickTags(palette: TagColor[]): Promise<Tag[] | undefined> {
   const items: vscode.QuickPickItem[] = [
-    ...palette.map((t) => ({ label: t.name })),
+    ...palette.map((t) => ({ label: t.name, iconPath: vscode.Uri.parse(swatchIconSvg(t.color)) })),
     { label: NEW_TAG_LABEL, alwaysShow: true },
   ];
   const picked = await vscode.window.showQuickPick(items, {
@@ -109,11 +111,12 @@ async function pickTags(): Promise<string[] | undefined> {
     return undefined;
   }
   const { names, addNew } = splitPickedTags(picked.map((item) => item.label));
+  const tags: Tag[] = names.map((name) => ({ name, color: tagColor(palette, name) }));
   if (addNew) {
-    const tag = await promptNewTag();
-    if (tag) {
-      names.push(tag.name);
+    const created = await promptNewTag();
+    if (created) {
+      tags.push(created);
     }
   }
-  return names;
+  return tags;
 }

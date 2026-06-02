@@ -9,7 +9,7 @@ function group(): AnnotationGroup {
     id: 'g1',
     title: 'Login review',
     author: 'Ezequiel',
-    tags: ['security'],
+    tags: [{ name: 'security', color: '#888888' }],
     gitRef: null,
     status: 'open',
     createdAt: 1,

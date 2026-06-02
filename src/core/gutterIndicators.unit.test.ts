@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { gutterBarsByLine, buildGutterSvg, MAX_BARS, annotationsAtLine, hoverMarkdown, decorationGroups } from './gutterIndicators';
+import { gutterBarsByLine, buildGutterSvg, MAX_BARS, annotationsAtLine, hoverMarkdown, decorationGroups, hoverItems } from './gutterIndicators';
 import { type AnnotationGroup } from '../shared/model';
 import { type TagColor } from '../shared/protocol';
 
@@ -14,7 +14,7 @@ function group(over: Partial<AnnotationGroup> & { id: string }): AnnotationGroup
 
 describe('gutterBarsByLine', () => {
   it('marks every line in an annotation range with the group first-tag color', () => {
-    const g = group({ id: 'g1', tags: ['security'], annotations: [
+    const g = group({ id: 'g1', tags: [{ name: 'security', color: '#888888' }], annotations: [
       { id: 'a1', file: 'a.ts', range: { startLine: 2, endLine: 4 }, content: '', contentHash: 'h' },
     ] });
     const map = gutterBarsByLine([g], 'a.ts', palette);
@@ -26,24 +26,24 @@ describe('gutterBarsByLine', () => {
   });
 
   it('ignores annotations in other files', () => {
-    const g = group({ id: 'g1', tags: ['security'], annotations: [
+    const g = group({ id: 'g1', tags: [{ name: 'security', color: '#888888' }], annotations: [
       { id: 'a1', file: 'other.ts', range: { startLine: 1, endLine: 1 }, content: '', contentHash: 'h' },
     ] });
     expect(gutterBarsByLine([g], 'a.ts', palette).size).toBe(0);
   });
 
   it('excludes resolved groups', () => {
-    const g = group({ id: 'g1', tags: ['security'], status: 'resolved', annotations: [
+    const g = group({ id: 'g1', tags: [{ name: 'security', color: '#888888' }], status: 'resolved', annotations: [
       { id: 'a1', file: 'a.ts', range: { startLine: 1, endLine: 1 }, content: '', contentHash: 'h' },
     ] });
     expect(gutterBarsByLine([g], 'a.ts', palette).size).toBe(0);
   });
 
   it('stacks one color per annotation covering the same line, in group then annotation order', () => {
-    const g1 = group({ id: 'g1', tags: ['security'], annotations: [
+    const g1 = group({ id: 'g1', tags: [{ name: 'security', color: '#888888' }], annotations: [
       { id: 'a1', file: 'a.ts', range: { startLine: 5, endLine: 5 }, content: '', contentHash: 'h' },
     ] });
-    const g2 = group({ id: 'g2', tags: ['perf'], annotations: [
+    const g2 = group({ id: 'g2', tags: [{ name: 'perf', color: '#888888' }], annotations: [
       { id: 'a2', file: 'a.ts', range: { startLine: 5, endLine: 5 }, content: '', contentHash: 'h' },
     ] });
     expect(gutterBarsByLine([g1, g2], 'a.ts', palette).get(5)).toEqual(['#aa0000', '#00aa00']);
@@ -84,7 +84,7 @@ describe('buildGutterSvg', () => {
 
 describe('annotationsAtLine', () => {
   it('returns non-resolved annotations whose range covers the line', () => {
-    const g1 = group({ id: 'g1', tags: ['security'], annotations: [
+    const g1 = group({ id: 'g1', tags: [{ name: 'security', color: '#888888' }], annotations: [
       { id: 'a1', file: 'a.ts', range: { startLine: 2, endLine: 4 }, content: '', contentHash: 'h' },
     ] });
     const g2 = group({ id: 'g2', status: 'resolved', annotations: [
@@ -136,5 +136,23 @@ describe('decorationGroups', () => {
 
   it('returns an empty array for an empty map', () => {
     expect(decorationGroups(new Map())).toEqual([]);
+  });
+});
+
+describe('hoverItems', () => {
+  it('labels each item with group title + a one-line content snippet', () => {
+    const g = group({ id: 'g1', title: 'Login', annotations: [
+      { id: 'a1', file: 'a.ts', range: { startLine: 1, endLine: 1 }, content: '# Heading\nmore', contentHash: 'h' },
+    ] });
+    expect(hoverItems([{ group: g, annotation: g.annotations[0] }])).toEqual([
+      { label: 'Login · # Heading', groupId: 'g1', annotationId: 'a1' },
+    ]);
+  });
+
+  it('uses (empty) for blank content', () => {
+    const g = group({ id: 'g1', title: 'T', annotations: [
+      { id: 'a1', file: 'a.ts', range: { startLine: 1, endLine: 1 }, content: '', contentHash: 'h' },
+    ] });
+    expect(hoverItems([{ group: g, annotation: g.annotations[0] }])[0].label).toBe('T · (empty)');
   });
 });

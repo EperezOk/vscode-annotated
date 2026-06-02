@@ -23,7 +23,7 @@ export function applyHostMessage(state: SidebarState, message: HostToWebview): S
   switch (message.type) {
     case 'setState': {
       const stillExists = state.selectedId !== null && message.groups.some((g) => g.id === state.selectedId);
-      const tags = new Set(message.groups.flatMap((g) => g.tags));
+      const tags = new Set(message.groups.flatMap((g) => g.tags.map((t) => t.name)));
       const authors = new Set(message.groups.map((g) => g.author));
       return {
         groups: message.groups,
@@ -48,7 +48,7 @@ export function tagColor(palette: TagColor[], name: string): string {
 
 /** Sorted, de-duplicated tag names across all groups (filter options). */
 export function availableTags(groups: AnnotationGroup[]): string[] {
-  return [...new Set(groups.flatMap((g) => g.tags))].sort();
+  return [...new Set(groups.flatMap((g) => g.tags.map((t) => t.name)))].sort();
 }
 
 /** Sorted, de-duplicated author names across all groups (filter options). */
@@ -72,7 +72,7 @@ export function filterGroups(state: SidebarState): AnnotationGroup[] {
     if (g.status === 'resolved' && !state.showResolved) {
       return false;
     }
-    if (state.selectedTags.length > 0 && !g.tags.some((t) => state.selectedTags.includes(t))) {
+    if (state.selectedTags.length > 0 && !g.tags.some((t) => state.selectedTags.includes(t.name))) {
       return false;
     }
     if (state.selectedAuthors.length > 0 && !state.selectedAuthors.includes(g.author)) {

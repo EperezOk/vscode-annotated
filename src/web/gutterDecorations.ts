@@ -7,6 +7,7 @@ import {
   decorationGroups,
   annotationsAtLine,
   hoverMarkdown,
+  hoverItems,
 } from '../core/gutterIndicators';
 
 /**
@@ -72,12 +73,7 @@ export class GutterDecorationManager {
   }
 
   private hoverFor(groups: AnnotationGroup[], file: string, line: number): vscode.MarkdownString {
-    const items = annotationsAtLine(groups, file, line).map(({ group, annotation }) => ({
-      label: `${group.title} · ${annotation.file}:${annotation.range.startLine}–${annotation.range.endLine}`,
-      groupId: group.id,
-      annotationId: annotation.id,
-    }));
-    const md = new vscode.MarkdownString(hoverMarkdown(items));
+    const md = new vscode.MarkdownString(hoverMarkdown(hoverItems(annotationsAtLine(groups, file, line))));
     md.isTrusted = true;
     return md;
   }

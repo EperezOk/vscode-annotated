@@ -4,21 +4,22 @@ import { registerCreateAnnotationCommand } from './createAnnotationCommand';
 import { DetailPanelProvider } from './detailPanelProvider';
 import { GroupStore } from '../core/groupStore';
 import { VscodeFileSystem } from './vscodeFileSystem';
-import { readTagPalette, promptNewTag } from './tagPalette';
+import { displayPalette, reconcileWorkspaceTags, promptNewTag } from './tagPalette';
 import { NEW_TAG_LABEL, splitPickedTags } from '../core/tags';
 import { revealAnnotation, clearHighlight } from './navigateToCode';
 import { readGitRefInfo } from './gitRefsSource';
 import { gitRefSuggestions } from '../core/gitRefs';
 import { computeStaleIds } from './staleness';
 import { sha256Hex, anchorText } from '../shared/hash';
-import { type AnnotationGroup, type GroupStatus } from '../shared/model';
-import { bulkStatusToggle } from '../core/sidebarState';
+import { type AnnotationGroup, type GroupStatus, type Tag } from '../shared/model';
+import { bulkStatusToggle, tagColor } from '../core/sidebarState';
 import { CommentStore } from '../core/commentStore';
 import { flattenComments, slugifyAuthor } from '../core/comments';
 import { resolveAuthor, resolveAuthorEmail } from '../core/authorIdentity';
 import { VscodeAuthorNameSources } from './authorSources';
 import { newId } from '../shared/ids';
 import { annotationsAtLine } from '../core/gutterIndicators';
+import { swatchIconSvg } from '../shared/svgIcon';
 import { GutterDecorationManager } from './gutterDecorations';
 
 export function activate(context: vscode.ExtensionContext): void {
@@ -43,10 +44,20 @@ export function activate(context: vscode.ExtensionContext): void {
     const groups = folder
       ? await new GroupStore(new VscodeFileSystem(folder.uri)).listGroups()
       : [];
-    gutter.refresh(vscode.window.visibleTextEditors, groups, readTagPalette());
+    gutter.refresh(vscode.window.visibleTextEditors, groups, displayPalette(groups));
+  };
+
+  const reconcile = async (): Promise<void> => {
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    if (!folder) {
+      return;
+    }
+    const groups = await new GroupStore(new VscodeFileSystem(folder.uri)).listGroups();
+    await reconcileWorkspaceTags(groups);
   };
 
   const onAnnotationsChanged = (): void => {
+    void reconcile();
     void provider.refresh();
     void refreshDecorations();
   };
@@ -78,7 +89,7 @@ export function activate(context: vscode.ExtensionContext): void {
     const ids = new Set(group?.annotations.map((a) => a.id) ?? []);
     const comments = flattenComments(await new CommentStore(fs).listCommentFiles()).filter((c) => ids.has(c.annotationId));
     const { author } = await currentIdentity();
-    detailProvider.showGroup(group, readTagPalette(), staleIds, comments, author);
+    detailProvider.showGroup(group, displayPalette(group ? [group] : []), staleIds, comments, author);
   };
 
   provider.onSelectGroup = async (groupId: string): Promise<void> => {
@@ -125,9 +136,10 @@ export function activate(context: vscode.ExtensionContext): void {
     if (!folder || groupIds.length === 0) {
       return;
     }
-    const palette = readTagPalette();
+    const store = new GroupStore(new VscodeFileSystem(folder.uri));
+    const palette = displayPalette(await store.listGroups());
     const items: vscode.QuickPickItem[] = [
-      ...palette.map((t) => ({ label: t.name })),
+      ...palette.map((t) => ({ label: t.name, iconPath: vscode.Uri.parse(swatchIconSvg(t.color)) })),
       { label: NEW_TAG_LABEL, alwaysShow: true },
     ];
     const picked = await vscode.window.showQuickPick(items, {
@@ -138,15 +150,15 @@ export function activate(context: vscode.ExtensionContext): void {
       return;
     }
     const { names, addNew } = splitPickedTags(picked.map((item) => item.label));
+    const tags: Tag[] = names.map((name) => ({ name, color: tagColor(palette, name) }));
     if (addNew) {
-      const tag = await promptNewTag();
-      if (tag) {
-        names.push(tag.name);
+      const created = await promptNewTag();
+      if (created) {
+        tags.push(created);
       }
     }
-    const store = new GroupStore(new VscodeFileSystem(folder.uri));
     for (const id of groupIds) {
-      await store.updateGroup(id, { tags: names }, now());
+      await store.updateGroup(id, { tags }, now());
     }
     await provider.refresh();
   };
@@ -210,7 +222,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
   const patchGroup = async (
     groupId: string,
-    patch: { title?: string; tags?: string[]; gitRef?: string | null; status?: GroupStatus },
+    patch: { title?: string; tags?: Tag[]; gitRef?: string | null; status?: GroupStatus },
   ): Promise<void> => {
     const folder = vscode.workspace.workspaceFolders?.[0];
     if (!folder) {
@@ -231,13 +243,14 @@ export function activate(context: vscode.ExtensionContext): void {
     if (!folder) {
       return;
     }
-    const group = await new GroupStore(new VscodeFileSystem(folder.uri)).getGroup(groupId);
+    const store = new GroupStore(new VscodeFileSystem(folder.uri));
+    const group = await store.getGroup(groupId);
     if (!group) {
       return;
     }
-    const palette = readTagPalette();
+    const palette = displayPalette(await store.listGroups());
     const items: vscode.QuickPickItem[] = [
-      ...palette.map((t) => ({ label: t.name, picked: group.tags.includes(t.name) })),
+      ...palette.map((t) => ({ label: t.name, picked: group.tags.some((gt) => gt.name === t.name), iconPath: vscode.Uri.parse(swatchIconSvg(t.color)) })),
       { label: NEW_TAG_LABEL, alwaysShow: true },
     ];
     const picked = await vscode.window.showQuickPick(items, {
@@ -248,13 +261,14 @@ export function activate(context: vscode.ExtensionContext): void {
       return;
     }
     const { names, addNew } = splitPickedTags(picked.map((item) => item.label));
+    const tags: Tag[] = names.map((name) => ({ name, color: tagColor(palette, name) }));
     if (addNew) {
-      const tag = await promptNewTag();
-      if (tag) {
-        names.push(tag.name);
+      const created = await promptNewTag();
+      if (created) {
+        tags.push(created);
       }
     }
-    await patchGroup(groupId, { tags: names });
+    await patchGroup(groupId, { tags });
   };
 
   detailProvider.onEditGitRef = async (groupId): Promise<void> => {
@@ -433,11 +447,13 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.window.onDidChangeVisibleTextEditors(() => void refreshDecorations()),
     vscode.workspace.onDidChangeConfiguration((e) => {
       if (e.affectsConfiguration('annotated.tags')) {
+        void provider.refresh();
         void refreshDecorations();
       }
     }),
   );
   provider.onRefreshRequested = (): void => void refreshDecorations();
+  void reconcile();
   void refreshDecorations(); // initial paint for already-open editors
 }
 

@@ -11,7 +11,7 @@ vi.mock('./vscodeApi', () => ({ postToHost: vi.fn() }));
 function group(
   id: string,
   title: string,
-  opts: { author?: string; tags?: string[]; status?: 'open' | 'resolved' } = {},
+  opts: { author?: string; tags?: { name: string; color: string }[]; status?: 'open' | 'resolved' } = {},
 ): AnnotationGroup {
   return {
     id, title, author: opts.author ?? 'A', tags: opts.tags ?? [],
@@ -54,7 +54,7 @@ describe('App.svelte', () => {
   it('filters by tag selected from the dropdown', async () => {
     sidebar.set({
       ...initialSidebarState(),
-      groups: [group('g1', 'Sec', { tags: ['security'] }), group('g2', 'Todo', { tags: ['todo'] })],
+      groups: [group('g1', 'Sec', { tags: [{ name: 'security', color: '#888888' }] }), group('g2', 'Todo', { tags: [{ name: 'todo', color: '#888888' }] })],
       palette: [],
     });
     render(App);
@@ -97,6 +97,16 @@ describe('App.svelte', () => {
     sidebar.set({ ...initialSidebarState(), groups: [group('g1', 'One')], palette: [] });
     render(App);
     await userEvent.click(screen.getByTestId('refresh-btn'));
+    expect(postToHost).toHaveBeenCalledWith({ type: 'refresh' });
+  });
+
+  it('shows transient "Refreshed" feedback after clicking refresh', async () => {
+    sidebar.set({ ...initialSidebarState(), groups: [group('g1', 'One')], palette: [] });
+    render(App);
+    const btn = screen.getByTestId('refresh-btn');
+    expect(btn).toHaveTextContent('↻ Refresh');
+    await userEvent.click(btn);
+    expect(btn).toHaveTextContent('✓ Refreshed');
     expect(postToHost).toHaveBeenCalledWith({ type: 'refresh' });
   });
 });

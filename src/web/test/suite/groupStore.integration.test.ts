@@ -14,7 +14,7 @@ suite('GroupStore over vscode.workspace.fs', () => {
       id: 'itest-group-1',
       title: 'Integration',
       author: 'Tester',
-      tags: ['security'],
+      tags: [{ name: 'security', color: '#888888' }],
       gitRef: null,
       status: 'open',
       createdAt: 1,

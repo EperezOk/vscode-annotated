@@ -1,8 +1,5 @@
-/** A user-configured tag: a name and a display color. */
-export interface Tag {
-  name: string;
-  color: string;
-}
+import { type Tag } from '../shared/model';
+export type { Tag };
 
 /** The pinned QuickPick item label that triggers inline tag creation. */
 export const NEW_TAG_LABEL = '$(add) New tag…';

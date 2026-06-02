@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { GroupStore } from '../core/groupStore';
 import { parseWebviewMessage, type HostToWebview } from '../shared/protocol';
 import { VscodeFileSystem } from './vscodeFileSystem';
-import { readTagPalette } from './tagPalette';
+import { displayPalette } from './tagPalette';
 
 export class SidebarViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = 'annotated.sidebar';
@@ -63,7 +63,7 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
     }
     const folder = vscode.workspace.workspaceFolders?.[0];
     const groups = folder ? await new GroupStore(new VscodeFileSystem(folder.uri)).listGroups() : [];
-    const message: HostToWebview = { type: 'setState', groups, palette: readTagPalette() };
+    const message: HostToWebview = { type: 'setState', groups, palette: displayPalette(groups) };
     void this.view.webview.postMessage(message);
   }
 

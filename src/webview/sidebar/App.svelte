@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onDestroy } from 'svelte';
   import { sidebar, setSelected, toggleTagFilter, toggleAuthorFilter, setShowResolved, toggleBulkMode, toggleGroupSelection, bulkEditTags, bulkEditGitRef, bulkResolveRestore, bulkDelete } from './state';
   import { postToHost } from './vscodeApi';
   import { filterGroups, availableTags, availableAuthors } from '../../core/sidebarState';
@@ -14,14 +15,20 @@
     postToHost({ type: 'selectGroup', groupId: id });
   }
 
+  let refreshed = $state(false);
+  let refreshTimer: ReturnType<typeof setTimeout> | undefined;
   function refreshFiles(): void {
     postToHost({ type: 'refresh' });
+    refreshed = true;
+    clearTimeout(refreshTimer);
+    refreshTimer = setTimeout(() => (refreshed = false), 1500);
   }
+  onDestroy(() => clearTimeout(refreshTimer));
 </script>
 
 <main data-testid="sidebar">
   <header class="bar">
-    <button type="button" class="link" data-testid="refresh-btn" title="Reload annotations from disk" onclick={refreshFiles}>↻ Refresh</button>
+    <button type="button" class="link" data-testid="refresh-btn" title="Reload annotations from disk" onclick={refreshFiles}>{refreshed ? '✓ Refreshed' : '↻ Refresh'}</button>
     {#if $sidebar.groups.length > 0}
       <button type="button" class="link" data-testid="bulk-toggle" onclick={toggleBulkMode}>
         {$sidebar.bulkMode ? 'Done' : 'Select'}

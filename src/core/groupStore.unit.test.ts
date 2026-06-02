@@ -98,21 +98,21 @@ describe('GroupStore', () => {
 
   it('updateGroup applies a partial patch, bumps updatedAt, and persists', async () => {
     await store.saveGroup(group('g1', 'Old'));
-    const ok = await store.updateGroup('g1', { title: 'New', tags: ['security'], gitRef: 'main' }, 555);
+    const ok = await store.updateGroup('g1', { title: 'New', tags: [{ name: 'security', color: '#888888' }], gitRef: 'main' }, 555);
     expect(ok).toBe(true);
     const g = await store.getGroup('g1');
     expect(g?.title).toBe('New');
-    expect(g?.tags).toEqual(['security']);
+    expect(g?.tags).toEqual([{ name: 'security', color: '#888888' }]);
     expect(g?.gitRef).toBe('main');
     expect(g?.updatedAt).toBe(555);
   });
 
   it('updateGroup leaves unspecified fields unchanged', async () => {
-    await store.saveGroup({ ...group('g1', 'Keep'), tags: ['a'], gitRef: 'dev' });
+    await store.saveGroup({ ...group('g1', 'Keep'), tags: [{ name: 'a', color: '#888888' }], gitRef: 'dev' });
     await store.updateGroup('g1', { title: 'Renamed' }, 1);
     const g = await store.getGroup('g1');
     expect(g?.title).toBe('Renamed');
-    expect(g?.tags).toEqual(['a']);
+    expect(g?.tags).toEqual([{ name: 'a', color: '#888888' }]);
     expect(g?.gitRef).toBe('dev');
   });
 
