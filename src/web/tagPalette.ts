@@ -7,11 +7,6 @@ import { resolveDisplayPalette, missingWorkspaceTags } from '../core/tagResolve'
 
 const DEFAULT_COLOR = '#888888';
 
-/** Read the configured tag palette (`annotated.tags`). */
-export function readTagPalette(): Tag[] {
-  return parseTagPalette(vscode.workspace.getConfiguration('annotated').get('tags'));
-}
-
 /** Add a tag to the palette if its name isn't already present. */
 export async function addTagToPalette(name: string, color = DEFAULT_COLOR): Promise<void> {
   const config = vscode.workspace.getConfiguration('annotated');
