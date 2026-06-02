@@ -12,7 +12,8 @@ import {
 } from '../core/createAnnotationFlow';
 import { VscodeFileSystem } from './vscodeFileSystem';
 import { VscodeAuthorNameSources } from './authorSources';
-import { readTagPalette, promptNewTag } from './tagPalette';
+import { displayPalette, promptNewTag } from './tagPalette';
+import { type TagColor } from '../shared/protocol';
 import { swatchIconSvg } from '../shared/svgIcon';
 import { NEW_TAG_LABEL, splitPickedTags } from '../core/tags';
 import { tagColor } from '../core/sidebarState';
@@ -38,7 +39,7 @@ export function registerCreateAnnotationCommand(
       listGroups: () => store.listGroups(),
       pickGroup: (groups) => pickGroup(groups),
       promptGroupTitle: () => promptGroupTitle(),
-      pickTags: () => pickTags(),
+      pickTags: async () => pickTags(displayPalette(await store.listGroups())),
       saveGroup: (group) => store.saveGroup(group),
       newId,
       now: () => Math.floor(Date.now() / 1000),
@@ -97,8 +98,7 @@ async function promptGroupTitle(): Promise<string | undefined> {
   });
 }
 
-async function pickTags(): Promise<Tag[] | undefined> {
-  const palette = readTagPalette();
+async function pickTags(palette: TagColor[]): Promise<Tag[] | undefined> {
   const items: vscode.QuickPickItem[] = [
     ...palette.map((t) => ({ label: t.name, iconPath: vscode.Uri.parse(swatchIconSvg(t.color)) })),
     { label: NEW_TAG_LABEL, alwaysShow: true },

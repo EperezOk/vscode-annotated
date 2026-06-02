@@ -4,7 +4,7 @@ import { registerCreateAnnotationCommand } from './createAnnotationCommand';
 import { DetailPanelProvider } from './detailPanelProvider';
 import { GroupStore } from '../core/groupStore';
 import { VscodeFileSystem } from './vscodeFileSystem';
-import { readTagPalette, promptNewTag } from './tagPalette';
+import { displayPalette, reconcileWorkspaceTags, promptNewTag } from './tagPalette';
 import { NEW_TAG_LABEL, splitPickedTags } from '../core/tags';
 import { revealAnnotation, clearHighlight } from './navigateToCode';
 import { readGitRefInfo } from './gitRefsSource';
@@ -44,10 +44,20 @@ export function activate(context: vscode.ExtensionContext): void {
     const groups = folder
       ? await new GroupStore(new VscodeFileSystem(folder.uri)).listGroups()
       : [];
-    gutter.refresh(vscode.window.visibleTextEditors, groups, readTagPalette());
+    gutter.refresh(vscode.window.visibleTextEditors, groups, displayPalette(groups));
+  };
+
+  const reconcile = async (): Promise<void> => {
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    if (!folder) {
+      return;
+    }
+    const groups = await new GroupStore(new VscodeFileSystem(folder.uri)).listGroups();
+    await reconcileWorkspaceTags(groups);
   };
 
   const onAnnotationsChanged = (): void => {
+    void reconcile();
     void provider.refresh();
     void refreshDecorations();
   };
@@ -79,7 +89,7 @@ export function activate(context: vscode.ExtensionContext): void {
     const ids = new Set(group?.annotations.map((a) => a.id) ?? []);
     const comments = flattenComments(await new CommentStore(fs).listCommentFiles()).filter((c) => ids.has(c.annotationId));
     const { author } = await currentIdentity();
-    detailProvider.showGroup(group, readTagPalette(), staleIds, comments, author);
+    detailProvider.showGroup(group, displayPalette(group ? [group] : []), staleIds, comments, author);
   };
 
   provider.onSelectGroup = async (groupId: string): Promise<void> => {
@@ -126,7 +136,8 @@ export function activate(context: vscode.ExtensionContext): void {
     if (!folder || groupIds.length === 0) {
       return;
     }
-    const palette = readTagPalette();
+    const store = new GroupStore(new VscodeFileSystem(folder.uri));
+    const palette = displayPalette(await store.listGroups());
     const items: vscode.QuickPickItem[] = [
       ...palette.map((t) => ({ label: t.name, iconPath: vscode.Uri.parse(swatchIconSvg(t.color)) })),
       { label: NEW_TAG_LABEL, alwaysShow: true },
@@ -146,7 +157,6 @@ export function activate(context: vscode.ExtensionContext): void {
         tags.push(created);
       }
     }
-    const store = new GroupStore(new VscodeFileSystem(folder.uri));
     for (const id of groupIds) {
       await store.updateGroup(id, { tags }, now());
     }
@@ -233,11 +243,12 @@ export function activate(context: vscode.ExtensionContext): void {
     if (!folder) {
       return;
     }
-    const group = await new GroupStore(new VscodeFileSystem(folder.uri)).getGroup(groupId);
+    const store = new GroupStore(new VscodeFileSystem(folder.uri));
+    const group = await store.getGroup(groupId);
     if (!group) {
       return;
     }
-    const palette = readTagPalette();
+    const palette = displayPalette(await store.listGroups());
     const items: vscode.QuickPickItem[] = [
       ...palette.map((t) => ({ label: t.name, picked: group.tags.some((gt) => gt.name === t.name), iconPath: vscode.Uri.parse(swatchIconSvg(t.color)) })),
       { label: NEW_TAG_LABEL, alwaysShow: true },
@@ -436,11 +447,13 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.window.onDidChangeVisibleTextEditors(() => void refreshDecorations()),
     vscode.workspace.onDidChangeConfiguration((e) => {
       if (e.affectsConfiguration('annotated.tags')) {
+        void provider.refresh();
         void refreshDecorations();
       }
     }),
   );
   provider.onRefreshRequested = (): void => void refreshDecorations();
+  void reconcile();
   void refreshDecorations(); // initial paint for already-open editors
 }
 
