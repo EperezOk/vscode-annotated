@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseGroup, serializeGroup, parseCommentFile, serializeCommentFile, type AnnotationGroup } from './model';
+import { parseGroup, serializeGroup, parseCommentFile, serializeCommentFile, formatLineRange, type AnnotationGroup } from './model';
 
 const validGroup: AnnotationGroup = {
   id: 'g1',
@@ -84,5 +84,14 @@ describe('parseCommentFile', () => {
   it('round-trips through serializeCommentFile', () => {
     const file = { author: 'Ana', email: 'a@x', comments: [{ id: 'c1', annotationId: 'a1', content: 'hi', timestamp: 100 }] };
     expect(parseCommentFile(JSON.parse(serializeCommentFile(file)))).toEqual(file);
+  });
+});
+
+describe('formatLineRange', () => {
+  it('collapses a single-line range to one number', () => {
+    expect(formatLineRange({ startLine: 12, endLine: 12 })).toBe('12');
+  });
+  it('formats a multi-line range with an en dash', () => {
+    expect(formatLineRange({ startLine: 12, endLine: 18 })).toBe('12–18');
   });
 });

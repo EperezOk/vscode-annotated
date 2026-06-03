@@ -8,6 +8,13 @@ export interface LineRange {
   endLine: number;
 }
 
+/** "12" for a single-line range, else "12–18" (en dash, 1-based inclusive). */
+export function formatLineRange(range: LineRange): string {
+  return range.startLine === range.endLine
+    ? String(range.startLine)
+    : `${range.startLine}–${range.endLine}`;
+}
+
 /** A tag on a group: a display name + color. (Colors are also resolved from user config.) */
 export interface Tag {
   name: string;
