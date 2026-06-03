@@ -40,13 +40,18 @@
         "command": "annotated.createAnnotation",
         "key": "ctrl+alt+a",
         "mac": "cmd+alt+a",
-        "when": "editorTextFocus && editorHasSelection"
+        "when": "editorTextFocus"
       },
       {
         "command": "annotated.openAnnotationAtCursor",
         "key": "ctrl+alt+o",
         "mac": "cmd+alt+o",
         "when": "editorTextFocus"
+      },
+      {
+        "command": "annotated.sidebar.focus",
+        "key": "ctrl+alt+l",
+        "mac": "cmd+alt+l"
       }
     ],
     "menus": {
