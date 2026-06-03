@@ -27,7 +27,6 @@
       ]
     },
     "commands": [
-      { "command": "annotated.ping", "title": "Annotated: Ping" },
       { "command": "annotated.createAnnotation", "title": "Annotated: Create Annotation" },
       { "command": "annotated.openAnnotationAtCursor", "title": "Annotated: Open Annotation at Cursor" },
       {

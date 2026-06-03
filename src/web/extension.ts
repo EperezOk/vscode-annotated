@@ -379,10 +379,6 @@ export function activate(context: vscode.ExtensionContext): void {
   };
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('annotated.ping', () => 'pong'),
-  );
-
-  context.subscriptions.push(
     vscode.commands.registerCommand('annotated.manageTags', async () => {
       await manageTags(async () => {
         await provider.refresh();
