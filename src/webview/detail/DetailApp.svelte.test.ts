@@ -1,9 +1,13 @@
 import { render, screen } from '@testing-library/svelte';
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import DetailApp from './DetailApp.svelte';
 import { detail } from './state';
 import { initialDetailState } from '../../core/detailState';
 import { type AnnotationGroup } from '../../shared/model';
+
+vi.mock('./MarkdownEditor.svelte', async () => ({
+  default: (await import('./__mocks__/MarkdownEditorStub.svelte')).default,
+}));
 
 function group(): AnnotationGroup {
   return {

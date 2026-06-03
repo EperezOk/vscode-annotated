@@ -2,16 +2,19 @@
   import { formatLineRange, type Annotation } from '../../shared/model';
   import { oneLine } from '../../core/detailState';
   import { fileName } from '../../shared/path';
+  import CommentBadge from '../shared/CommentBadge.svelte';
 
   let {
     annotation,
     selected = false,
     stale = false,
+    commentCount = 0,
     onselect,
   }: {
     annotation: Annotation;
     selected?: boolean;
     stale?: boolean;
+    commentCount?: number;
     onselect?: (id: string) => void;
   } = $props();
 
@@ -30,6 +33,7 @@
 >
   {#if stale}<span class="stale-dot" data-testid="stale-dot" title="Lines changed since this was written">●</span>{/if}
   <span class="summary">{summary}</span>
+  <CommentBadge count={commentCount} />
   <span class="loc" data-testid="annotation-loc" title={fullLoc}>{shortLoc}</span>
 </button>
 

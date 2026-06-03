@@ -5,6 +5,10 @@ import GroupView from './GroupView.svelte';
 import { type AnnotationGroup } from '../../shared/model';
 import { type TagColor } from '../../shared/protocol';
 
+vi.mock('./MarkdownEditor.svelte', async () => ({
+  default: (await import('./__mocks__/MarkdownEditorStub.svelte')).default,
+}));
+
 function group(): AnnotationGroup {
   return {
     id: 'g1', title: 'Login review', author: 'Ezequiel', tags: [{ name: 'security', color: '#888888' }], gitRef: 'main', status: 'open',
@@ -127,5 +131,34 @@ describe('GroupView', () => {
       annotationId: 'a1',
       preventDefaultContextMenuItems: true,
     });
+  });
+
+  it('renders the group comment thread and routes add to onaddgroupcomment', async () => {
+    const onaddgroupcomment = vi.fn();
+    render(GroupView, {
+      group: group(), palette, currentAuthor: 'Me', onaddgroupcomment,
+      comments: [
+        { id: 'c1', groupId: 'g1', author: 'Ana', content: 'group note', timestamp: 100 },
+        { id: 'c2', annotationId: 'a1', author: 'Ana', content: 'row note', timestamp: 200 },
+      ],
+    });
+    const thread = screen.getByTestId('comment-thread');
+    expect(thread).toHaveTextContent('group note');
+    expect(thread).not.toHaveTextContent('row note');
+    await userEvent.click(screen.getByTestId('comment-reply-trigger'));
+    await userEvent.type(screen.getByTestId('md-editor'), 'hi');
+    await userEvent.click(screen.getByTestId('comment-add-btn'));
+    expect(onaddgroupcomment).toHaveBeenCalledWith('hi');
+  });
+
+  it('shows per-annotation comment counts on rows', () => {
+    render(GroupView, {
+      group: group(), palette,
+      comments: [
+        { id: 'c1', annotationId: 'a1', author: 'Ana', content: 'x', timestamp: 1 },
+        { id: 'c2', annotationId: 'a1', author: 'Bob', content: 'y', timestamp: 2 },
+      ],
+    });
+    expect(screen.getByTestId('comment-badge')).toHaveTextContent('2');
   });
 });

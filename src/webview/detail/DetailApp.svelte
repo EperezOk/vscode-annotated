@@ -3,7 +3,7 @@
   import {
     detail, openAnnotationView, showGroupView, saveAnnotationContent, copyToClipboard,
     renameGroup, requestEditTags, requestEditGitRef, saveAnnotationRange, reorderAnnotations, setGroupStatus,
-    addComment, editComment, deleteComment,
+    addComment, editComment, deleteComment, addGroupComment,
   } from './state';
   import { postToHost } from './vscodeApi';
   import AnnotationView from './AnnotationView.svelte';
@@ -50,12 +50,17 @@
       group={$detail.group}
       palette={$detail.palette}
       staleIds={$detail.staleIds ?? []}
+      comments={$detail.comments}
+      currentAuthor={$detail.currentAuthor}
       onrename={(title) => renameGroup(title)}
       onedittags={requestEditTags}
       oneditgitref={requestEditGitRef}
       onselectrow={openRow}
       onreorder={(ids) => reorderAnnotations(ids)}
       onsetstatus={(s) => setGroupStatus(s)}
+      onaddgroupcomment={(content) => addGroupComment(content)}
+      oneditcomment={(id, content) => editComment(id, content)}
+      ondeletecomment={(id) => deleteComment(id)}
     />
   {/if}
 </main>

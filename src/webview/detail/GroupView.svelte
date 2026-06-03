@@ -1,32 +1,44 @@
 <script lang="ts">
-  import { type AnnotationGroup, type GroupStatus } from '../../shared/model';
+  import { type AnnotationGroup, type GroupStatus, type ThreadComment } from '../../shared/model';
   import { type TagColor } from '../../shared/protocol';
   import { tagColor } from '../../core/sidebarState';
   import { contrastColor } from '../../shared/color';
   import { moveBefore } from '../../core/detailState';
+  import { groupCommentsOf } from '../../core/comments';
   import AnnotationRow from './AnnotationRow.svelte';
+  import CommentThread from './CommentThread.svelte';
   import { focusAtEnd } from '../shared/focusAtEnd';
 
   let {
     group,
     palette,
     staleIds = [],
+    comments = [],
+    currentAuthor = '',
     onrename,
     onedittags,
     oneditgitref,
     onselectrow,
     onreorder,
     onsetstatus,
+    onaddgroupcomment,
+    oneditcomment,
+    ondeletecomment,
   }: {
     group: AnnotationGroup;
     palette: TagColor[];
     staleIds?: string[];
+    comments?: ThreadComment[];
+    currentAuthor?: string;
     onrename?: (title: string) => void;
     onedittags?: () => void;
     oneditgitref?: () => void;
     onselectrow?: (id: string) => void;
     onreorder?: (annotationIds: string[]) => void;
     onsetstatus?: (status: GroupStatus) => void;
+    onaddgroupcomment?: (content: string) => void;
+    oneditcomment?: (commentId: string, content: string) => void;
+    ondeletecomment?: (commentId: string) => void;
   } = $props();
 
   let editingTitle = $state(false);
@@ -55,6 +67,7 @@
     }
   }
   const resolveLabel = $derived(group.status === 'resolved' ? 'Restore' : 'Resolve');
+  const groupComments = $derived(groupCommentsOf(comments, group.id));
   function toggleStatus(): void {
     onsetstatus?.(group.status === 'resolved' ? 'open' : 'resolved');
   }
@@ -121,11 +134,20 @@
           {annotation}
           selected={false}
           stale={staleIds.includes(annotation.id)}
+          commentCount={comments.filter((c) => c.annotationId === annotation.id).length}
           onselect={(id) => onselectrow?.(id)}
         />
       </div>
     {/each}
   </div>
+
+  <CommentThread
+    comments={groupComments}
+    {currentAuthor}
+    onadd={(content) => onaddgroupcomment?.(content)}
+    onedit={(id, content) => oneditcomment?.(id, content)}
+    ondelete={(id) => ondeletecomment?.(id)}
+  />
 </section>
 
 <style>

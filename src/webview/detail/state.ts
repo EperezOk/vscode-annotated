@@ -75,3 +75,8 @@ export function editComment(commentId: string, content: string): void {
 export function deleteComment(commentId: string): void {
   postToHost({ type: 'deleteComment', commentId });
 }
+
+/** Add a comment to the current group itself (host attributes + persists). */
+export function addGroupComment(content: string): void {
+  postToHost({ type: 'addGroupComment', content });
+}

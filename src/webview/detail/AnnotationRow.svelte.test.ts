@@ -45,4 +45,13 @@ describe('AnnotationRow', () => {
     });
     expect(screen.getByTestId('annotation-loc').textContent).toBe('login.ts:7');
   });
+
+  it('shows a comment badge when commentCount > 0', () => {
+    render(AnnotationRow, { annotation: annotation('x'), commentCount: 2 });
+    expect(screen.getByTestId('comment-badge')).toHaveTextContent('2');
+  });
+  it('shows no comment badge by default', () => {
+    render(AnnotationRow, { annotation: annotation('x') });
+    expect(screen.queryByTestId('comment-badge')).toBeNull();
+  });
 });
