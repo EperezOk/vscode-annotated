@@ -50,10 +50,6 @@
   let editing = $state(untrack(() => annotation.content.length === 0));
   let draft = $state(untrack(() => annotation.content));
 
-  // Autofocus the editor only when we auto-open in edit mode because the annotation is
-  // empty (the just-created case) — never steal focus on a manual "Edit" of existing content.
-  const autofocusEditor = untrack(() => annotation.content.length === 0);
-
   let editingRange = $state(false);
   let rangeStart = $state(untrack(() => annotation.range.startLine));
   let rangeEnd = $state(untrack(() => annotation.range.endLine));
@@ -131,7 +127,7 @@
   </div>
 
   {#if editing}
-    <MarkdownEditor doc={draft} autofocus={autofocusEditor} onChange={(v) => (draft = v)} />
+    <MarkdownEditor doc={draft} autofocus onChange={(v) => (draft = v)} onSubmit={save} />
   {:else}
     <MarkdownPreview source={annotation.content} />
   {/if}

@@ -95,10 +95,20 @@ describe('AnnotationView', () => {
     expect(screen.getByTestId('md-editor')).toHaveAttribute('data-autofocus', 'true');
   });
 
-  it('does not autofocus when manually editing an existing annotation', async () => {
+  it('autofocuses the editor when manually editing an existing annotation', async () => {
     render(AnnotationView, { annotation: annotation('original') });
     await userEvent.click(screen.getByTestId('edit-btn'));
-    expect(screen.getByTestId('md-editor')).toHaveAttribute('data-autofocus', 'false');
+    expect(screen.getByTestId('md-editor')).toHaveAttribute('data-autofocus', 'true');
+  });
+
+  it('saves via Cmd/Ctrl+Enter inside the editor', async () => {
+    const onsave = vi.fn();
+    render(AnnotationView, { annotation: annotation('original'), onsave });
+    await userEvent.click(screen.getByTestId('edit-btn'));
+    const editor = screen.getByTestId('md-editor');
+    await userEvent.type(editor, '!');
+    await userEvent.type(editor, '{Meta>}{Enter}{/Meta}');
+    expect(onsave).toHaveBeenCalledWith('a1', 'original!');
   });
 
   it('renders the comment thread', () => {
