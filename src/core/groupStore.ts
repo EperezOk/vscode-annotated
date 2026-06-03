@@ -1,5 +1,6 @@
 import { type FileSystem } from './fileSystem';
 import { type AnnotationGroup, type LineRange, parseGroup, serializeGroup } from '../shared/model';
+import { removeAnnotation } from './annotationFactory';
 
 const dec = new TextDecoder();
 const enc = new TextEncoder();
@@ -116,6 +117,23 @@ export class GroupStore {
     }
     const annotations = orderedIds.map((id) => byId.get(id)!);
     await this.saveGroup({ ...group, annotations, updatedAt: now });
+    return true;
+  }
+
+  /**
+   * Delete one annotation from a group; the group itself is kept, even when
+   * emptied. Returns false when the group or annotation does not exist.
+   */
+  async deleteAnnotation(groupId: string, annotationId: string, now: number): Promise<boolean> {
+    const group = await this.getGroup(groupId);
+    if (!group) {
+      return false;
+    }
+    const updated = removeAnnotation(group, annotationId, now);
+    if (!updated) {
+      return false;
+    }
+    await this.saveGroup(updated);
     return true;
   }
 

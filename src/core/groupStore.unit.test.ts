@@ -183,4 +183,38 @@ describe('GroupStore', () => {
     expect(r?.status).toBe('resolved');
     expect(r?.updatedAt).toBe(909);
   });
+
+  describe('deleteAnnotation', () => {
+    function withAnnotations(id: string): AnnotationGroup {
+      return {
+        ...group(id),
+        annotations: [
+          { id: 'a1', file: 'x.ts', range: { startLine: 1, endLine: 1 }, content: '', contentHash: 'h' },
+          { id: 'a2', file: 'x.ts', range: { startLine: 2, endLine: 2 }, content: '', contentHash: 'h' },
+        ],
+      };
+    }
+
+    it('removes the annotation, bumps updatedAt, and persists', async () => {
+      await store.saveGroup(withAnnotations('g1'));
+      expect(await store.deleteAnnotation('g1', 'a1', 99)).toBe(true);
+      const got = await store.getGroup('g1');
+      expect(got?.annotations.map((a) => a.id)).toEqual(['a2']);
+      expect(got?.updatedAt).toBe(99);
+    });
+
+    it('keeps the (now empty) group file when the last annotation is deleted', async () => {
+      const base = withAnnotations('g1');
+      await store.saveGroup({ ...base, annotations: [base.annotations[0]] });
+      expect(await store.deleteAnnotation('g1', 'a1', 99)).toBe(true);
+      expect((await store.getGroup('g1'))?.annotations).toEqual([]);
+      expect(await fs.exists('.annotations/groups/g1.json')).toBe(true);
+    });
+
+    it('returns false for a missing group or annotation', async () => {
+      expect(await store.deleteAnnotation('nope', 'a1', 1)).toBe(false);
+      await store.saveGroup(withAnnotations('g1'));
+      expect(await store.deleteAnnotation('g1', 'missing', 1)).toBe(false);
+    });
+  });
 });
