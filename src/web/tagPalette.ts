@@ -111,7 +111,9 @@ export async function pickTagsWithNewOption(
   palette: TagColor[],
   options: PickTagsOptions,
 ): Promise<Tag[] | undefined> {
+  // Guard: the action item must never be pre-checked (it would auto-accept on open).
   const preselected = new Set(options.preselectedNames ?? []);
+  preselected.delete(NEW_TAG_LABEL);
   const quickPick = vscode.window.createQuickPick();
   quickPick.canSelectMany = true;
   quickPick.placeholder = options.placeHolder;
