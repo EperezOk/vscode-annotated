@@ -41,7 +41,7 @@
   } = $props();
 
   // Full path:range — stays the "copy path" payload and the hover tooltip.
-  const location = $derived(`${annotation.file}:${annotation.range.startLine}–${annotation.range.endLine}`);
+  const location = $derived(`${annotation.file}:${formatLineRange(annotation.range)}`);
   const shortLocation = $derived(`${fileName(annotation.file)}:${formatLineRange(annotation.range)}`);
 
   // Seed once from the prop (intentional — DetailApp keys this component by

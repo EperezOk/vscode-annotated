@@ -26,7 +26,9 @@ describe('AnnotationView', () => {
     render(AnnotationView, {
       annotation: { id: 'a1', file: 'src/x.ts', range: { startLine: 7, endLine: 7 }, content: '# N', contentHash: 'h' },
     });
-    expect(screen.getByTestId('annotation-loc').textContent).toBe('x.ts:7');
+    const loc = screen.getByTestId('annotation-loc');
+    expect(loc.textContent).toBe('x.ts:7');
+    expect(loc).toHaveAttribute('title', 'src/x.ts:7');
   });
 
   it('starts in edit mode for an empty annotation', () => {
