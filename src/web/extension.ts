@@ -12,7 +12,7 @@ import { readGitRefInfo } from './gitRefsSource';
 import { gitRefSuggestions } from '../core/gitRefs';
 import { computeStaleIds } from './staleness';
 import { sha256Hex, anchorText } from '../shared/hash';
-import { type AnnotationGroup, type GroupStatus, type Tag } from '../shared/model';
+import { formatLineRange, type AnnotationGroup, type GroupStatus, type Tag } from '../shared/model';
 import { bulkStatusToggle, tagColor } from '../core/sidebarState';
 import { CommentStore } from '../core/commentStore';
 import { flattenComments, slugifyAuthor } from '../core/comments';
@@ -437,7 +437,7 @@ export function activate(context: vscode.ExtensionContext): void {
       const picked = await vscode.window.showQuickPick(
         matches.map((m) => ({
           label: m.group.title,
-          description: `${m.annotation.file}:${m.annotation.range.startLine}–${m.annotation.range.endLine}`,
+          description: `${m.annotation.file}:${formatLineRange(m.annotation.range)}`,
           groupId: m.group.id,
           annotationId: m.annotation.id,
         })),
