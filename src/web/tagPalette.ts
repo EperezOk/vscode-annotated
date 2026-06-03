@@ -1,9 +1,10 @@
 import * as vscode from 'vscode';
-import { type Tag, parseTagPalette, TAG_SWATCHES } from '../core/tags';
+import { type Tag, parseTagPalette, TAG_SWATCHES, NEW_TAG_LABEL, resolveTagPickAccept } from '../core/tags';
 import { swatchIconSvg } from '../shared/svgIcon';
 import { type AnnotationGroup, DEFAULT_TAG_COLOR } from '../shared/model';
 import { type TagColor } from '../shared/protocol';
 import { resolveDisplayPalette, missingWorkspaceTags } from '../core/tagResolve';
+import { tagColor } from '../core/sidebarState';
 
 /** Add a tag to the palette if its name isn't already present. */
 export async function addTagToPalette(name: string, color = DEFAULT_TAG_COLOR): Promise<void> {
@@ -87,4 +88,72 @@ export async function reconcileWorkspaceTags(groups: AnnotationGroup[]): Promise
   await vscode.workspace
     .getConfiguration('annotated')
     .update('tags', [...local, ...missing], vscode.ConfigurationTarget.Workspace);
+}
+
+/** Options for `pickTagsWithNewOption`. */
+export interface PickTagsOptions {
+  placeHolder: string;
+  /** Tag names to show pre-checked (e.g. the group's current tags). */
+  preselectedNames?: string[];
+}
+
+/**
+ * Multi-select tag QuickPick with a pinned "＋New tag…" action item, shared by the
+ * create flow and the tag-edit handlers. Built on `createQuickPick` (not
+ * `showQuickPick`) so that:
+ * - checking "New tag…" accepts immediately (it is an action, not a tag), and
+ * - Enter on the highlighted-but-unchecked "New tag…" still counts as add-new
+ *   (a plain multi-select accept would return [] and silently skip the prompts).
+ * Returns the picked tags (with any newly created tag appended), [] for "no tags",
+ * or undefined if the user cancelled.
+ */
+export async function pickTagsWithNewOption(
+  palette: TagColor[],
+  options: PickTagsOptions,
+): Promise<Tag[] | undefined> {
+  const preselected = new Set(options.preselectedNames ?? []);
+  const quickPick = vscode.window.createQuickPick();
+  quickPick.canSelectMany = true;
+  quickPick.placeholder = options.placeHolder;
+  quickPick.items = [
+    ...palette.map((t) => ({ label: t.name, iconPath: vscode.Uri.parse(swatchIconSvg(t.color)) })),
+    { label: NEW_TAG_LABEL, alwaysShow: true },
+  ];
+  quickPick.selectedItems = quickPick.items.filter((item) => preselected.has(item.label));
+
+  const accepted = await new Promise<{ names: string[]; addNew: boolean } | undefined>((resolve) => {
+    // Checking "New tag…" is an action: accept right away (later resolves are no-ops).
+    quickPick.onDidChangeSelection((selection) => {
+      if (selection.some((item) => item.label === NEW_TAG_LABEL)) {
+        resolve(resolveTagPickAccept(selection.map((item) => item.label), undefined));
+        quickPick.hide();
+      }
+    });
+    quickPick.onDidAccept(() => {
+      resolve(
+        resolveTagPickAccept(
+          quickPick.selectedItems.map((item) => item.label),
+          quickPick.activeItems[0]?.label,
+        ),
+      );
+      quickPick.hide();
+    });
+    quickPick.onDidHide(() => {
+      resolve(undefined); // cancel; no-op when accept already resolved
+      quickPick.dispose();
+    });
+    quickPick.show();
+  });
+
+  if (!accepted) {
+    return undefined;
+  }
+  const tags: Tag[] = accepted.names.map((name) => ({ name, color: tagColor(palette, name) }));
+  if (accepted.addNew) {
+    const created = await promptNewTag();
+    if (created) {
+      tags.push(created);
+    }
+  }
+  return tags;
 }
