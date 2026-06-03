@@ -428,9 +428,12 @@ export function activate(context: vscode.ExtensionContext): void {
   );
 
   const openAnnotationInPanel = async (groupId: string, annotationId: string): Promise<void> => {
+    // Focus first: resolves the detail view when it was closed, so the messages
+    // below reach a live webview (the provider's 'ready' replay covers the rest
+    // of the race). revealAnnotation keeps preserveFocus, so focus stays here.
+    await vscode.commands.executeCommand('annotated.detail.focus');
     await showGroupWithStale(groupId);
     detailProvider.openAnnotation(annotationId);
-    await vscode.commands.executeCommand('annotated.detail.focus');
     const folder = vscode.workspace.workspaceFolders?.[0];
     if (!folder) {
       return;
