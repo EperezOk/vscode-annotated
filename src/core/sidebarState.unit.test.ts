@@ -17,7 +17,7 @@ describe('initialSidebarState', () => {
     expect(initialSidebarState()).toEqual({
       groups: [], palette: [], selectedId: null,
       selectedTags: [], selectedAuthors: [], showResolved: false,
-      bulkMode: false, selectedGroupIds: [],
+      bulkMode: false, selectedGroupIds: [], commentCounts: {},
     });
   });
 });
@@ -177,5 +177,16 @@ describe('filterOptions', () => {
     const result = filterOptions(many, [], '', 50);
     expect(result.visible).toHaveLength(50);
     expect(result.more).toBe(10);
+  });
+});
+
+describe('commentCounts in sidebarState', () => {
+  it('stores commentCounts from setState, defaulting to {}', () => {
+    const withCounts = applyHostMessage(initialSidebarState(), {
+      type: 'setState', groups: [], palette: [], commentCounts: { g1: 2 },
+    });
+    expect(withCounts.commentCounts).toEqual({ g1: 2 });
+    const without = applyHostMessage(initialSidebarState(), { type: 'setState', groups: [], palette: [] });
+    expect(without.commentCounts).toEqual({});
   });
 });

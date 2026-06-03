@@ -10,10 +10,11 @@ export interface SidebarState {
   showResolved: boolean;
   bulkMode: boolean;
   selectedGroupIds: string[];
+  commentCounts: Record<string, number>;
 }
 
 export function initialSidebarState(): SidebarState {
-  return { groups: [], palette: [], selectedId: null, selectedTags: [], selectedAuthors: [], showResolved: false, bulkMode: false, selectedGroupIds: [] };
+  return { groups: [], palette: [], selectedId: null, selectedTags: [], selectedAuthors: [], showResolved: false, bulkMode: false, selectedGroupIds: [], commentCounts: {} };
 }
 
 /** Apply a host→webview message, returning a new state. */
@@ -32,6 +33,7 @@ export function applyHostMessage(state: SidebarState, message: HostToWebview): S
         showResolved: state.showResolved,
         bulkMode: state.bulkMode,
         selectedGroupIds: state.selectedGroupIds.filter((id) => message.groups.some((g) => g.id === id)),
+        commentCounts: message.commentCounts ?? {},
       };
     }
     default:

@@ -12,6 +12,8 @@ export type HostToWebview = {
   type: 'setState';
   groups: AnnotationGroup[];
   palette: TagColor[];
+  /** Per-group comment totals (annotation + group comments) for the card badges. */
+  commentCounts?: Record<string, number>;
 };
 
 /** Webview → host messages. */
@@ -49,6 +51,7 @@ export type DetailToHost =
   | { type: 'reorderAnnotations'; annotationIds: string[] }
   | { type: 'updateGroupStatus'; status: GroupStatus }
   | { type: 'addComment'; annotationId: string; content: string }
+  | { type: 'addGroupComment'; content: string }
   | { type: 'editComment'; commentId: string; content: string }
   | { type: 'deleteComment'; commentId: string }
   | { type: 'navigationClosed' };
@@ -121,6 +124,8 @@ export function parseDetailMessage(raw: unknown): DetailToHost | null {
       return typeof raw.annotationId === 'string' && typeof raw.content === 'string'
         ? { type: 'addComment', annotationId: raw.annotationId, content: raw.content }
         : null;
+    case 'addGroupComment':
+      return typeof raw.content === 'string' ? { type: 'addGroupComment', content: raw.content } : null;
     case 'editComment':
       return typeof raw.commentId === 'string' && typeof raw.content === 'string'
         ? { type: 'editComment', commentId: raw.commentId, content: raw.content }

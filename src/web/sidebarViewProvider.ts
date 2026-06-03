@@ -1,5 +1,7 @@
 import * as vscode from 'vscode';
 import { GroupStore } from '../core/groupStore';
+import { CommentStore } from '../core/commentStore';
+import { flattenComments, commentCountsByGroup } from '../core/comments';
 import { parseWebviewMessage, type HostToWebview } from '../shared/protocol';
 import { VscodeFileSystem } from './vscodeFileSystem';
 import { displayPalette } from './tagPalette';
@@ -56,14 +58,21 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
     });
   }
 
-  /** Reload groups from disk and push fresh state to the webview. */
+  /** Reload groups + comment counts from disk and push fresh state to the webview. */
   async refresh(): Promise<void> {
     if (!this.view) {
       return;
     }
     const folder = vscode.workspace.workspaceFolders?.[0];
-    const groups = folder ? await new GroupStore(new VscodeFileSystem(folder.uri)).listGroups() : [];
-    const message: HostToWebview = { type: 'setState', groups, palette: displayPalette(groups) };
+    const fs = folder ? new VscodeFileSystem(folder.uri) : null;
+    const groups = fs ? await new GroupStore(fs).listGroups() : [];
+    const comments = fs ? flattenComments(await new CommentStore(fs).listCommentFiles()) : [];
+    const message: HostToWebview = {
+      type: 'setState',
+      groups,
+      palette: displayPalette(groups),
+      commentCounts: commentCountsByGroup(groups, comments),
+    };
     void this.view.webview.postMessage(message);
   }
 

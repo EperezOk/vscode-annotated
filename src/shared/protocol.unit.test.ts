@@ -133,4 +133,8 @@ describe('parseDetailMessage', () => {
   it('accepts navigationClosed', () => {
     expect(parseDetailMessage({ type: 'navigationClosed' })).toEqual({ type: 'navigationClosed' });
   });
+  it('accepts addGroupComment (content required)', () => {
+    expect(parseDetailMessage({ type: 'addGroupComment', content: 'hi' })).toEqual({ type: 'addGroupComment', content: 'hi' });
+    expect(parseDetailMessage({ type: 'addGroupComment' })).toBeNull();
+  });
 });
