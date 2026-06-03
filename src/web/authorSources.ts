@@ -1,12 +1,13 @@
 import * as vscode from 'vscode';
 import { type AuthorNameSources, type AuthorEmailSources } from '../core/authorIdentity';
+import { waitForGitInit, type GitInitApi } from '../core/gitInit';
 
 /** Minimal shape of the built-in git extension API we use. */
 interface GitApiRepository {
   getConfig(key: string): Promise<string>;
   getGlobalConfig(key: string): Promise<string>;
 }
-interface GitApi {
+interface GitApi extends GitInitApi {
   repositories: GitApiRepository[];
 }
 interface GitExtensionExports {
@@ -15,7 +16,11 @@ interface GitExtensionExports {
 
 /** AuthorNameSources backed by VSCode APIs. git is desktop-only; the rest work on web. */
 export class VscodeAuthorNameSources implements AuthorNameSources, AuthorEmailSources {
-  async gitUserName(): Promise<string | undefined> {
+  /**
+   * The first git repository, awaiting the git API's async repo discovery first
+   * (right after activation `repositories` is empty until state is 'initialized').
+   */
+  private async gitRepo(): Promise<GitApiRepository | undefined> {
     const ext = vscode.extensions.getExtension<GitExtensionExports>('vscode.git');
     if (!ext) {
       return undefined; // git extension is unavailable in the web host
@@ -24,41 +29,33 @@ export class VscodeAuthorNameSources implements AuthorNameSources, AuthorEmailSo
       if (!ext.isActive) {
         await ext.activate();
       }
-      const repo = ext.exports.getAPI(1).repositories[0];
-      if (!repo) {
-        return undefined;
-      }
-      const local = await repo.getConfig('user.name').catch(() => undefined);
-      if (local) {
-        return local;
-      }
-      return await repo.getGlobalConfig('user.name').catch(() => undefined);
+      const api = ext.exports.getAPI(1);
+      await waitForGitInit(api);
+      return api.repositories[0];
     } catch {
       return undefined;
     }
   }
 
-  async gitUserEmail(): Promise<string | undefined> {
-    const ext = vscode.extensions.getExtension<GitExtensionExports>('vscode.git');
-    if (!ext) {
-      return undefined; // git extension is unavailable in the web host
-    }
-    try {
-      if (!ext.isActive) {
-        await ext.activate();
-      }
-      const repo = ext.exports.getAPI(1).repositories[0];
-      if (!repo) {
-        return undefined;
-      }
-      const local = await repo.getConfig('user.email').catch(() => undefined);
-      if (local) {
-        return local;
-      }
-      return await repo.getGlobalConfig('user.email').catch(() => undefined);
-    } catch {
+  /** Local-then-global `git config` lookup; undefined when unset/unavailable. */
+  private async gitConfig(key: string): Promise<string | undefined> {
+    const repo = await this.gitRepo();
+    if (!repo) {
       return undefined;
     }
+    const local = await repo.getConfig(key).catch(() => undefined);
+    if (local) {
+      return local;
+    }
+    return repo.getGlobalConfig(key).catch(() => undefined);
+  }
+
+  async gitUserName(): Promise<string | undefined> {
+    return this.gitConfig('user.name');
+  }
+
+  async gitUserEmail(): Promise<string | undefined> {
+    return this.gitConfig('user.email');
   }
 
   settingAuthorName(): string | undefined {
