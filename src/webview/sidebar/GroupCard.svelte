@@ -3,10 +3,12 @@
   import { type TagColor } from '../../shared/protocol';
   import { tagColor } from '../../core/sidebarState';
   import { contrastColor } from '../../shared/color';
+  import CommentBadge from '../shared/CommentBadge.svelte';
 
   let {
     group,
     palette,
+    commentCount = 0,
     selected = false,
     bulkMode = false,
     checked = false,
@@ -15,6 +17,7 @@
   }: {
     group: AnnotationGroup;
     palette: TagColor[];
+    commentCount?: number;
     selected?: boolean;
     bulkMode?: boolean;
     checked?: boolean;
@@ -39,7 +42,7 @@
     {group.title}
     {#if group.status === 'resolved'}<span class="badge" data-testid="resolved-badge">resolved</span>{/if}
   </div>
-  <div class="meta">{group.author} · {group.annotations.length} annotation{group.annotations.length === 1 ? '' : 's'}</div>
+  <div class="meta">{group.author} · {group.annotations.length} annotation{group.annotations.length === 1 ? '' : 's'} <CommentBadge count={commentCount} /></div>
   {#if group.tags.length > 0}
     <div class="chips">
       {#each group.tags as tag (tag.name)}

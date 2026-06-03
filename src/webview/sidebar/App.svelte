@@ -68,6 +68,7 @@
         <GroupCard
           {group}
           palette={$sidebar.palette}
+          commentCount={$sidebar.commentCounts[group.id] ?? 0}
           selected={$sidebar.selectedId === group.id}
           bulkMode={$sidebar.bulkMode}
           checked={$sidebar.selectedGroupIds.includes(group.id)}

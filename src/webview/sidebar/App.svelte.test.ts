@@ -109,4 +109,10 @@ describe('App.svelte', () => {
     expect(btn).toHaveTextContent('✓ Refreshed');
     expect(postToHost).toHaveBeenCalledWith({ type: 'refresh' });
   });
+
+  it('passes per-group comment counts to the cards', () => {
+    sidebar.set({ ...initialSidebarState(), groups: [group('g1', 'One')], palette: [], commentCounts: { g1: 4 } });
+    render(App);
+    expect(screen.getByTestId('comment-badge')).toHaveTextContent('4');
+  });
 });

@@ -78,4 +78,13 @@ describe('GroupCard', () => {
       preventDefaultContextMenuItems: true,
     });
   });
+
+  it('shows a comment badge when the group has comments', () => {
+    render(GroupCard, { group: group(), palette: [], commentCount: 5 });
+    expect(screen.getByTestId('comment-badge')).toHaveTextContent('5');
+  });
+  it('shows no comment badge at zero comments', () => {
+    render(GroupCard, { group: group(), palette: [] });
+    expect(screen.queryByTestId('comment-badge')).toBeNull();
+  });
 });
