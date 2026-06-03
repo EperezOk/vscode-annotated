@@ -1,4 +1,4 @@
-import { type CommentFile, type ThreadComment } from '../shared/model';
+import { type AnnotationGroup, type CommentFile, type ThreadComment } from '../shared/model';
 
 /** A filesystem-safe slug of an author display name (collisions are tolerated). */
 export function slugifyAuthor(name: string): string {
@@ -11,6 +11,34 @@ export function flattenComments(files: CommentFile[]): ThreadComment[] {
   return files
     .flatMap((file) => file.comments.map((c) => ({ ...c, author: file.author })))
     .sort((a, b) => a.timestamp - b.timestamp);
+}
+
+/** Comments attached to the group itself (not to its annotations); order preserved. */
+export function groupCommentsOf(comments: ThreadComment[], groupId: string): ThreadComment[] {
+  return comments.filter((c) => c.groupId === groupId);
+}
+
+/**
+ * Per-group comment totals for the sidebar badges: comments on the group's
+ * annotations plus comments on the group itself. Every group gets an entry
+ * (0 when comment-less); comments on unknown targets are ignored.
+ */
+export function commentCountsByGroup(groups: AnnotationGroup[], comments: ThreadComment[]): Record<string, number> {
+  const counts: Record<string, number> = {};
+  const groupByAnnotation = new Map<string, string>();
+  for (const g of groups) {
+    counts[g.id] = 0;
+    for (const a of g.annotations) {
+      groupByAnnotation.set(a.id, g.id);
+    }
+  }
+  for (const c of comments) {
+    const gid = c.groupId ?? (c.annotationId !== undefined ? groupByAnnotation.get(c.annotationId) : undefined);
+    if (gid !== undefined && gid in counts) {
+      counts[gid] += 1;
+    }
+  }
+  return counts;
 }
 
 /** Coarse "x ago" label. `now` and `ts` are epoch seconds. */
