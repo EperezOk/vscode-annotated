@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { type AnnotationGroup, type Tag } from '../shared/model';
+import { type AnnotationGroup } from '../shared/model';
 import { newId } from '../shared/ids';
 import { sha256Hex } from '../shared/hash';
 import { GroupStore } from '../core/groupStore';
@@ -12,11 +12,7 @@ import {
 } from '../core/createAnnotationFlow';
 import { VscodeFileSystem } from './vscodeFileSystem';
 import { VscodeAuthorNameSources } from './authorSources';
-import { displayPalette, promptNewTag } from './tagPalette';
-import { type TagColor } from '../shared/protocol';
-import { swatchIconSvg } from '../shared/svgIcon';
-import { NEW_TAG_LABEL, splitPickedTags } from '../core/tags';
-import { tagColor } from '../core/sidebarState';
+import { displayPalette, pickTagsWithNewOption } from './tagPalette';
 
 const CREATE_NEW_LABEL = '$(add) Create new group…';
 
@@ -39,7 +35,10 @@ export function registerCreateAnnotationCommand(
       listGroups: () => store.listGroups(),
       pickGroup: (groups) => pickGroup(groups),
       promptGroupTitle: () => promptGroupTitle(),
-      pickTags: async () => pickTags(displayPalette(await store.listGroups())),
+      pickTags: async () =>
+        pickTagsWithNewOption(displayPalette(await store.listGroups()), {
+          placeHolder: 'Select tags (optional)',
+        }),
       saveGroup: (group) => store.saveGroup(group),
       newId,
       now: () => Math.floor(Date.now() / 1000),
@@ -98,25 +97,3 @@ async function promptGroupTitle(): Promise<string | undefined> {
   });
 }
 
-async function pickTags(palette: TagColor[]): Promise<Tag[] | undefined> {
-  const items: vscode.QuickPickItem[] = [
-    ...palette.map((t) => ({ label: t.name, iconPath: vscode.Uri.parse(swatchIconSvg(t.color)) })),
-    { label: NEW_TAG_LABEL, alwaysShow: true },
-  ];
-  const picked = await vscode.window.showQuickPick(items, {
-    canPickMany: true,
-    placeHolder: 'Select tags (optional)',
-  });
-  if (picked === undefined) {
-    return undefined;
-  }
-  const { names, addNew } = splitPickedTags(picked.map((item) => item.label));
-  const tags: Tag[] = names.map((name) => ({ name, color: tagColor(palette, name) }));
-  if (addNew) {
-    const created = await promptNewTag();
-    if (created) {
-      tags.push(created);
-    }
-  }
-  return tags;
-}
