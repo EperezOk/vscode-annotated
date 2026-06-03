@@ -30,6 +30,24 @@ export const TAG_SWATCHES: readonly { name: string; hex: string }[] = [
   { name: 'Gray', hex: '#8B949E' },
 ];
 
+/**
+ * Decide the outcome of a multi-select tag QuickPick accept. `checkedLabels` are
+ * the checked items' labels; `activeLabel` is the highlighted item's label. Enter
+ * with nothing checked while "＋New tag…" is highlighted counts as choosing it —
+ * a plain multi-select accept treats that as an empty selection and would
+ * silently create the group with no tag (the round-3 #9 bug).
+ */
+export function resolveTagPickAccept(
+  checkedLabels: string[],
+  activeLabel: string | undefined,
+): { names: string[]; addNew: boolean } {
+  const { names, addNew } = splitPickedTags(checkedLabels);
+  if (checkedLabels.length === 0 && activeLabel === NEW_TAG_LABEL) {
+    return { names, addNew: true };
+  }
+  return { names, addNew };
+}
+
 /** Validate/normalize the raw `annotated.tags` config value into a Tag[]. */
 export function parseTagPalette(raw: unknown): Tag[] {
   if (!Array.isArray(raw)) {
