@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { type Annotation } from '../../shared/model';
+  import { formatLineRange, type Annotation } from '../../shared/model';
   import { oneLine } from '../../core/detailState';
   import { fileName } from '../../shared/path';
 
@@ -16,7 +16,7 @@
   } = $props();
 
   const summary = $derived(oneLine(annotation.content) || '(empty)');
-  const range = $derived(`${annotation.range.startLine}–${annotation.range.endLine}`);
+  const range = $derived(formatLineRange(annotation.range));
   const shortLoc = $derived(`${fileName(annotation.file)}:${range}`);
   const fullLoc = $derived(`${annotation.file}:${range}`);
 </script>

@@ -38,4 +38,11 @@ describe('AnnotationRow', () => {
     render(AnnotationRow, { annotation: annotation('hi') });
     expect(screen.queryByTestId('stale-dot')).toBeNull();
   });
+
+  it('collapses a single-line range to one number', () => {
+    render(AnnotationRow, {
+      annotation: { id: 'a9', file: 'src/auth/login.ts', range: { startLine: 7, endLine: 7 }, content: 'x', contentHash: 'h' },
+    });
+    expect(screen.getByTestId('annotation-loc').textContent).toBe('login.ts:7');
+  });
 });
