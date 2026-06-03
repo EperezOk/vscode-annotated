@@ -34,7 +34,7 @@ export function commentCountsByGroup(groups: AnnotationGroup[], comments: Thread
   }
   for (const c of comments) {
     const gid = c.groupId ?? (c.annotationId !== undefined ? groupByAnnotation.get(c.annotationId) : undefined);
-    if (gid !== undefined && gid in counts) {
+    if (gid !== undefined && Object.hasOwn(counts, gid)) {
       counts[gid] += 1;
     }
   }

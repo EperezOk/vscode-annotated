@@ -74,4 +74,10 @@ describe('commentCountsByGroup', () => {
   it('returns zero entries for comment-less groups', () => {
     expect(commentCountsByGroup(groups, [])).toEqual({ g1: 0, g2: 0 });
   });
+  it('ignores comments whose target id collides with inherited object keys', () => {
+    const comments: ThreadComment[] = [
+      { id: 'c1', groupId: 'constructor', author: 'A', content: 'x', timestamp: 1 },
+    ];
+    expect(commentCountsByGroup(groups, comments)).toEqual({ g1: 0, g2: 0 });
+  });
 });
