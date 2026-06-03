@@ -94,6 +94,7 @@
     "compile": "node esbuild.mjs",
     "watch": "node esbuild.mjs --watch",
     "package": "node esbuild.mjs --production",
+    "build:logo": "node scripts/render-logo.mjs",
     "check-types": "tsc --noEmit && tsc -p tsconfig.test.json --noEmit",
     "test:unit": "vitest run",
     "test:integration": "npm run compile && vscode-test-web --browserType=chromium --extensionDevelopmentPath=. --extensionTestsPath=dist/web/test/suite/index.js --headless --quality=stable test-workspace",
