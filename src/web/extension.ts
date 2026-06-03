@@ -4,23 +4,21 @@ import { registerCreateAnnotationCommand } from './createAnnotationCommand';
 import { DetailPanelProvider } from './detailPanelProvider';
 import { GroupStore } from '../core/groupStore';
 import { VscodeFileSystem } from './vscodeFileSystem';
-import { displayPalette, reconcileWorkspaceTags, promptNewTag } from './tagPalette';
+import { displayPalette, reconcileWorkspaceTags, pickTagsWithNewOption } from './tagPalette';
 import { manageTags } from './tagAdminCommand';
-import { NEW_TAG_LABEL, splitPickedTags } from '../core/tags';
 import { revealAnnotation, clearHighlight } from './navigateToCode';
 import { readGitRefInfo } from './gitRefsSource';
 import { gitRefSuggestions } from '../core/gitRefs';
 import { computeStaleIds } from './staleness';
 import { sha256Hex, anchorText } from '../shared/hash';
 import { formatLineRange, type AnnotationGroup, type GroupStatus, type Tag } from '../shared/model';
-import { bulkStatusToggle, tagColor } from '../core/sidebarState';
+import { bulkStatusToggle } from '../core/sidebarState';
 import { CommentStore } from '../core/commentStore';
 import { flattenComments, slugifyAuthor } from '../core/comments';
 import { resolveAuthor, resolveAuthorEmail } from '../core/authorIdentity';
 import { VscodeAuthorNameSources } from './authorSources';
 import { newId } from '../shared/ids';
 import { annotationsAtLine } from '../core/gutterIndicators';
-import { swatchIconSvg } from '../shared/svgIcon';
 import { GutterDecorationManager } from './gutterDecorations';
 import { debounce } from '../shared/debounce';
 
@@ -139,25 +137,11 @@ export function activate(context: vscode.ExtensionContext): void {
       return;
     }
     const store = new GroupStore(new VscodeFileSystem(folder.uri));
-    const palette = displayPalette(await store.listGroups());
-    const items: vscode.QuickPickItem[] = [
-      ...palette.map((t) => ({ label: t.name, iconPath: vscode.Uri.parse(swatchIconSvg(t.color)) })),
-      { label: NEW_TAG_LABEL, alwaysShow: true },
-    ];
-    const picked = await vscode.window.showQuickPick(items, {
-      canPickMany: true,
+    const tags = await pickTagsWithNewOption(displayPalette(await store.listGroups()), {
       placeHolder: `Set tags on ${groupIds.length} group(s)`,
     });
-    if (picked === undefined) {
+    if (tags === undefined) {
       return;
-    }
-    const { names, addNew } = splitPickedTags(picked.map((item) => item.label));
-    const tags: Tag[] = names.map((name) => ({ name, color: tagColor(palette, name) }));
-    if (addNew) {
-      const created = await promptNewTag();
-      if (created) {
-        tags.push(created);
-      }
     }
     for (const id of groupIds) {
       await store.updateGroup(id, { tags }, now());
@@ -251,24 +235,12 @@ export function activate(context: vscode.ExtensionContext): void {
       return;
     }
     const palette = displayPalette(await store.listGroups());
-    const items: vscode.QuickPickItem[] = [
-      ...palette.map((t) => ({ label: t.name, picked: group.tags.some((gt) => gt.name === t.name), iconPath: vscode.Uri.parse(swatchIconSvg(t.color)) })),
-      { label: NEW_TAG_LABEL, alwaysShow: true },
-    ];
-    const picked = await vscode.window.showQuickPick(items, {
-      canPickMany: true,
+    const tags = await pickTagsWithNewOption(palette, {
       placeHolder: 'Select tags for this group',
+      preselectedNames: group.tags.map((t) => t.name),
     });
-    if (picked === undefined) {
+    if (tags === undefined) {
       return;
-    }
-    const { names, addNew } = splitPickedTags(picked.map((item) => item.label));
-    const tags: Tag[] = names.map((name) => ({ name, color: tagColor(palette, name) }));
-    if (addNew) {
-      const created = await promptNewTag();
-      if (created) {
-        tags.push(created);
-      }
     }
     await patchGroup(groupId, { tags });
   };
