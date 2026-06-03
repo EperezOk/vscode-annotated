@@ -49,4 +49,51 @@ describe('CommentThread', () => {
     await userEvent.click(screen.getByTestId('comment-save-btn'));
     expect(onedit).toHaveBeenCalledWith('c2', 'edited');
   });
+
+  it('marks other authors\' names with the "other" class; own name unmarked', () => {
+    render(CommentThread, { comments: thread, currentAuthor: 'Me', now: 200 });
+    const rows = screen.getAllByTestId('comment');
+    expect(rows[0].querySelector('.cauthor')).toHaveClass('other'); // Ana
+    expect(rows[1].querySelector('.cauthor')).not.toHaveClass('other'); // Me
+  });
+
+  it('autofocuses the reply composer when opened', async () => {
+    render(CommentThread, { comments: [], currentAuthor: 'Me', now: 200 });
+    await userEvent.click(screen.getByTestId('comment-reply-trigger'));
+    expect(screen.getByTestId('md-editor')).toHaveAttribute('data-autofocus', 'true');
+  });
+
+  it('autofocuses the editor when editing an own comment', async () => {
+    render(CommentThread, { comments: thread, currentAuthor: 'Me', now: 200 });
+    await userEvent.click(screen.getByTestId('comment-edit-btn'));
+    expect(screen.getByTestId('md-editor')).toHaveAttribute('data-autofocus', 'true');
+  });
+
+  it('adds a comment via Cmd/Ctrl+Enter', async () => {
+    const onadd = vi.fn();
+    render(CommentThread, { comments: [], currentAuthor: 'Me', now: 200, onadd });
+    await userEvent.click(screen.getByTestId('comment-reply-trigger'));
+    const editor = screen.getByTestId('md-editor');
+    await userEvent.type(editor, 'Quick');
+    await userEvent.type(editor, '{Meta>}{Enter}{/Meta}');
+    expect(onadd).toHaveBeenCalledWith('Quick');
+  });
+
+  it('does not add an empty comment via Cmd/Ctrl+Enter', async () => {
+    const onadd = vi.fn();
+    render(CommentThread, { comments: [], currentAuthor: 'Me', now: 200, onadd });
+    await userEvent.click(screen.getByTestId('comment-reply-trigger'));
+    await userEvent.type(screen.getByTestId('md-editor'), '{Meta>}{Enter}{/Meta}');
+    expect(onadd).not.toHaveBeenCalled();
+  });
+
+  it('saves a comment edit via Cmd/Ctrl+Enter', async () => {
+    const onedit = vi.fn();
+    render(CommentThread, { comments: thread, currentAuthor: 'Me', now: 200, onedit });
+    await userEvent.click(screen.getByTestId('comment-edit-btn'));
+    const editor = screen.getByTestId('md-editor');
+    await userEvent.type(editor, '!');
+    await userEvent.type(editor, '{Meta>}{Enter}{/Meta}');
+    expect(onedit).toHaveBeenCalledWith('c2', 'my note!');
+  });
 });

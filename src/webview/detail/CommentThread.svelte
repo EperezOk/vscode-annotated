@@ -45,7 +45,7 @@
   {#each comments as c (c.id)}
     <div class="comment" data-testid="comment">
       <div class="chead">
-        <span class="cauthor">{c.author}</span>
+        <span class="cauthor" class:other={c.author !== currentAuthor}>{c.author}</span>
         <span class="ctime">{relativeTime(c.timestamp, now)}</span>
         {#if c.author === currentAuthor}
           <span class="cactions">
@@ -55,7 +55,7 @@
         {/if}
       </div>
       {#if editingId === c.id}
-        <MarkdownEditor doc={editDraft} onChange={(v) => (editDraft = v)} />
+        <MarkdownEditor doc={editDraft} autofocus onChange={(v) => (editDraft = v)} onSubmit={() => saveEdit(c.id)} />
         <div class="crow">
           <button type="button" class="btn" data-testid="comment-save-btn" onclick={() => saveEdit(c.id)}>Save</button>
           <button type="button" class="link" onclick={() => (editingId = null)}>cancel</button>
@@ -68,7 +68,7 @@
 
   {#if replying}
     <div class="reply">
-      <MarkdownEditor doc={replyDraft} onChange={(v) => (replyDraft = v)} />
+      <MarkdownEditor doc={replyDraft} autofocus onChange={(v) => (replyDraft = v)} onSubmit={addReply} />
       <div class="crow">
         <button type="button" class="btn" data-testid="comment-add-btn" disabled={!replyDraft.trim()} onclick={addReply}>Add comment</button>
         <button type="button" class="link" onclick={() => (replying = false)}>cancel</button>
@@ -85,6 +85,7 @@
   .comment { margin-bottom: 10px; }
   .chead { display: flex; align-items: baseline; gap: 8px; margin-bottom: 2px; }
   .cauthor { font-weight: 600; font-size: 12px; }
+  .cauthor.other { color: var(--vscode-charts-orange, #d18616); }
   .ctime { font-size: 10.5px; color: var(--vscode-descriptionForeground, #9a9a9a); }
   .cactions { margin-left: auto; display: flex; gap: 6px; }
   .crow { display: flex; gap: 8px; align-items: center; margin-top: 4px; }
