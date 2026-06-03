@@ -13,6 +13,7 @@ try {
     viewport: { width: 256, height: 256 },
     deviceScaleFactor: 1,
   });
+  // logo.svg is repo-owned and contains no </body> or </html> — direct injection is safe here.
   await page.setContent(
     `<!DOCTYPE html><html><head><style>
       html, body { margin: 0; background: transparent; }
