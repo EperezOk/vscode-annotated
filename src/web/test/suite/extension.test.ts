@@ -14,5 +14,10 @@ suite('Annotated web extension', () => {
     if (commands.includes('annotated.ping')) {
       throw new Error('annotated.ping should no longer be registered');
     }
+    for (const cmd of ['annotated.deleteGroup', 'annotated.deleteAnnotation']) {
+      if (!commands.includes(cmd)) {
+        throw new Error(`${cmd} should be registered`);
+      }
+    }
   });
 });

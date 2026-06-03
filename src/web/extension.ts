@@ -359,6 +359,59 @@ export function activate(context: vscode.ExtensionContext): void {
     }),
   );
 
+  // Webview context-menu commands (args come from each element's data-vscode-context).
+  context.subscriptions.push(
+    vscode.commands.registerCommand('annotated.deleteGroup', async (args?: { groupId?: string }) => {
+      const folder = vscode.workspace.workspaceFolders?.[0];
+      if (!folder || typeof args?.groupId !== 'string') {
+        return;
+      }
+      const store = new GroupStore(new VscodeFileSystem(folder.uri));
+      const group = await store.getGroup(args.groupId);
+      if (!group) {
+        return;
+      }
+      const choice = await vscode.window.showWarningMessage(
+        `Delete group "${group.title}"? This cannot be undone.`,
+        { modal: true },
+        'Delete',
+      );
+      if (choice !== 'Delete') {
+        return;
+      }
+      await store.deleteGroup(group.id);
+      await provider.refresh();
+      if (detailProvider.currentGroupId() === group.id) {
+        await showGroupWithStale(group.id); // group is gone → empty panel
+      }
+      await refreshDecorations();
+    }),
+    vscode.commands.registerCommand(
+      'annotated.deleteAnnotation',
+      async (args?: { groupId?: string; annotationId?: string }) => {
+        const folder = vscode.workspace.workspaceFolders?.[0];
+        if (!folder || typeof args?.groupId !== 'string' || typeof args?.annotationId !== 'string') {
+          return;
+        }
+        const choice = await vscode.window.showWarningMessage(
+          'Delete this annotation? This cannot be undone.',
+          { modal: true },
+          'Delete',
+        );
+        if (choice !== 'Delete') {
+          return;
+        }
+        const store = new GroupStore(new VscodeFileSystem(folder.uri));
+        const ok = await store.deleteAnnotation(args.groupId, args.annotationId, now());
+        if (ok) {
+          await provider.refresh();
+          await showGroupWithStale(args.groupId);
+          await refreshDecorations();
+        }
+      },
+    ),
+  );
+
   const openAnnotationInPanel = async (groupId: string, annotationId: string): Promise<void> => {
     await showGroupWithStale(groupId);
     detailProvider.openAnnotation(annotationId);

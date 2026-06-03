@@ -35,7 +35,9 @@
         "command": "annotated.manageTags",
         "title": "Annotated: Manage Tags…",
         "icon": "$(tag)"
-      }
+      },
+      { "command": "annotated.deleteGroup", "title": "Delete Group" },
+      { "command": "annotated.deleteAnnotation", "title": "Delete Annotation" }
     ],
     "keybindings": [
       {
@@ -63,6 +65,20 @@
           "when": "view == annotated.sidebar",
           "group": "navigation"
         }
+      ],
+      "webview/context": [
+        {
+          "command": "annotated.deleteGroup",
+          "when": "webviewId == 'annotated.sidebar' && webviewSection == 'group'"
+        },
+        {
+          "command": "annotated.deleteAnnotation",
+          "when": "webviewId == 'annotated.detail' && webviewSection == 'annotation'"
+        }
+      ],
+      "commandPalette": [
+        { "command": "annotated.deleteGroup", "when": "false" },
+        { "command": "annotated.deleteAnnotation", "when": "false" }
       ]
     },
     "configuration": {

@@ -143,6 +143,11 @@ export class DetailPanelProvider implements vscode.WebviewViewProvider {
     void this.view?.webview.postMessage(message);
   }
 
+  /** Id of the group currently shown in the panel, or null when empty. */
+  currentGroupId(): string | null {
+    return this.group?.id ?? null;
+  }
+
   private post(): void {
     if (!this.view) {
       return;
