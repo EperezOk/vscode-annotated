@@ -7,7 +7,7 @@
   import { markdown } from '@codemirror/lang-markdown';
   import { markdownKeymap, urlPasteHandler, markdownHighlightStyle, fillHeightTheme } from './editorExtensions';
 
-  let { doc = '', autofocus = false, onChange }: { doc?: string; autofocus?: boolean; onChange?: (value: string) => void } = $props();
+  let { doc = '', autofocus = false, onChange, onSubmit }: { doc?: string; autofocus?: boolean; onChange?: (value: string) => void; onSubmit?: () => void } = $props();
 
   let host: HTMLDivElement;
   let view: EditorView | undefined;
@@ -23,7 +23,13 @@
           markdown(),
           fillHeightTheme,
           urlPasteHandler,
-          keymap.of([...markdownKeymap, ...defaultKeymap, ...historyKeymap]),
+          keymap.of([
+            // Submit shortcut — ahead of defaultKeymap, which binds Mod-Enter to insertBlankLine.
+            { key: 'Mod-Enter', run: () => (onSubmit ? (onSubmit(), true) : false) },
+            ...markdownKeymap,
+            ...defaultKeymap,
+            ...historyKeymap,
+          ]),
           EditorView.lineWrapping,
           EditorView.updateListener.of((update) => {
             if (update.docChanged) {
