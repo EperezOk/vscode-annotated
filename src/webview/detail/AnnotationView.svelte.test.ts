@@ -13,11 +13,20 @@ function annotation(content: string): Annotation {
 }
 
 describe('AnnotationView', () => {
-  it('shows a preview and the file:range for a non-empty annotation', () => {
+  it('shows a preview and basename:range (full path on hover) for a non-empty annotation', () => {
     render(AnnotationView, { annotation: annotation('# Note') });
     expect(screen.getByTestId('md-preview')).toBeInTheDocument();
-    expect(screen.getByTestId('annotation-loc')).toHaveTextContent('src/x.ts:2–4');
+    const loc = screen.getByTestId('annotation-loc');
+    expect(loc.textContent).toBe('x.ts:2–4');
+    expect(loc).toHaveAttribute('title', 'src/x.ts:2–4');
     expect(screen.queryByTestId('md-editor')).toBeNull();
+  });
+
+  it('collapses a single-line range to one number', () => {
+    render(AnnotationView, {
+      annotation: { id: 'a1', file: 'src/x.ts', range: { startLine: 7, endLine: 7 }, content: '# N', contentHash: 'h' },
+    });
+    expect(screen.getByTestId('annotation-loc').textContent).toBe('x.ts:7');
   });
 
   it('starts in edit mode for an empty annotation', () => {

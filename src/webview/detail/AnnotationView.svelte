@@ -1,6 +1,7 @@
 <script lang="ts">
   import { untrack, onDestroy } from 'svelte';
-  import { type Annotation, type ThreadComment } from '../../shared/model';
+  import { formatLineRange, type Annotation, type ThreadComment } from '../../shared/model';
+  import { fileName } from '../../shared/path';
   import MarkdownPreview from './MarkdownPreview.svelte';
   import MarkdownEditor from './MarkdownEditor.svelte';
   import CommentThread from './CommentThread.svelte';
@@ -39,7 +40,9 @@
     ondeletecomment?: (commentId: string) => void;
   } = $props();
 
+  // Full path:range — stays the "copy path" payload and the hover tooltip.
   const location = $derived(`${annotation.file}:${annotation.range.startLine}–${annotation.range.endLine}`);
+  const shortLocation = $derived(`${fileName(annotation.file)}:${formatLineRange(annotation.range)}`);
 
   // Seed once from the prop (intentional — DetailApp keys this component by
   // annotation id, so it remounts on switch). untrack() avoids the spurious
@@ -99,12 +102,12 @@
   <div class="bar">
     <button type="button" class="link" data-testid="back-btn" onclick={() => onback?.()}>‹ Back</button>
     {#if editingRange}
-      <span class="loc">{annotation.file}:
+      <span class="loc">{fileName(annotation.file)}:
         <input class="num" data-testid="range-start" type="number" min="1" bind:value={rangeStart} />–<input class="num" data-testid="range-end" type="number" min="1" bind:value={rangeEnd} />
       </span>
       <button type="button" class="link" data-testid="save-range-btn" onclick={saveRange}>save</button>
     {:else}
-      <span class="loc" data-testid="annotation-loc">{location}</span>
+      <span class="loc" data-testid="annotation-loc" title={location}>{shortLocation}</span>
       <button type="button" class="link" data-testid="edit-range-btn" onclick={startRangeEdit}>edit range</button>
     {/if}
     <button type="button" class="link" data-testid="copy-loc-btn" onclick={copyPath}>{copiedPath ? '✓ Copied' : '⧉ path'}</button>
