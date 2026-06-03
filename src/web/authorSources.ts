@@ -84,7 +84,7 @@ export class VscodeAuthorNameSources implements AuthorNameSources, AuthorEmailSo
 
   async promptForName(): Promise<string | undefined> {
     return vscode.window.showInputBox({
-      prompt: 'Your name for annotations',
+      prompt: 'User name for annotations',
       ignoreFocusOut: true,
     });
   }
