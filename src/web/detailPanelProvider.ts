@@ -11,6 +11,9 @@ export class DetailPanelProvider implements vscode.WebviewViewProvider {
   private comments: ThreadComment[] = [];
   private currentAuthor = '';
 
+  /** Last annotation the host asked to open — replayed after a webview (re)load. */
+  private pendingAnnotationId: string | null = null;
+
   /** Set by the extension to navigate to a selected annotation. */
   public onSelectAnnotation?: (annotation: Annotation) => void;
 
@@ -65,7 +68,9 @@ export class DetailPanelProvider implements vscode.WebviewViewProvider {
       }
       if (message.type === 'ready') {
         this.post();
+        this.replayOpenAnnotation();
       } else if (message.type === 'selectAnnotation') {
+        this.pendingAnnotationId = message.annotationId;
         const annotation = this.group?.annotations.find((a) => a.id === message.annotationId);
         if (annotation) {
           this.onSelectAnnotation?.(annotation);
@@ -81,6 +86,7 @@ export class DetailPanelProvider implements vscode.WebviewViewProvider {
       } else if (message.type === 'copyText') {
         void vscode.env.clipboard.writeText(message.text);
       } else if (message.type === 'navigationClosed') {
+        this.pendingAnnotationId = null;
         this.onNavigationClosed?.();
       } else if (message.type === 'setGroupTitle') {
         if (this.group) {
@@ -145,8 +151,23 @@ export class DetailPanelProvider implements vscode.WebviewViewProvider {
 
   /** Tell the webview to open a specific annotation in the annotation view. */
   openAnnotation(annotationId: string): void {
+    this.pendingAnnotationId = annotationId;
     const message: HostToDetail = { type: 'openAnnotation', annotationId };
     void this.view?.webview.postMessage(message);
+  }
+
+  /**
+   * Re-send the last openAnnotation after a webview (re)load. Without this, an
+   * openAnnotation posted before the view resolved is silently lost and the
+   * panel lands in group view (the round-3 #10 autofocus bug). Guarded: only
+   * replayed while the shown group still contains that annotation.
+   */
+  private replayOpenAnnotation(): void {
+    const id = this.pendingAnnotationId;
+    if (id !== null && (this.group?.annotations.some((a) => a.id === id) ?? false)) {
+      const message: HostToDetail = { type: 'openAnnotation', annotationId: id };
+      void this.view?.webview.postMessage(message);
+    }
   }
 
   /** Id of the group currently shown in the panel, or null when empty. */
