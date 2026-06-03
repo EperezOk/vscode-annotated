@@ -87,7 +87,9 @@ export function activate(context: vscode.ExtensionContext): void {
     const group = await new GroupStore(fs).getGroup(groupId);
     const staleIds = group ? await computeStaleIds(fs, group) : [];
     const ids = new Set(group?.annotations.map((a) => a.id) ?? []);
-    const comments = flattenComments(await new CommentStore(fs).listCommentFiles()).filter((c) => ids.has(c.annotationId));
+    const comments = flattenComments(await new CommentStore(fs).listCommentFiles()).filter(
+      (c) => (c.annotationId !== undefined && ids.has(c.annotationId)) || c.groupId === groupId,
+    );
     const { author } = await currentIdentity();
     detailProvider.showGroup(group, displayPalette(group ? [group] : []), staleIds, comments, author);
   };

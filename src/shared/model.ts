@@ -125,10 +125,12 @@ export function serializeGroup(group: AnnotationGroup): string {
   return JSON.stringify(group, null, 2);
 }
 
-/** One comment in a per-author comment file. */
+/** One comment in a per-author comment file — targets EITHER an annotation or a group. */
 export interface Comment {
   id: string;
-  annotationId: string;
+  /** Exactly one of `annotationId` / `groupId` is set. */
+  annotationId?: string;
+  groupId?: string;
   content: string;
   timestamp: number; // epoch seconds
 }
@@ -147,12 +149,19 @@ export interface ThreadComment extends Comment {
 
 function parseComment(raw: unknown): Comment {
   if (!isObject(raw)) fail('comment', 'is not an object');
-  const { id, annotationId, content, timestamp } = raw;
+  const { id, annotationId, groupId, content, timestamp } = raw;
   if (typeof id !== 'string') fail('comment.id', 'must be a string');
-  if (typeof annotationId !== 'string') fail('comment.annotationId', 'must be a string');
   if (typeof content !== 'string') fail('comment.content', 'must be a string');
   if (typeof timestamp !== 'number') fail('comment.timestamp', 'must be a number');
-  return { id, annotationId, content, timestamp };
+  if (annotationId !== undefined && typeof annotationId !== 'string') fail('comment.annotationId', 'must be a string');
+  if (groupId !== undefined && typeof groupId !== 'string') fail('comment.groupId', 'must be a string');
+  if ((annotationId === undefined) === (groupId === undefined)) {
+    fail('comment', 'must target exactly one of annotationId / groupId');
+  }
+  if (typeof annotationId === 'string') {
+    return { id, annotationId, content, timestamp };
+  }
+  return { id, groupId: groupId as string, content, timestamp };
 }
 
 /** Validate an untrusted value as a CommentFile. Throws on any problem. */

@@ -95,3 +95,23 @@ describe('formatLineRange', () => {
     expect(formatLineRange({ startLine: 12, endLine: 18 })).toBe('12–18');
   });
 });
+
+describe('parseCommentFile comment targets', () => {
+  const base = { author: 'A', email: 'a@x' };
+  it('parses an annotation comment (existing shape)', () => {
+    const file = parseCommentFile({ ...base, comments: [{ id: 'c1', annotationId: 'a1', content: 'x', timestamp: 1 }] });
+    expect(file.comments[0]).toEqual({ id: 'c1', annotationId: 'a1', content: 'x', timestamp: 1 });
+  });
+  it('parses a group comment', () => {
+    const file = parseCommentFile({ ...base, comments: [{ id: 'c1', groupId: 'g1', content: 'x', timestamp: 1 }] });
+    expect(file.comments[0]).toEqual({ id: 'c1', groupId: 'g1', content: 'x', timestamp: 1 });
+  });
+  it('rejects a comment with both targets', () => {
+    expect(() =>
+      parseCommentFile({ ...base, comments: [{ id: 'c1', annotationId: 'a1', groupId: 'g1', content: 'x', timestamp: 1 }] }),
+    ).toThrow(/exactly one/);
+  });
+  it('rejects a comment with neither target', () => {
+    expect(() => parseCommentFile({ ...base, comments: [{ id: 'c1', content: 'x', timestamp: 1 }] })).toThrow(/exactly one/);
+  });
+});
