@@ -108,4 +108,13 @@ describe('GroupView', () => {
     await userEvent.click(btn);
     expect(onsetstatus).toHaveBeenCalledWith('open');
   });
+
+  it('autofocuses the title input with the cursor at the end when editing', async () => {
+    render(GroupView, { group: group(), palette });
+    await userEvent.click(screen.getByTestId('title-edit-btn'));
+    const input = screen.getByTestId('title-input') as HTMLInputElement;
+    expect(input).toHaveFocus();
+    expect(input.selectionStart).toBe('Login review'.length);
+    expect(input.selectionEnd).toBe('Login review'.length);
+  });
 });

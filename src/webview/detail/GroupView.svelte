@@ -5,6 +5,7 @@
   import { contrastColor } from '../../shared/color';
   import { moveBefore } from '../../core/detailState';
   import AnnotationRow from './AnnotationRow.svelte';
+  import { focusAtEnd } from '../shared/focusAtEnd';
 
   let {
     group,
@@ -76,6 +77,7 @@
         bind:value={titleDraft}
         onkeydown={onTitleKey}
         onblur={commitTitle}
+        use:focusAtEnd
       />
     {:else}
       <div class="title-row">
