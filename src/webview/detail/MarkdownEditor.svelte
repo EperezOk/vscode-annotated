@@ -12,6 +12,41 @@
   let host: HTMLDivElement;
   let view: EditorView | undefined;
 
+  /**
+   * Focus + cursor-at-end, retried briefly: when the webview iframe itself isn't
+   * focused yet (the host focuses the view asynchronously after this mounts),
+   * the initial .focus() doesn't take. Retry on short timers and once when the
+   * window gains focus, then give up quietly (round-3 #10).
+   */
+  function focusWithRetry(target: EditorView): () => void {
+    const place = (): void => {
+      target.focus();
+      target.dispatch({ selection: EditorSelection.cursor(target.state.doc.length) });
+    };
+    const onWindowFocus = (): void => {
+      if (!target.hasFocus) {
+        place();
+      }
+    };
+    place();
+    const timers = [50, 150, 400].map((ms) =>
+      setTimeout(() => {
+        if (!target.hasFocus) {
+          place();
+        }
+      }, ms),
+    );
+    window.addEventListener('focus', onWindowFocus);
+    const deadline = setTimeout(() => window.removeEventListener('focus', onWindowFocus), 1500);
+    return () => {
+      for (const timer of timers) {
+        clearTimeout(timer);
+      }
+      clearTimeout(deadline);
+      window.removeEventListener('focus', onWindowFocus);
+    };
+  }
+
   onMount(() => {
     view = new EditorView({
       parent: host,
@@ -39,11 +74,11 @@
         ],
       }),
     });
-    if (autofocus) {
-      view.focus();
-      view.dispatch({ selection: EditorSelection.cursor(view.state.doc.length) });
-    }
-    return () => view?.destroy();
+    const cleanupFocus = autofocus ? focusWithRetry(view) : undefined;
+    return () => {
+      cleanupFocus?.();
+      view?.destroy();
+    };
   });
 </script>
 
