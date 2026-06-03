@@ -292,6 +292,19 @@ export function activate(context: vscode.ExtensionContext): void {
     await showGroupWithStale(groupId);
   };
 
+  detailProvider.onAddGroupComment = async (groupId, content): Promise<void> => {
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    if (!folder) {
+      return;
+    }
+    const { author, email } = await currentIdentity();
+    const fs = new VscodeFileSystem(folder.uri);
+    await new CommentStore(fs).addComment(slugifyAuthor(author), author, email, {
+      id: newId(), groupId, content, timestamp: now(),
+    });
+    await showGroupWithStale(groupId);
+  };
+
   detailProvider.onEditComment = async (groupId, commentId, content): Promise<void> => {
     const folder = vscode.workspace.workspaceFolders?.[0];
     if (!folder) {

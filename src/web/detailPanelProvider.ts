@@ -38,6 +38,8 @@ export class DetailPanelProvider implements vscode.WebviewViewProvider {
 
   /** Set by the extension: add a comment to an annotation. */
   public onAddComment?: (groupId: string, annotationId: string, content: string) => void;
+  /** Set by the extension: add a comment to the group itself. */
+  public onAddGroupComment?: (groupId: string, content: string) => void;
   /** Set by the extension: edit a comment's content. */
   public onEditComment?: (groupId: string, commentId: string, content: string) => void;
   /** Set by the extension: delete a comment. */
@@ -103,6 +105,10 @@ export class DetailPanelProvider implements vscode.WebviewViewProvider {
       } else if (message.type === 'addComment') {
         if (this.group) {
           this.onAddComment?.(this.group.id, message.annotationId, message.content);
+        }
+      } else if (message.type === 'addGroupComment') {
+        if (this.group) {
+          this.onAddGroupComment?.(this.group.id, message.content);
         }
       } else if (message.type === 'editComment') {
         if (this.group) {
