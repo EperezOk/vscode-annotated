@@ -108,6 +108,7 @@
         class="row-wrap"
         class:dragging={draggedId === annotation.id}
         data-testid="annotation-drag"
+        data-vscode-context={JSON.stringify({ webviewSection: 'annotation', groupId: group.id, annotationId: annotation.id, preventDefaultContextMenuItems: true })}
         draggable="true"
         role="listitem"
         ondragstart={() => (draggedId = annotation.id)}

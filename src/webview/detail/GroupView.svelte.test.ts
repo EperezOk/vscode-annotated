@@ -117,4 +117,15 @@ describe('GroupView', () => {
     expect(input.selectionStart).toBe('Login review'.length);
     expect(input.selectionEnd).toBe('Login review'.length);
   });
+
+  it('exposes the right-click delete context on annotation rows', () => {
+    render(GroupView, { group: group(), palette });
+    const raw = screen.getByTestId('annotation-drag').getAttribute('data-vscode-context');
+    expect(JSON.parse(raw ?? '{}')).toEqual({
+      webviewSection: 'annotation',
+      groupId: 'g1',
+      annotationId: 'a1',
+      preventDefaultContextMenuItems: true,
+    });
+  });
 });

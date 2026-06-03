@@ -29,6 +29,7 @@
   class:selected
   class:resolved={group.status === 'resolved'}
   data-testid="group-card"
+  data-vscode-context={JSON.stringify({ webviewSection: 'group', groupId: group.id, preventDefaultContextMenuItems: true })}
   onclick={() => (bulkMode ? oncheck?.(group.id) : onselect?.(group.id))}
 >
   {#if bulkMode}

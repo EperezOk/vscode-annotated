@@ -68,4 +68,14 @@ describe('GroupCard', () => {
     render(GroupCard, { group: group(), palette: [] });
     expect(screen.queryByTestId('bulk-checkbox')).toBeNull();
   });
+
+  it('exposes the right-click delete context on the card', () => {
+    render(GroupCard, { group: group(), palette: [] });
+    const raw = screen.getByTestId('group-card').getAttribute('data-vscode-context');
+    expect(JSON.parse(raw ?? '{}')).toEqual({
+      webviewSection: 'group',
+      groupId: 'g1',
+      preventDefaultContextMenuItems: true,
+    });
+  });
 });
