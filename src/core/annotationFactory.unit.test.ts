@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { createGroup, makeAnnotation, addAnnotation } from './annotationFactory';
+import { createGroup, makeAnnotation, addAnnotation, removeAnnotation } from './annotationFactory';
 
 describe('createGroup', () => {
   it('builds an open group with timestamps and copied tags', () => {
@@ -40,5 +40,24 @@ describe('addAnnotation', () => {
     expect(next.annotations).toEqual([a]);
     expect(next.updatedAt).toBe(200);
     expect(g.annotations).toEqual([]); // original unchanged
+  });
+});
+
+describe('removeAnnotation', () => {
+  it('removes the annotation and bumps updatedAt without mutating the input', () => {
+    const g = addAnnotation(
+      createGroup({ id: 'g1', title: 'T', author: 'A', tags: [], now: 1 }),
+      makeAnnotation({ id: 'a1', file: 'x.ts', range: { startLine: 1, endLine: 1 }, contentHash: 'h' }),
+      2,
+    );
+    const next = removeAnnotation(g, 'a1', 300);
+    expect(next?.annotations).toEqual([]);
+    expect(next?.updatedAt).toBe(300);
+    expect(g.annotations).toHaveLength(1); // original unchanged
+  });
+
+  it('returns null when the annotation id is absent', () => {
+    const g = createGroup({ id: 'g1', title: 'T', author: 'A', tags: [], now: 1 });
+    expect(removeAnnotation(g, 'missing', 2)).toBeNull();
   });
 });

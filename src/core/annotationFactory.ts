@@ -47,3 +47,16 @@ export function addAnnotation(group: AnnotationGroup, annotation: Annotation, no
     updatedAt: now,
   };
 }
+
+/**
+ * Return a copy of `group` without the annotation `annotationId` (updatedAt = `now`),
+ * or null when the id is absent. The group is kept even when emptied — deleting the
+ * last annotation does not delete the group (round-3 #4 decision).
+ */
+export function removeAnnotation(group: AnnotationGroup, annotationId: string, now: number): AnnotationGroup | null {
+  const annotations = group.annotations.filter((a) => a.id !== annotationId);
+  if (annotations.length === group.annotations.length) {
+    return null;
+  }
+  return { ...group, annotations, updatedAt: now };
+}
