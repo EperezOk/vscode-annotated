@@ -5,6 +5,8 @@
   "version": "0.0.0",
   "publisher": "eperezok",
   "license": "MIT",
+  "icon": "media/logo.png",
+  "galleryBanner": { "color": "#1b1f2e", "theme": "dark" },
   "engines": { "vscode": "^1.106.0", "node": ">=20.19" },
   "categories": ["Other"],
   "activationEvents": [],
