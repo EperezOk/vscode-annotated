@@ -12,6 +12,21 @@ Contents:
 
 ## Install
 
+With a skill manager (recommended):
+
+```bash
+# GitHub CLI (gh ≥ 2.93)
+gh skill install EperezOk/vscode-annotated annotated-agent
+
+# skills.sh
+npx skills add EperezOk/vscode-annotated
+```
+
+Both discover the skill via the standard `skills/*/SKILL.md` layout and install the full bundle
+(including `references/`) into your agent's skills directory.
+
+Or from a local clone of this repo:
+
 ```bash
 # Global (all repos): symlink into ~/.claude/skills
 ./install.sh
