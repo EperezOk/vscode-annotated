@@ -1,4 +1,4 @@
-# annotated-agent skill
+# annotated skill
 
 A Claude Code skill that lets an AI agent participate in a
 [`vscode-annotated`](https://github.com/EperezOk/vscode-annotated) workspace by reading/writing
@@ -16,7 +16,7 @@ With a skill manager (recommended):
 
 ```bash
 # GitHub CLI (gh ≥ 2.93)
-gh skill install EperezOk/vscode-annotated annotated-agent
+gh skill install EperezOk/vscode-annotated annotated
 
 # skills.sh
 npx skills add EperezOk/vscode-annotated
@@ -28,7 +28,7 @@ Both discover the skill via the standard `skills/*/SKILL.md` layout and install 
 Or from a local clone of this repo:
 
 ```bash
-npx skills add /path/to/vscode-annotated --skill annotated-agent
+npx skills add /path/to/vscode-annotated --skill annotated
 ```
 
 The canonical source lives in the `vscode-annotated` repo and is kept in lockstep with the data

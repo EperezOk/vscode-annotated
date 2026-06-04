@@ -1,9 +1,9 @@
 ---
-name: annotated-agent
-description: Use when working in a repo that has a `.annotations/` directory (the vscode-annotated extension) and the user wants to surf annotation groups or comment threads, reply in a thread (on an annotation or on a group itself), create annotation groups/annotations, or update the tag palette / identity config. The agent reads and writes the `.annotations/` JSON files directly, under a distinct agent identity, using node-free shell recipes.
+name: annotated
+description: Use when the user wants to annotate a codebase, or when the user asks you to perform a task based on existing annotations. Also use this skill if the user asks to update the tag palette / identity config of the vscode-annotated extension.
 ---
 
-# annotated-agent
+# Annotated
 
 Participate in a `vscode-annotated` workspace by reading and writing its on-disk artifacts
 directly. Everything the extension stores lives in `.annotations/` JSON files plus a few
@@ -45,8 +45,8 @@ You act under a **distinct agent identity** — not the human's. Your identity i
 ## Installation
 
 This skill is maintained in the `vscode-annotated` repo
-(<https://github.com/EperezOk/vscode-annotated>) under `skills/annotated-agent/`. Install it
-with `gh skill install EperezOk/vscode-annotated annotated-agent` (GitHub CLI ≥ 2.93) or
+(<https://github.com/EperezOk/vscode-annotated>) under `skills/annotated/`. Install it
+with `gh skill install EperezOk/vscode-annotated annotated` (GitHub CLI ≥ 2.93) or
 `npx skills add EperezOk/vscode-annotated` (skills.sh); both also accept local paths for
 installing from a clone. For more detailed instructions or to inspect the extension's source,
 look at that repo.

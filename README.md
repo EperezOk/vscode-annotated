@@ -5,10 +5,10 @@ annotations. See the design spec in `docs/superpowers/specs/`.
 
 ## Agent skill
 
-`skills/annotated-agent/` is a Claude Code skill for AI agents to participate in an annotated
+`skills/annotated/` is a Claude Code skill for AI agents to participate in an annotated
 workspace (surf, reply, create, configure) by reading/writing `.annotations/` directly. Install
-it with `gh skill install EperezOk/vscode-annotated annotated-agent` or
-`npx skills add EperezOk/vscode-annotated`. See `skills/annotated-agent/README.md`.
+it with `gh skill install EperezOk/vscode-annotated annotated` or
+`npx skills add EperezOk/vscode-annotated`. See `skills/annotated/README.md`.
 
 ## Development
 

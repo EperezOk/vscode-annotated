@@ -14,7 +14,7 @@ import {
 } from './model';
 import { slugifyAuthor } from '../core/comments';
 
-const CONTRACT_DOC = 'skills/annotated-agent/references/data-contract.md';
+const CONTRACT_DOC = 'skills/annotated/references/data-contract.md';
 
 // Canonical node-free content-hash recipe. The doc MUST embed this verbatim, and it MUST hash
 // identically to sha256Hex(anchorText(...)). $FILE/$START/$END are env vars.
@@ -56,7 +56,7 @@ const SAMPLES: Array<{ name: string; text: string; start: number; end: number }>
   { name: 'past EOF endLine', text: 'p\nq', start: 1, end: 9 },
 ];
 
-describe('annotated-agent contract: hash recipe parity', () => {
+describe('annotated contract: hash recipe parity', () => {
   for (const s of SAMPLES) {
     it(`recipe matches sha256Hex(anchorText) — ${s.name}`, async () => {
       const expected = await sha256Hex(anchorText(s.text, { startLine: s.start, endLine: s.end }));
@@ -65,14 +65,14 @@ describe('annotated-agent contract: hash recipe parity', () => {
   }
 });
 
-describe('annotated-agent contract: doc embeds the canonical recipe', () => {
+describe('annotated contract: doc embeds the canonical recipe', () => {
   it('data-contract.md contains the exact RECIPE text', () => {
     const doc = readFileSync(CONTRACT_DOC, 'utf8');
     expect(doc.includes(RECIPE)).toBe(true);
   });
 });
 
-describe('annotated-agent contract: schema round-trip', () => {
+describe('annotated contract: schema round-trip', () => {
   it('a documented group round-trips through parseGroup/serializeGroup', () => {
     const group: AnnotationGroup = {
       id: '550e8400-e29b-41d4-a716-446655440000',
@@ -126,19 +126,19 @@ describe('annotated-agent contract: schema round-trip', () => {
   });
 });
 
-describe('annotated-agent contract: doc covers group comments', () => {
+describe('annotated contract: doc covers group comments', () => {
   it('data-contract.md documents the groupId target and the exactly-one rule', () => {
     const doc = readFileSync(CONTRACT_DOC, 'utf8');
     expect(doc).toMatch(/groupId/);
     expect(doc).toMatch(/exactly one/i);
   });
   it('operations.md documents replying on a group thread', () => {
-    const ops = readFileSync('skills/annotated-agent/references/operations.md', 'utf8');
+    const ops = readFileSync('skills/annotated/references/operations.md', 'utf8');
     expect(ops).toMatch(/groupId/);
   });
 });
 
-describe('annotated-agent contract: slug parity', () => {
+describe('annotated contract: slug parity', () => {
   it('matches the documented slug rule', () => {
     expect(slugifyAuthor('Claude')).toBe('claude');
     expect(slugifyAuthor('Ana Díaz!')).toBe('ana-d-az');
@@ -147,7 +147,7 @@ describe('annotated-agent contract: slug parity', () => {
   });
 });
 
-describe('annotated-agent contract: slug recipe parity + doc embed', () => {
+describe('annotated contract: slug recipe parity + doc embed', () => {
   for (const name of ['Claude', 'Ana Díaz!', 'Bob Smith', '', '@@@']) {
     it(`shell slug recipe matches slugifyAuthor — ${JSON.stringify(name)}`, () => {
       expect(slugViaRecipe(name)).toBe(slugifyAuthor(name));
