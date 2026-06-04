@@ -17,6 +17,8 @@ the safety rules in `SKILL.md`.**
 - **Assemble a thread for an annotation `A`:** read every `.annotations/comments/*.json`,
   collect comments where `annotationId == A.id`, sort ascending by `timestamp`, and present
   each as `author` · (relative time from `timestamp`) · `content`.
+- **Assemble a group's own thread for group `G`:** same, but collect comments where
+  `groupId == G.id` (group-level remarks, separate from any annotation's thread).
 
 `grep`/`jq` are optional conveniences; your Read tool over the JSON is sufficient.
 
@@ -26,10 +28,12 @@ the safety rules in `SKILL.md`.**
 2. Compute your comment-file slug from `agentName` (slug recipe) → path
    `.annotations/comments/<slug>.json`.
 3. Read that file if it exists; otherwise start `{ "author": "<agentName>", "email": "", "comments": [] }`.
-4. Append a comment: `{ "id": "<uuidgen>", "annotationId": "<the annotation's id>", "content": "<markdown>", "timestamp": <date +%s> }`.
+4. Append a comment targeting **exactly one** thread (omit the other key entirely):
+   - **Annotation thread:** `{ "id": "<uuidgen>", "annotationId": "<the annotation's id>", "content": "<markdown>", "timestamp": <date +%s> }`
+   - **Group thread** (a remark on the group itself): `{ "id": "<uuidgen>", "groupId": "<the group's id>", "content": "<markdown>", "timestamp": <date +%s> }`
 5. Write the file back (2-space indent, no trailing newline).
 
-You may reply to **any** annotation, but only ever write your **own** slug file.
+You may reply on **any** annotation or group, but only ever write your **own** slug file.
 
 ## 3. Create an annotation group (and annotations)
 
@@ -58,6 +62,8 @@ nothing for existing entries, set the new entry's `contentHash`, and bump `updat
 
 Only on groups whose `author` is your `agentName`, and your own comment file:
 - **Resolve / restore a group:** set `status` to `"resolved"` / `"open"`, bump `updatedAt`.
+- **Delete an annotation:** remove it from the group's `annotations`, bump `updatedAt` — an
+  emptied group (`"annotations": []`) stays valid; keep the file.
 - **Delete a group:** remove its `.annotations/groups/<id>.json`.
 - **Edit/delete your comment:** in your own slug file, change a comment's `content`, or drop it
   from `comments`; write back.

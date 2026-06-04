@@ -104,6 +104,38 @@ describe('annotated-agent contract: schema round-trip', () => {
     };
     expect(parseCommentFile(JSON.parse(serializeCommentFile(file)))).toEqual(file);
   });
+
+  it('a documented mixed comment file (annotation + group comments) round-trips', () => {
+    const file: CommentFile = {
+      author: 'Claude',
+      email: '',
+      comments: [
+        { id: 'c1', annotationId: 'f47ac10b-58cc-4372-a567-0e02b2c3d479', content: 'Reply', timestamp: 1730000050 },
+        { id: 'c2', groupId: '550e8400-e29b-41d4-a716-446655440000', content: 'Group remark', timestamp: 1730000060 },
+      ],
+    };
+    expect(parseCommentFile(JSON.parse(serializeCommentFile(file)))).toEqual(file);
+  });
+
+  it('a comment with both or neither target is rejected (exactly-one rule)', () => {
+    const base = { author: 'Claude', email: '', comments: [] as unknown[] };
+    expect(() =>
+      parseCommentFile({ ...base, comments: [{ id: 'c1', annotationId: 'a', groupId: 'g', content: 'x', timestamp: 1 }] }),
+    ).toThrow(/exactly one/);
+    expect(() => parseCommentFile({ ...base, comments: [{ id: 'c1', content: 'x', timestamp: 1 }] })).toThrow(/exactly one/);
+  });
+});
+
+describe('annotated-agent contract: doc covers group comments', () => {
+  it('data-contract.md documents the groupId target and the exactly-one rule', () => {
+    const doc = readFileSync(CONTRACT_DOC, 'utf8');
+    expect(doc).toMatch(/groupId/);
+    expect(doc).toMatch(/exactly one/i);
+  });
+  it('operations.md documents replying on a group thread', () => {
+    const ops = readFileSync('skills/annotated-agent/references/operations.md', 'utf8');
+    expect(ops).toMatch(/groupId/);
+  });
 });
 
 describe('annotated-agent contract: slug parity', () => {

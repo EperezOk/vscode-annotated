@@ -40,6 +40,9 @@ match this contract **exactly** or the extension won't read them back.
 > The displayed color resolves **local config > global config > this JSON**. Legacy `"tags":
 > ["security"]` string arrays still load (auto-migrated), but write the object form.
 
+> `"annotations": []` is **valid** (it happens when the last annotation is deleted) — an empty
+> group is not corrupt; don't "repair" or delete it.
+
 ## Comment file — `.annotations/comments/<author-slug>.json`
 
 ```jsonc
@@ -49,21 +52,35 @@ match this contract **exactly** or the extension won't read them back.
   "comments": [
     {
       "id": "uuid",
-      "annotationId": "f47ac10b-…",                // references an annotation in ANY group file
+      "annotationId": "f47ac10b-…",                // → an annotation in ANY group file
       "content": "Markdown body…",
       "timestamp": 1730000050                      // epoch SECONDS; thread order (ascending)
+    },
+    {
+      "id": "uuid",
+      "groupId": "550e8400-…",                     // → a GROUP itself (group-level remark)
+      "content": "Markdown body…",
+      "timestamp": 1730000060
     }
   ]
 }
 ```
 
-A **thread** for an annotation = every comment, across **all** `comments/*.json`, whose
-`annotationId` matches — sorted ascending by `timestamp`.
+Each comment targets **exactly one** of `annotationId` / `groupId` — never both, never
+neither. **Omit** the unused key (don't write `null`).
+
+Threads (each across **all** `comments/*.json`, sorted ascending by `timestamp`):
+- **Annotation thread:** comments whose `annotationId` matches — shown in the annotation view.
+- **Group thread:** comments whose `groupId` matches — shown in the group detail view.
+
+The UI's comment badges count a group's annotation comments **plus** its group comments.
 
 ## Invariants (must hold or the extension can't read your writes)
 
 - **Group `id` == filename stem.** `groups/<id>.json`; a mismatch hides the group.
 - **Comment filename == author slug** (see slug recipe). Edit/delete-own only works on your own slug file.
+- **One comment target.** Exactly one of `annotationId` / `groupId` per comment — a single
+  invalid comment makes the extension skip the **whole** comment file.
 - **`contentHash` is mandatory + exact** (see hash recipe). A wrong/placeholder hash renders the annotation "stale" (amber).
 - **Line ranges:** 1-based, inclusive, integers.
 - **Timestamps:** epoch **seconds** (not milliseconds).
