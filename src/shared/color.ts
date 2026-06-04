@@ -1,3 +1,25 @@
+/**
+ * A deterministic hue (0–359) for a comment author, so each author reads in a distinct color.
+ * Orange (~30°) is reserved for the agent identity "Claude"; every other author hashes to one of
+ * a curated set of hues that deliberately avoids the orange band. The component renders the hue
+ * at a theme-appropriate lightness (darker on light themes, lighter on dark) so contrast holds
+ * on any theme — see CommentThread.svelte.
+ */
+const CLAUDE_HUE = 30;
+// Distinct, evenly-spread hues, none in the reserved orange band (15–50°).
+const AUTHOR_HUES = [210, 145, 280, 350, 190, 320, 95, 255, 170, 235] as const;
+
+export function authorHue(author: string): number {
+  if (author.trim().toLowerCase() === 'claude') {
+    return CLAUDE_HUE;
+  }
+  let h = 0;
+  for (let i = 0; i < author.length; i++) {
+    h = (Math.imul(h, 31) + author.charCodeAt(i)) | 0;
+  }
+  return AUTHOR_HUES[Math.abs(h) % AUTHOR_HUES.length];
+}
+
 /** Pick black or white text for legible contrast on a solid background color. */
 export function contrastColor(hex: string): '#000000' | '#ffffff' {
   const rgb = parseHex(hex);

@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi } from 'vitest';
 import CommentThread from './CommentThread.svelte';
 import { type ThreadComment } from '../../shared/model';
+import { authorHue } from '../../shared/color';
 
 vi.mock('./MarkdownEditor.svelte', async () => ({
   default: (await import('./__mocks__/MarkdownEditorStub.svelte')).default,
@@ -55,6 +56,21 @@ describe('CommentThread', () => {
     const rows = screen.getAllByTestId('comment');
     expect(rows[0].querySelector('.cauthor')).toHaveClass('other'); // Ana
     expect(rows[1].querySelector('.cauthor')).not.toHaveClass('other'); // Me
+  });
+
+  it('gives each other-author a distinct hue via --author-h, reserving orange for Claude', () => {
+    const multi: ThreadComment[] = [
+      { id: 'c1', annotationId: 'a1', author: 'Ana', content: 'x', timestamp: 100 },
+      { id: 'c2', annotationId: 'a1', author: 'Claude', content: 'y', timestamp: 150 },
+      { id: 'c3', annotationId: 'a1', author: 'Me', content: 'z', timestamp: 200 },
+    ];
+    render(CommentThread, { comments: multi, currentAuthor: 'Me', now: 200 });
+    const rows = screen.getAllByTestId('comment');
+    const hueOf = (row: HTMLElement) =>
+      (row.querySelector('.cauthor') as HTMLElement).style.getPropertyValue('--author-h').trim();
+    expect(hueOf(rows[0])).toBe(String(authorHue('Ana')));
+    expect(hueOf(rows[1])).toBe(String(authorHue('Claude'))); // orange, reserved
+    expect(hueOf(rows[2])).toBe(''); // own author: no per-author hue
   });
 
   it('autofocuses the reply composer when opened', async () => {

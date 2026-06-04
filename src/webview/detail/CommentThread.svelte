@@ -1,6 +1,7 @@
 <script lang="ts">
   import { type ThreadComment } from '../../shared/model';
   import { relativeTime } from '../../core/comments';
+  import { authorHue } from '../../shared/color';
   import MarkdownPreview from './MarkdownPreview.svelte';
   import MarkdownEditor from './MarkdownEditor.svelte';
 
@@ -45,7 +46,11 @@
   {#each comments as c (c.id)}
     <div class="comment" data-testid="comment">
       <div class="chead">
-        <span class="cauthor" class:other={c.author !== currentAuthor}>{c.author}</span>
+        <span
+          class="cauthor"
+          class:other={c.author !== currentAuthor}
+          style={c.author !== currentAuthor ? `--author-h: ${authorHue(c.author)}` : undefined}
+        >{c.author}</span>
         <span class="ctime">{relativeTime(c.timestamp, now)}</span>
         {#if c.author === currentAuthor}
           <span class="cactions">
@@ -85,7 +90,12 @@
   .comment { margin-bottom: 10px; }
   .chead { display: flex; align-items: baseline; gap: 8px; margin-bottom: 2px; }
   .cauthor { font-weight: 600; font-size: 12px; }
-  .cauthor.other { color: var(--vscode-charts-orange, #d18616); }
+  /* Per-author color: hue comes from --author-h (set inline); lightness is chosen per theme so
+     the name stays legible on any background — darker on light themes, lighter on dark/HC. */
+  .cauthor.other { color: hsl(var(--author-h, 30) 60% 38%); }
+  :global(body.vscode-dark) .cauthor.other { color: hsl(var(--author-h, 30) 70% 70%); }
+  :global(body.vscode-high-contrast) .cauthor.other { color: hsl(var(--author-h, 30) 90% 80%); }
+  :global(body.vscode-high-contrast-light) .cauthor.other { color: hsl(var(--author-h, 30) 90% 28%); }
   .ctime { font-size: 10.5px; color: var(--vscode-descriptionForeground, #9a9a9a); }
   .cactions { margin-left: auto; display: flex; gap: 6px; }
   .crow { display: flex; gap: 8px; align-items: center; margin-top: 4px; }
