@@ -58,18 +58,18 @@ Exact approved markup (element order matters — code lines overlap the tail tip
 Exact approved markup:
 
 ```svg
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="1.5 1.5 21 21" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M20 11.5a2 2 0 0 1-2 2h-7l-4 4v-4h-1a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2z"/>
-  <line x1="8" y1="7" x2="16" y2="7"/>
-  <line x1="8" y1="10" x2="13" y2="10"/>
-  <line x1="4" y1="21" x2="14" y2="21"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M21.5 13a2.5 2.5 0 0 1-2.5 2.5h-7.5L7 20v-4.5H5a2.5 2.5 0 0 1-2.5-2.5V4.5A2.5 2.5 0 0 1 5 2h14a2.5 2.5 0 0 1 2.5 2.5z"/>
+  <line x1="7" y1="6.5" x2="17" y2="6.5"/>
+  <line x1="7" y1="11" x2="13.5" y2="11"/>
+  <line x1="2.5" y1="22" x2="14" y2="22"/>
 </svg>
 ```
 
-The `viewBox` is cropped to `1.5 1.5 21 21` (instead of `0 0 24 24`) so the artwork fills
-the 24×24 render box like VS Code's native activity-bar icons — a ~14% uniform scale-up
-that brings the effective stroke to ~2px (still native weight). Found during the manual
-visual check: the un-cropped version rendered visibly smaller than neighboring icons.
+The geometry is drawn full-bleed (stroke extents span ~1..23 of the 24×24 canvas) with a
+2px stroke, matching the optical size and weight of VS Code's native activity-bar icons.
+The manual visual check found earlier, smaller-padded revisions rendered visibly smaller
+than neighboring icons.
 
 Both view containers (`annotated` activity bar + `annotated-detail` secondary sidebar)
 already point at `media/icon.svg`, so they pick this up with no manifest change.
