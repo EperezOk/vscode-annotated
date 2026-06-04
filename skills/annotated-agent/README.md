@@ -28,14 +28,7 @@ Both discover the skill via the standard `skills/*/SKILL.md` layout and install 
 Or from a local clone of this repo:
 
 ```bash
-# Global (all repos): symlink into ~/.claude/skills
-./install.sh
-
-# …or copy instead of symlink
-./install.sh --copy
-
-# Into a specific repo's .claude/skills
-./install.sh --repo /path/to/repo
+npx skills add /path/to/vscode-annotated --skill annotated-agent
 ```
 
 The canonical source lives in the `vscode-annotated` repo and is kept in lockstep with the data

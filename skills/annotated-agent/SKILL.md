@@ -47,7 +47,6 @@ You act under a **distinct agent identity** — not the human's. Your identity i
 This skill is maintained in the `vscode-annotated` repo
 (<https://github.com/EperezOk/vscode-annotated>) under `skills/annotated-agent/`. Install it
 with `gh skill install EperezOk/vscode-annotated annotated-agent` (GitHub CLI ≥ 2.93) or
-`npx skills add EperezOk/vscode-annotated` (skills.sh) — or, from a local clone, run its
-`install.sh` (see `README.md`) to symlink/copy it into `~/.claude/skills` (global) or a target
-repo's `.claude/skills`. For more detailed instructions or to inspect the extension's source,
+`npx skills add EperezOk/vscode-annotated` (skills.sh); both also accept local paths for
+installing from a clone. For more detailed instructions or to inspect the extension's source,
 look at that repo.
