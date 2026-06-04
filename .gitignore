@@ -7,3 +7,7 @@ dist/
 test-results/
 playwright-report/
 .vscode-test-web/
+
+# personal scratch docs (local only)
+TODO.md
+IDEA.md

@@ -1,8 +1,0 @@
-- Clean up the extension and prepare it for release in the VSCode Marketplace.
-- Try out the skill.
-  - Try out a /loop prompt to have Claude monitor annotations to automatically validate issues, answer questions, and respond to comments (all by leaving comments on the corresponding group/annotation).
-  - Try out requesting Claude to create an annotation group to explain something about the codebase.
-- When available, include the repo link in the skill so the agent can look for more detailed instructions and inspect the code.
-- Polish the README with image/screenshot/videos, and include usage instructions (manual and skill).
-  - Include FAQ with rationale.
-  - Include workflow ideas like the ones I tested above based on the skill.
