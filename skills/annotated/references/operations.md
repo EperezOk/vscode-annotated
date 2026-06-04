@@ -13,8 +13,9 @@ Surfing/reading needs no identity. But before writing **any** comment, annotatio
 
 1. Read `annotated.agentName` from the workspace `.vscode/settings.json`, then the global user
    `settings.json` (paths in `data-contract.md`). If set, that's your `agentName` — done.
-2. If **unset**, ask the user to choose an identity — suggest **Claude**, **Codex**, or
-   **Agent**, and let them enter any other name. Never assume a default.
+2. If **unset**, ask the user to choose an identity. **Suggest your own** as the recommended
+   default — the assistant you are (e.g. Claude → "Claude", Codex → "Codex") — and let them
+   enter any other name. Propose and confirm; don't silently assume one.
 3. Ask where to persist the chosen name:
    - **Project:** write `annotated.agentName` into the workspace `.vscode/settings.json`.
    - **Global:** write it into the user `settings.json` (resolve the OS/flavor path; confirm first).

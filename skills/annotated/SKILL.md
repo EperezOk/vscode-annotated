@@ -1,6 +1,6 @@
 ---
 name: annotated
-description: Use when the user wants to annotate a codebase, or when the user asks you to perform ANY task based on existing annotations. Also use this skill if the user asks to update the tag palette / identity config of the vscode-annotated extension.
+description: Use when the user wants to annotate a codebase, or when the user asks you to perform ANY task based on existing or new annotations. Also use this skill if the user asks to update the tag palette / identity config of the vscode-annotated extension.
 ---
 
 # Annotated
@@ -30,8 +30,9 @@ You act under a **distinct agent identity** — not the human's. Your identity i
 `author` and your comments to `.annotations/comments/<slug-of-agentName>.json`.
 
 **If `annotated.agentName` is unset, establish it before your first write** — never silently
-default. Ask the user to choose a name (suggest **Claude**, **Codex**, or **Agent**; they may
-pick any other), then ask where to save it: **Project** (workspace `.vscode/settings.json`),
+default. Ask the user to choose a name — **suggest your own identity** as the default (the
+assistant you are, e.g. if you're Claude propose "Claude"; if Codex, "Codex"), but let them pick
+any other — then ask where to save it: **Project** (workspace `.vscode/settings.json`),
 **Global** (user `settings.json`), or **Don't save** (this session only). Once set, reuse it
 without re-asking. Full steps: `references/operations.md` §0.
 
