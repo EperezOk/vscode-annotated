@@ -60,10 +60,15 @@ Resolve your `agentName` per §0 first (ask the user if it's unset) — it becom
 2. **Choose the group's tag(s) — ask the user.** Gather the existing tags from `annotated.tags`
    (workspace then global config) and from existing `.annotations/groups/*.json` (dedup by
    `name`) and offer them as suggestions. Ask which to apply: one or more existing tags and/or a
-   new tag; for each **new** tag, ask the user for a display color (hex `#rrggbb`). Reuse an
-   existing tag's known color — don't invent a new one for a name that already has a color. A
-   group may carry several tags (or none, if the user prefers). Writing the chosen tags into the
-   group JSON is enough — no need to pre-register them in `annotated.tags`.
+   new tag. For a **new** tag, ask for a color but **don't make the user supply hex** — accept a
+   color *name* (e.g. "teal", "amber") just as readily, and convert it to a `#rrggbb` hex
+   yourself. The stored `color` must be a `#rrggbb` hex (the extension parses it to pick legible
+   text contrast). When the name maps to one of the extension's built-in swatches, use its hex:
+   Red `#E5484D`, Amber `#F5A623`, Yellow `#E5C100`, Green `#3FB950`, Teal `#14B8A6`,
+   Blue `#3794FF`, Indigo `#5B5BD6`, Gray `#8B949E`. Reuse an existing tag's known color — don't
+   invent a new one for a name that already has a color. A group may carry several tags (or none,
+   if the user prefers). Writing the chosen tags into the group JSON is enough — no need to
+   pre-register them in `annotated.tags`.
 3. Build the group:
    ```jsonc
    {

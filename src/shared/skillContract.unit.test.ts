@@ -13,8 +13,10 @@ import {
   type CommentFile,
 } from './model';
 import { slugifyAuthor } from '../core/comments';
+import { TAG_SWATCHES } from '../core/tags';
 
 const CONTRACT_DOC = 'skills/annotated/references/data-contract.md';
+const OPERATIONS_DOC = 'skills/annotated/references/operations.md';
 
 // Canonical node-free content-hash recipe. The doc MUST embed this verbatim, and it MUST hash
 // identically to sha256Hex(anchorText(...)). $FILE/$START/$END are env vars.
@@ -133,8 +135,19 @@ describe('annotated contract: doc covers group comments', () => {
     expect(doc).toMatch(/exactly one/i);
   });
   it('operations.md documents replying on a group thread', () => {
-    const ops = readFileSync('skills/annotated/references/operations.md', 'utf8');
+    const ops = readFileSync(OPERATIONS_DOC, 'utf8');
     expect(ops).toMatch(/groupId/);
+  });
+});
+
+describe('annotated contract: tag swatch palette parity', () => {
+  // operations.md tells the agent to convert a color *name* to a hex itself, matching the
+  // extension's built-in swatches. Keep that list in lockstep with TAG_SWATCHES (src/core/tags).
+  it('operations.md lists every TAG_SWATCH with its exact hex', () => {
+    const ops = readFileSync(OPERATIONS_DOC, 'utf8');
+    for (const s of TAG_SWATCHES) {
+      expect(ops).toContain(`${s.name} \`${s.hex}\``);
+    }
   });
 });
 
