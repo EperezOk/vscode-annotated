@@ -1,8 +1,8 @@
 # annotated-agent skill
 
 A Claude Code skill that lets an AI agent participate in a
-[`vscode-annotated`](../../README.md) workspace by reading/writing the `.annotations/` files
-directly — surf groups & threads, reply, create groups/annotations, and update config. Markdown
+[`vscode-annotated`](https://github.com/EperezOk/vscode-annotated) workspace by reading/writing
+the `.annotations/` files directly — surf groups & threads, reply, create groups/annotations, and update config. Markdown
 only, node-free shell recipes, distinct agent identity, additive write scope.
 
 Contents:

@@ -44,6 +44,8 @@ You act under a **distinct agent identity** — not the human's. Your identity i
 
 ## Installation
 
-This skill is maintained in the `vscode-annotated` repo under `skills/annotated-agent/`. To use
+This skill is maintained in the `vscode-annotated` repo
+(<https://github.com/EperezOk/vscode-annotated>) under `skills/annotated-agent/`. To use
 it elsewhere, run its `install.sh` (see `README.md`) to symlink/copy it into `~/.claude/skills`
-(global) or a target repo's `.claude/skills`.
+(global) or a target repo's `.claude/skills`. For more detailed instructions or to inspect the
+extension's source, look at that repo.
