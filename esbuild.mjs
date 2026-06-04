@@ -59,7 +59,10 @@ const testSuiteConfig = {
   logLevel: 'info',
 };
 
-const configs = [extensionConfig, webviewConfig, testSuiteConfig];
+// The test-suite bundle is only needed by test/dev builds — keep it out of production output.
+const configs = production
+  ? [extensionConfig, webviewConfig]
+  : [extensionConfig, webviewConfig, testSuiteConfig];
 
 async function run() {
   const contexts = await Promise.all(configs.map((c) => esbuild.context(c)));
