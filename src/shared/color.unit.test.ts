@@ -2,17 +2,28 @@ import { describe, it, expect } from 'vitest';
 import { contrastColor, authorHue } from './color';
 
 describe('contrastColor', () => {
-  it('returns black on light backgrounds', () => {
+  it('uses dark text on light / pale backgrounds', () => {
     expect(contrastColor('#ffffff')).toBe('#000000');
     expect(contrastColor('#ffff00')).toBe('#000000'); // yellow
     expect(contrastColor('#fff')).toBe('#000000');     // shorthand
-    expect(contrastColor('#808080')).toBe('#000000'); // boundary: BT.601 brightness exactly 128 → black
+    expect(contrastColor('#F5A623')).toBe('#000000'); // amber swatch
+    expect(contrastColor('#3FB950')).toBe('#000000'); // green swatch
   });
 
-  it('returns white on dark backgrounds', () => {
+  it('uses light text on dark backgrounds', () => {
     expect(contrastColor('#000000')).toBe('#ffffff');
     expect(contrastColor('#0000ff')).toBe('#ffffff'); // blue
     expect(contrastColor('#5B5BD6')).toBe('#ffffff'); // indigo swatch
+    expect(contrastColor('#808080')).toBe('#ffffff'); // mid-gray: white reads better (APCA)
+  });
+
+  // Perceptual (APCA) selection fixes saturated mid-tone hues that a luminance threshold
+  // wrongly gives dark text — the hard-to-read purple tag that prompted this.
+  it('uses light text on saturated purples / reds', () => {
+    expect(contrastColor('#A855F7')).toBe('#ffffff'); // orchid/violet — the reported case
+    expect(contrastColor('#5B5BD6')).toBe('#ffffff'); // indigo
+    expect(contrastColor('#E5484D')).toBe('#ffffff'); // red swatch
+    expect(contrastColor('#3794FF')).toBe('#ffffff'); // blue swatch
   });
 
   it('defaults to white for malformed input', () => {

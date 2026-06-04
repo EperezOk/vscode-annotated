@@ -20,15 +20,44 @@ export function authorHue(author: string): number {
   return AUTHOR_HUES[Math.abs(h) % AUTHOR_HUES.length];
 }
 
-/** Pick black or white text for legible contrast on a solid background color. */
+/**
+ * Pick black or white text for the most legible contrast on a solid background color.
+ *
+ * Uses APCA (the perceptual contrast model behind WCAG 3), not a flat luminance threshold:
+ * it returns whichever text polarity yields the higher perceptual lightness contrast (|Lc|).
+ * A YIQ/luminance threshold mis-assigns dark text to saturated mid-tone hues (orchid/violet
+ * purples, blues) because it under-weights blue; APCA gets these right.
+ */
 export function contrastColor(hex: string): '#000000' | '#ffffff' {
   const rgb = parseHex(hex);
   if (!rgb) {
     return '#ffffff';
   }
-  // Perceived brightness (ITU-R BT.601 / "YIQ"), 0–255.
-  const brightness = (rgb.r * 299 + rgb.g * 587 + rgb.b * 114) / 1000;
-  return brightness >= 128 ? '#000000' : '#ffffff';
+  const bg = apcaLuminance(rgb);
+  // Higher |Lc| = more readable. Compare black text (Y=0) against white text (Y=1).
+  return apcaLc(0, bg) >= apcaLc(1, bg) ? '#000000' : '#ffffff';
+}
+
+/** APCA 0.98G screen luminance (Y) for an sRGB color, with the dark-level soft clamp. */
+function apcaLuminance({ r, g, b }: { r: number; g: number; b: number }): number {
+  const s = (v: number): number => (v / 255) ** 2.4;
+  const y = 0.2126729 * s(r) + 0.7151522 * s(g) + 0.072175 * s(b);
+  return y >= 0.022 ? y : y + (0.022 - y) ** 1.414;
+}
+
+/** Absolute APCA lightness contrast (Lc) of text luminance `txt` on background luminance `bg`. */
+function apcaLc(txt: number, bg: number): number {
+  if (Math.abs(bg - txt) < 0.0005) {
+    return 0;
+  }
+  if (bg > txt) {
+    // Dark text on a lighter background (normal polarity).
+    const sapc = (bg ** 0.56 - txt ** 0.57) * 1.14;
+    return sapc < 0.1 ? 0 : (sapc - 0.027) * 100;
+  }
+  // Light text on a darker background (reverse polarity).
+  const sapc = (bg ** 0.65 - txt ** 0.62) * 1.14;
+  return sapc > -0.1 ? 0 : -(sapc + 0.027) * 100;
 }
 
 function parseHex(hex: string): { r: number; g: number; b: number } | null {
