@@ -57,13 +57,20 @@ Resolve your `agentName` per §0 first (ask the user if it's unset) — it becom
 
 1. For each annotation, gather `file` (workspace-relative POSIX), 1-based inclusive `range`,
    and markdown `content`. Compute `contentHash` via the hash recipe with that `file`/range.
-2. Build the group:
+2. **Choose the group's tag(s) — ask the user.** Gather the existing tags from `annotated.tags`
+   (workspace then global config) and from existing `.annotations/groups/*.json` (dedup by
+   `name`) and offer them as suggestions. Ask which to apply: one or more existing tags and/or a
+   new tag; for each **new** tag, ask the user for a display color (hex `#rrggbb`). Reuse an
+   existing tag's known color — don't invent a new one for a name that already has a color. A
+   group may carry several tags (or none, if the user prefers). Writing the chosen tags into the
+   group JSON is enough — no need to pre-register them in `annotated.tags`.
+3. Build the group:
    ```jsonc
    {
      "id": "<uuidgen>",
      "title": "<title>",
      "author": "<agentName>",
-     "tags": [{ "name": "...", "color": "#rrggbb" }, …],  // include each tag's color; no need to pre-register in config
+     "tags": [{ "name": "...", "color": "#rrggbb" }, …],  // the tag(s) chosen in step 2, each with its color
      "gitRef": null,            // or a branch/tag/SHA string
      "status": "open",
      "createdAt": <date +%s>,
@@ -71,10 +78,11 @@ Resolve your `agentName` per §0 first (ask the user if it's unset) — it becom
      "annotations": [ { "id": "<uuidgen>", "file": "...", "range": {...}, "content": "...", "contentHash": "..." } ]
    }
    ```
-3. Write `.annotations/groups/<id>.json` — **the filename stem MUST equal `id`**.
+4. Write `.annotations/groups/<id>.json` — **the filename stem MUST equal `id`**.
 
 **Add an annotation to a group you already authored:** append to its `annotations`, recompute
-nothing for existing entries, set the new entry's `contentHash`, and bump `updatedAt` to `date +%s` — never add to a group authored by someone else.
+nothing for existing entries, set the new entry's `contentHash`, bump `updatedAt` to `date +%s`,
+and keep the group's existing tags (don't re-ask) — never add to a group authored by someone else.
 
 ## 4. Manage your own
 
