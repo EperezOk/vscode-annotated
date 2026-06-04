@@ -2,6 +2,17 @@ name: CI
 on:
   push:
     branches: [main]
+    # Skip docs-only pushes. Deliberately NOT ignoring skills/**/*.md — the
+    # skill-contract unit test keeps those docs in lockstep with the code.
+    paths-ignore:
+      - 'docs/**'
+      - 'media/**'
+      - 'README.md'
+      - 'CLAUDE.md'
+      - 'AGENTS.md'
+      - 'LICENSE'
+      - '.gitignore'
+      - '.vscodeignore'
   pull_request:
   workflow_dispatch:
 
