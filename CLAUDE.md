@@ -9,9 +9,10 @@ Project-specific guidance for AI agents working in this repo.
   between tasks. Don't ask which execution mode to use; default to subagent-driven.
 - **Git branches:** manage branches as you see fit to keep work moving — create feature
   branches, fast-forward / merge into `main` at sensible checkpoints. The remote is `origin`
-  (<https://github.com/EperezOk/vscode-annotated>): **push `main` after merging a milestone**.
-  The workflow stays local-merge based — no PRs unless explicitly asked. Only surface a
-  branch/merge decision if there's a genuine blocker.
+  (<https://github.com/EperezOk/vscode-annotated>), but **never push automatically — the user
+  decides when to push**. Prepare commits (and tags) locally and leave `git push` to the user;
+  no PRs unless explicitly asked. Only surface a branch/merge decision if there's a genuine
+  blocker.
 - **Keep going without asking:** do all sub-plans of a phase on a **single branch** (e.g.
   `phase-2`), and proceed through them — and across phases — **autonomously**. Do NOT pause to
   ask permission at sub-plan or phase boundaries; just continue (write the next plan, execute it
