@@ -7,6 +7,22 @@ the safety rules in `SKILL.md`.**
 > Reminder: generate `<uuidgen>` ids in **lowercase**, and take `contentHash` and the author
 > slug from the recipes in `data-contract.md` — don't hand-write them.
 
+## 0. Establish identity (before any write)
+
+Surfing/reading needs no identity. But before writing **any** comment, annotation, or group:
+
+1. Read `annotated.agentName` from the workspace `.vscode/settings.json`, then the global user
+   `settings.json` (paths in `data-contract.md`). If set, that's your `agentName` — done.
+2. If **unset**, ask the user to choose an identity — suggest **Claude**, **Codex**, or
+   **Agent**, and let them enter any other name. Never assume a default.
+3. Ask where to persist the chosen name:
+   - **Project:** write `annotated.agentName` into the workspace `.vscode/settings.json`.
+   - **Global:** write it into the user `settings.json` (resolve the OS/flavor path; confirm first).
+   - **Don't save:** keep it for this session only (you'll re-ask next session).
+   Persist via the read-merge-write recipe in §5, preserving other keys.
+4. Use that `agentName` for the rest of the session — your group `author` and the basis for
+   your comment-file slug.
+
 ## 1. Surf / read
 
 - **List groups:** read each `.annotations/groups/*.json`; for each report
@@ -24,7 +40,7 @@ the safety rules in `SKILL.md`.**
 
 ## 2. Reply in a thread
 
-1. Determine your identity: `agentName` = `annotated.agentName` from config, else `"Claude"`.
+1. Resolve your `agentName` per §0 (ask the user first if it's unset) — never default silently.
 2. Compute your comment-file slug from `agentName` (slug recipe) → path
    `.annotations/comments/<slug>.json`.
 3. Read that file if it exists; otherwise start `{ "author": "<agentName>", "email": "", "comments": [] }`.
@@ -36,6 +52,8 @@ the safety rules in `SKILL.md`.**
 You may reply on **any** annotation or group, but only ever write your **own** slug file.
 
 ## 3. Create an annotation group (and annotations)
+
+Resolve your `agentName` per §0 first (ask the user if it's unset) — it becomes the group `author`.
 
 1. For each annotation, gather `file` (workspace-relative POSIX), 1-based inclusive `range`,
    and markdown `content`. Compute `contentHash` via the hash recipe with that `file`/range.
@@ -81,4 +99,6 @@ Never modify or delete a group authored by someone else, or another author's com
     writing.
   - Read the target settings JSON (create `{}` if absent), merge `annotated.tags` (append or
     replace-by-name), write it back preserving other keys.
-- **Set agent identity:** write `annotated.agentName` to the workspace `.vscode/settings.json`.
+- **Set agent identity:** write `annotated.agentName` — **Project** = workspace
+  `.vscode/settings.json`, **Global** = user `settings.json`. This is also how you persist the
+  identity chosen in §0.

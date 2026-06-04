@@ -148,5 +148,7 @@ Examples: `Claude` → `claude`; `Ana Díaz!` → `ana-d-az`; `` (empty) → `an
   Either target: read-merge-write `annotated.tags`, **dedup by `name`**, preserve other keys.
   Both files may be absent — create with `{ }` if needed.
 - `annotated.authorName` / `annotated.authorEmail`: the **human's** identity — read, never overwrite.
-- **Agent identity:** `annotated.agentName` (optional) → fallback `"Claude"`. Used as your
-  group `author` and the basis for your comment-file slug.
+- **Agent identity:** `annotated.agentName` (optional). Used as your group `author` and the
+  basis for your comment-file slug. If unset, the agent asks the user to choose one (and whether
+  to save it to project/global config) before writing — see `SKILL.md` / `operations.md` §0 —
+  rather than assuming a default.

@@ -1,6 +1,6 @@
 ---
 name: annotated
-description: Use when the user wants to annotate a codebase, or when the user asks you to perform a task based on existing annotations. Also use this skill if the user asks to update the tag palette / identity config of the vscode-annotated extension.
+description: Use when the user wants to annotate a codebase, or when the user asks you to perform ANY task based on existing annotations. Also use this skill if the user asks to update the tag palette / identity config of the vscode-annotated extension.
 ---
 
 # Annotated
@@ -26,11 +26,20 @@ annotations/threads, **reply** in a thread (annotation threads and group-level t
 ## Identity
 
 You act under a **distinct agent identity** — not the human's. Your identity is
-`annotated.agentName` from config, falling back to `"Claude"`. You write your groups under that
+`annotated.agentName` from config (workspace or global). You write your groups under that
 `author` and your comments to `.annotations/comments/<slug-of-agentName>.json`.
+
+**If `annotated.agentName` is unset, establish it before your first write** — never silently
+default. Ask the user to choose a name (suggest **Claude**, **Codex**, or **Agent**; they may
+pick any other), then ask where to save it: **Project** (workspace `.vscode/settings.json`),
+**Global** (user `settings.json`), or **Don't save** (this session only). Once set, reuse it
+without re-asking. Full steps: `references/operations.md` §0.
 
 ## Hard rules (always)
 
+- **Establish identity before writing.** If `annotated.agentName` is unset, ask the user to
+  choose one (and whether to persist it) **before** any comment, annotation, or group — never
+  write under an assumed default. Reads (surfing) need no identity.
 - **Own-only writes.** Create groups/annotations and reply anywhere, but **edit/resolve/delete
   only what you authored** (groups whose `author` is your identity, and your own comment file).
   Never modify or delete a human's group or another author's comments.
