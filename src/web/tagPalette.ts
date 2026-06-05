@@ -95,6 +95,12 @@ export interface PickTagsOptions {
   placeHolder: string;
   /** Tag names to show pre-checked (e.g. the group's current tags). */
   preselectedNames?: string[];
+  /**
+   * Tag names that are on SOME but not all of the targets (bulk edit). Shown with a "mixed…"
+   * hint and left unchecked: checking one adds it to all; leaving it is a no-op (it stays on
+   * whichever groups already have it — you can't remove a non-common tag from here).
+   */
+  partialNames?: string[];
 }
 
 /**
@@ -114,11 +120,16 @@ export async function pickTagsWithNewOption(
   // Guard: the action item must never be pre-checked (it would auto-accept on open).
   const preselected = new Set(options.preselectedNames ?? []);
   preselected.delete(NEW_TAG_LABEL);
+  const partial = new Set(options.partialNames ?? []);
   const quickPick = vscode.window.createQuickPick();
   quickPick.canSelectMany = true;
   quickPick.placeholder = options.placeHolder;
   quickPick.items = [
-    ...palette.map((t) => ({ label: t.name, iconPath: vscode.Uri.parse(swatchIconSvg(t.color)) })),
+    ...palette.map((t) => ({
+      label: t.name,
+      iconPath: vscode.Uri.parse(swatchIconSvg(t.color)),
+      ...(partial.has(t.name) ? { description: 'on some — check to add to all' } : {}),
+    })),
     { label: NEW_TAG_LABEL, alwaysShow: true },
   ];
   quickPick.selectedItems = quickPick.items.filter((item) => preselected.has(item.label));

@@ -6,6 +6,7 @@ import { GroupStore } from '../core/groupStore';
 import { VscodeFileSystem } from './vscodeFileSystem';
 import { displayPalette, reconcileWorkspaceTags, pickTagsWithNewOption } from './tagPalette';
 import { manageTags } from './tagAdminCommand';
+import { commonTagNames, partialTagNames, bulkTagPatches } from '../core/tagAdmin';
 import { revealAnnotation, clearHighlight } from './navigateToCode';
 import { readGitRefInfo } from './gitRefsSource';
 import { gitRefSuggestions } from '../core/gitRefs';
@@ -139,14 +140,25 @@ export function activate(context: vscode.ExtensionContext): void {
       return;
     }
     const store = new GroupStore(new VscodeFileSystem(folder.uri));
-    const tags = await pickTagsWithNewOption(displayPalette(await store.listGroups()), {
-      placeHolder: `Set tags on ${groupIds.length} group(s)`,
+    const allGroups = await store.listGroups();
+    const selected = allGroups.filter((g) => groupIds.includes(g.id));
+    // Differential edit: pre-check the tags common to ALL selected groups. Unchecking a common
+    // tag removes it from every group; checking a tag adds it to every group; each group's
+    // non-common ("mixed") tags are left untouched. Never replaces a group's whole tag set.
+    const picked = await pickTagsWithNewOption(displayPalette(allGroups), {
+      placeHolder:
+        selected.length === 1
+          ? 'Select tags for this group'
+          : `Tags across ${selected.length} groups — add to all / remove common`,
+      preselectedNames: commonTagNames(selected),
+      partialNames: partialTagNames(selected),
     });
-    if (tags === undefined) {
+    if (picked === undefined) {
       return;
     }
-    for (const id of groupIds) {
-      await store.updateGroup(id, { tags }, now());
+    const stamp = now();
+    for (const patch of bulkTagPatches(selected, picked)) {
+      await store.updateGroup(patch.id, { tags: patch.tags }, stamp);
     }
     await provider.refresh();
   };

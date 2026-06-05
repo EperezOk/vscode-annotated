@@ -51,3 +51,60 @@ export function groupTagPatches(groups: AnnotationGroup[], op: TagOp): { id: str
 export function groupsUsingTag(groups: AnnotationGroup[], name: string): number {
   return groups.filter((g) => g.tags.some((t) => t.name === name)).length;
 }
+
+function sameTags(a: Tag[], b: Tag[]): boolean {
+  return a.length === b.length && a.every((t, i) => t.name === b[i].name && t.color === b[i].color);
+}
+
+/** Tag names present on EVERY group (intersection by name). [] for no groups. */
+export function commonTagNames(groups: AnnotationGroup[]): string[] {
+  if (groups.length === 0) {
+    return [];
+  }
+  const [first, ...rest] = groups;
+  return first.tags
+    .map((t) => t.name)
+    .filter((name) => rest.every((g) => g.tags.some((t) => t.name === name)));
+}
+
+/** Tag names on SOME but not all groups (union minus intersection) — "mixed" across the set. */
+export function partialTagNames(groups: AnnotationGroup[]): string[] {
+  const common = new Set(commonTagNames(groups));
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const g of groups) {
+    for (const t of g.tags) {
+      if (!common.has(t.name) && !seen.has(t.name)) {
+        seen.add(t.name);
+        out.push(t.name);
+      }
+    }
+  }
+  return out;
+}
+
+/**
+ * Differential bulk tag edit. `picked` is the final selection from a multi-select picker that was
+ * pre-checked with the groups' COMMON tags (see `commonTagNames`). The only meaningful moves are:
+ *  - a previously-common tag left UNchecked  → removed from every group,
+ *  - a newly-checked tag (not previously common) → added to every group (that lacks it),
+ *  - every other (non-common) tag a group has  → left untouched.
+ * This never clobbers a group's distinct tags. Returns ONLY the groups whose tags actually change.
+ */
+export function bulkTagPatches(groups: AnnotationGroup[], picked: Tag[]): { id: string; tags: Tag[] }[] {
+  const common = new Set(commonTagNames(groups));
+  const pickedNames = new Set(picked.map((t) => t.name));
+  const removeNames = new Set([...common].filter((name) => !pickedNames.has(name)));
+  const addTags = picked.filter((t) => !common.has(t.name)); // ensure these on every group
+
+  const out: { id: string; tags: Tag[] }[] = [];
+  for (const g of groups) {
+    const existing = new Set(g.tags.map((t) => t.name));
+    const kept = g.tags.filter((t) => !removeNames.has(t.name)); // preserve order + existing colors
+    const next = [...kept, ...addTags.filter((t) => !existing.has(t.name))];
+    if (!sameTags(g.tags, next)) {
+      out.push({ id: g.id, tags: next });
+    }
+  }
+  return out;
+}
