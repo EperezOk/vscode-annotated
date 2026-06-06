@@ -44,13 +44,14 @@
 <section class="comments" data-testid="comment-thread">
   <h4 class="ctitle">Comments</h4>
   {#each comments as c (c.id)}
-    <div class="comment" data-testid="comment">
+    <div
+      class="comment"
+      class:other={c.author !== currentAuthor}
+      style={c.author !== currentAuthor ? `--author-h: ${authorHue(c.author)}` : undefined}
+      data-testid="comment"
+    >
       <div class="chead">
-        <span
-          class="cauthor"
-          class:other={c.author !== currentAuthor}
-          style={c.author !== currentAuthor ? `--author-h: ${authorHue(c.author)}` : undefined}
-        >{c.author}</span>
+        <span class="cauthor" class:other={c.author !== currentAuthor}>{c.author}</span>
         <span class="ctime">{relativeTime(c.timestamp, now)}</span>
         {#if c.author === currentAuthor}
           <span class="cactions">
@@ -87,11 +88,15 @@
 <style>
   .comments { margin-top: 14px; border-top: 1px solid var(--vscode-sideBar-border, #333); padding-top: 10px; }
   .ctitle { margin: 0 0 8px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--vscode-descriptionForeground, #9a9a9a); }
-  .comment { margin-bottom: 10px; }
+  /* Each comment is a bordered box so its bounds are obvious. The border is neutral for your
+     own comments and tinted with the author's hue (--author-h, set inline on .comment) for
+     others — the hue var also cascades to the author name below. */
+  .comment { margin-bottom: 10px; padding: 7px 10px; border: 1px solid var(--vscode-widget-border, #3c3c3c); border-radius: 6px; }
+  .comment.other { border-color: hsl(var(--author-h, 30) 55% 50% / 0.5); }
   .chead { display: flex; align-items: baseline; gap: 8px; margin-bottom: 2px; }
   .cauthor { font-weight: 600; font-size: 12px; }
-  /* Per-author color: hue comes from --author-h (set inline); lightness is chosen per theme so
-     the name stays legible on any background — darker on light themes, lighter on dark/HC. */
+  /* Per-author color: hue comes from --author-h (cascaded from .comment); lightness is chosen
+     per theme so the name stays legible on any background — darker on light, lighter on dark/HC. */
   .cauthor.other { color: hsl(var(--author-h, 30) 60% 38%); }
   :global(body.vscode-dark) .cauthor.other { color: hsl(var(--author-h, 30) 70% 70%); }
   :global(body.vscode-high-contrast) .cauthor.other { color: hsl(var(--author-h, 30) 90% 80%); }

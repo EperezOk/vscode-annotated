@@ -58,7 +58,7 @@ describe('CommentThread', () => {
     expect(rows[1].querySelector('.cauthor')).not.toHaveClass('other'); // Me
   });
 
-  it('gives each other-author a distinct hue via --author-h, reserving orange for Claude', () => {
+  it('tints each other-author comment box via --author-h on the comment, reserving orange for Claude', () => {
     const multi: ThreadComment[] = [
       { id: 'c1', annotationId: 'a1', author: 'Ana', content: 'x', timestamp: 100 },
       { id: 'c2', annotationId: 'a1', author: 'Claude', content: 'y', timestamp: 150 },
@@ -66,10 +66,12 @@ describe('CommentThread', () => {
     ];
     render(CommentThread, { comments: multi, currentAuthor: 'Me', now: 200 });
     const rows = screen.getAllByTestId('comment');
-    const hueOf = (row: HTMLElement) =>
-      (row.querySelector('.cauthor') as HTMLElement).style.getPropertyValue('--author-h').trim();
+    // The hue var lives on the comment box (drives its border + the inherited author-name color).
+    const hueOf = (row: HTMLElement) => row.style.getPropertyValue('--author-h').trim();
+    expect(rows[0]).toHaveClass('other');
     expect(hueOf(rows[0])).toBe(String(authorHue('Ana')));
     expect(hueOf(rows[1])).toBe(String(authorHue('Claude'))); // orange, reserved
+    expect(rows[2]).not.toHaveClass('other'); // own author
     expect(hueOf(rows[2])).toBe(''); // own author: no per-author hue
   });
 
