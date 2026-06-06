@@ -5,7 +5,7 @@
   import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
   import { syntaxHighlighting } from '@codemirror/language';
   import { markdown } from '@codemirror/lang-markdown';
-  import { markdownKeymap, urlPasteHandler, stopFormattingShortcuts, markdownHighlightStyle, fillHeightTheme } from './editorExtensions';
+  import { markdownKeymap, urlPasteHandler, markdownHighlightStyle, fillHeightTheme } from './editorExtensions';
 
   let { doc = '', autofocus = false, onChange, onSubmit }: { doc?: string; autofocus?: boolean; onChange?: (value: string) => void; onSubmit?: () => void } = $props();
 
@@ -58,7 +58,6 @@
           markdown(),
           fillHeightTheme,
           urlPasteHandler,
-          stopFormattingShortcuts,
           keymap.of([
             // Submit shortcut — ahead of defaultKeymap, which binds Mod-Enter to insertBlankLine.
             { key: 'Mod-Enter', run: () => (onSubmit ? (onSubmit(), true) : false) },

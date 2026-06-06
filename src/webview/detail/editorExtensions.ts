@@ -45,11 +45,19 @@ function toggleCommand(marker: string) {
   };
 }
 
-/** Bold (Mod-b), italic (Mod-i), inline code (Mod-e) toggle shortcuts. */
+/**
+ * Bold (Mod-b), italic (Mod-i), inline code (Mod-e) toggle shortcuts.
+ *
+ * `stopPropagation: true` keeps the combo inside the editor: when the command handles the
+ * key, CodeMirror calls both preventDefault and stopPropagation, so the keydown never reaches
+ * the window-level forwarder that VS Code webviews use to fire global keybindings (otherwise
+ * Cmd+B would also toggle the sidebar). It fires only on the platform-correct Mod- expansion
+ * and only when the toggle actually runs.
+ */
 export const markdownKeymap: readonly KeyBinding[] = [
-  { key: 'Mod-b', run: toggleCommand('**') },
-  { key: 'Mod-i', run: toggleCommand('*') },
-  { key: 'Mod-e', run: toggleCommand('`') },
+  { key: 'Mod-b', run: toggleCommand('**'), stopPropagation: true },
+  { key: 'Mod-i', run: toggleCommand('*'), stopPropagation: true },
+  { key: 'Mod-e', run: toggleCommand('`'), stopPropagation: true },
 ];
 
 /**
@@ -79,29 +87,3 @@ export const fillHeightTheme: Extension = EditorView.theme({
   '.cm-scroller': { minHeight: '160px' },
 });
 
-/** True for the editor's formatting combos (Cmd/Ctrl + b/i/e, no shift/alt). */
-export function isFormattingShortcut(e: {
-  key: string;
-  metaKey: boolean;
-  ctrlKey: boolean;
-  altKey: boolean;
-  shiftKey: boolean;
-}): boolean {
-  const k = e.key.toLowerCase();
-  return (e.metaKey || e.ctrlKey) && !e.altKey && !e.shiftKey && (k === 'b' || k === 'i' || k === 'e');
-}
-
-/**
- * Keep the formatting combos inside the editor. VS Code webviews forward keydowns to the
- * workbench so global keybindings still fire in a webview — which is why Cmd+B also toggled
- * the sidebar. The keymap still runs the toggle + preventDefault; we add stopPropagation so
- * the event never reaches the window-level forwarder.
- */
-export const stopFormattingShortcuts: Extension = EditorView.domEventHandlers({
-  keydown(event) {
-    if (isFormattingShortcut(event)) {
-      event.stopPropagation();
-    }
-    return false; // let the keymap run the command
-  },
-});
