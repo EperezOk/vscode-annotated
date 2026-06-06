@@ -1,8 +1,8 @@
 import { EditorView, type KeyBinding } from '@codemirror/view';
-import { EditorSelection, type Extension } from '@codemirror/state';
+import { EditorSelection, type EditorState, type Extension, type TransactionSpec } from '@codemirror/state';
 import { HighlightStyle } from '@codemirror/language';
 import { tags as t } from '@lezer/highlight';
-import { isUrl, linkSelection } from '../../core/markdownTransforms';
+import { isUrl, linkSelection, toggleMarker } from '../../core/markdownTransforms';
 
 /** Select text + paste an http(s) URL → wrap the selection as a Markdown link. */
 export const urlPasteHandler: Extension = EditorView.domEventHandlers({
@@ -25,25 +25,31 @@ export const urlPasteHandler: Extension = EditorView.domEventHandlers({
   },
 });
 
-/** A command that wraps each selection range with `before`/`after`. */
-function wrapCommand(before: string, after: string) {
+/** Build the transaction that toggles `marker` over every selection range (pure — no view). */
+export function toggleMarkerSpec(state: EditorState, marker: string): TransactionSpec {
+  const doc = state.doc.toString();
+  return state.changeByRange((range) => {
+    const edit = toggleMarker(doc, range.from, range.to, marker);
+    return {
+      changes: edit.changes,
+      range: EditorSelection.range(edit.selectionFrom, edit.selectionTo),
+    };
+  });
+}
+
+/** A command that toggles `marker` around the current selection(s). */
+function toggleCommand(marker: string) {
   return (view: EditorView): boolean => {
-    const tr = view.state.changeByRange((range) => ({
-      changes: [
-        { from: range.from, insert: before },
-        { from: range.to, insert: after },
-      ],
-      range: EditorSelection.range(range.from + before.length, range.to + before.length),
-    }));
-    view.dispatch(view.state.update(tr, { scrollIntoView: true }));
+    view.dispatch(view.state.update(toggleMarkerSpec(view.state, marker), { scrollIntoView: true }));
     return true;
   };
 }
 
-/** Bold (Mod-b) and italic (Mod-i) shortcuts. */
+/** Bold (Mod-b), italic (Mod-i), inline code (Mod-e) toggle shortcuts. */
 export const markdownKeymap: readonly KeyBinding[] = [
-  { key: 'Mod-b', run: wrapCommand('**', '**') },
-  { key: 'Mod-i', run: wrapCommand('*', '*') },
+  { key: 'Mod-b', run: toggleCommand('**') },
+  { key: 'Mod-i', run: toggleCommand('*') },
+  { key: 'Mod-e', run: toggleCommand('`') },
 ];
 
 /**
