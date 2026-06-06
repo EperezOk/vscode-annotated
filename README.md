@@ -6,8 +6,7 @@
 
 Annotate a codebase with grouped, shareable Markdown annotations.
 
-[![VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/eperezok.vscode-annotated?label=marketplace&logo=visualstudiocode)](https://marketplace.visualstudio.com/items?itemName=eperezok.vscode-annotated)
-[![Installs](https://img.shields.io/visual-studio-marketplace/i/eperezok.vscode-annotated)](https://marketplace.visualstudio.com/items?itemName=eperezok.vscode-annotated)
+[![VS Marketplace](https://badgen.net/vs-marketplace/v/eperezok.vscode-annotated?icon=visualstudio&label=marketplace)](https://marketplace.visualstudio.com/items?itemName=eperezok.vscode-annotated)
 [![CI](https://github.com/EperezOk/vscode-annotated/actions/workflows/ci.yml/badge.svg)](https://github.com/EperezOk/vscode-annotated/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
