@@ -21,7 +21,7 @@ in your repo, so they're diffable, shareable (commit them), and readable by AI a
 groups with tags, discuss them in comment threads, link a group to a Git ref, and resolve them
 when the work is done.
 
-![Extension Demo](./media/screenshots/demo.gif)
+![Extension Demo](./media/demo.gif)
 
 ## Quickstart
 
