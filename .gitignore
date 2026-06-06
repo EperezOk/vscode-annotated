@@ -11,3 +11,6 @@ playwright-report/
 # personal scratch docs (local only)
 TODO.md
 IDEA.md
+
+# os files
+.DS_STORE

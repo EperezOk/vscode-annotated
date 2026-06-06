@@ -21,6 +21,8 @@ in your repo, so they're diffable, shareable (commit them), and readable by AI a
 groups with tags, discuss them in comment threads, link a group to a Git ref, and resolve them
 when the work is done.
 
+![Extension Demo](./media/screenshots/demo.gif)
+
 ## Quickstart
 
 Open the **Annotated** view from the Activity Bar to browse, filter, and manage your annotation
@@ -43,9 +45,9 @@ A few things that live in the UI rather than as keybindings:
 
 ## AI agent skill
 
-`skills/annotated/` is a [Claude Code](https://claude.com/claude-code) skill that lets an AI agent
-take part in an annotated workspace — surf groups and comment threads, reply, create annotation
-groups/annotations, and manage the tag palette — by reading and writing the `.annotations/` files
+`skills/annotated/` is a skill that lets an AI agent take part in an annotated workspace
+— surf groups and comment threads, reply, create annotation groups/annotations, and
+manage the tag palette — by reading and writing the `.annotations/` files
 directly, under its own distinct identity (kept separate from yours).
 
 Install it with a skill manager:
@@ -58,7 +60,7 @@ gh skill install EperezOk/vscode-annotated annotated
 npx skills add EperezOk/vscode-annotated
 ```
 
-Then ask your agent to, e.g., _"create a group explaining how X works"_ or _"answer the questions
+Then ask your agent to, e.g., _"explain how X works with annotations"_ or _"answer the questions
 I left in the annotations"_ — the groups it creates are navigable right alongside your own. See
 [`skills/annotated/README.md`](skills/annotated/README.md) for the full operation set and rules.
 

@@ -24,6 +24,7 @@ skills/**
 test-workspace/**
 test-results/**
 playwright-report/**
+media/demo.gif
 media/logo.svg
 AGENTS.md
 CLAUDE.md
