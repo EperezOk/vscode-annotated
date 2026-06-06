@@ -145,5 +145,16 @@ describe('AnnotationView', () => {
     expect(onsave).not.toHaveBeenCalled();
     expect(screen.queryByTestId('md-editor')).toBeNull();
     expect(screen.getByTestId('md-preview')).toBeInTheDocument();
+
+    // Re-open and save immediately — must use the original content, not the discarded text
+    await userEvent.click(screen.getByTestId('edit-btn'));
+    await userEvent.click(screen.getByTestId('save-btn'));
+    expect(onsave).toHaveBeenCalledWith('a1', 'original');
+  });
+
+  it('Cancel on a new annotation returns to the empty preview without crashing', async () => {
+    render(AnnotationView, { annotation: annotation('') });
+    await userEvent.click(screen.getByTestId('cancel-btn'));
+    expect(screen.getByTestId('md-preview')).toBeInTheDocument();
   });
 });
