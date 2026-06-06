@@ -132,32 +132,30 @@ still fire when focus is in a webview. CodeMirror's keymap calls `preventDefault
 runs, but that does **not** stop the forward — so `Cmd+B` both wraps text *and* toggles the
 sidebar (`workbench.action.toggleSidebarVisibility`).
 
-**Fix:** add a bubble-phase `keydown` DOM handler (a second `EditorView.domEventHandlers`, like
-the existing `urlPasteHandler`) that calls **`event.stopPropagation()`** for our combos, so the
-event never reaches the window-level forwarder. The keymap still runs the toggle and
-`preventDefault`s; we only add `stopPropagation`.
+**Fix:** set CodeMirror's built-in `stopPropagation: true` on each `markdownKeymap` entry.
+CodeMirror calls `event.stopPropagation()` on the keys this binding also `preventDefault`s — i.e.
+**only when the toggle command actually runs**, and only for the platform-correct `Mod-`
+expansion — so the keydown never reaches the window-level forwarder.
 
 ```ts
-export const stopFormattingShortcuts: Extension = EditorView.domEventHandlers({
-  keydown(event) {
-    const k = event.key.toLowerCase();
-    if ((event.metaKey || event.ctrlKey) && !event.altKey && !event.shiftKey
-        && (k === 'b' || k === 'i' || k === 'e')) {
-      event.stopPropagation(); // keep it inside the editor; keymap still handles + preventDefaults
-    }
-    return false; // let the keymap run the command
-  },
-});
+export const markdownKeymap: readonly KeyBinding[] = [
+  { key: 'Mod-b', run: toggleCommand('**'), stopPropagation: true },
+  { key: 'Mod-i', run: toggleCommand('*'), stopPropagation: true },
+  { key: 'Mod-e', run: toggleCommand('`'), stopPropagation: true },
+];
 ```
 
-Matching `metaKey || ctrlKey` covers both macOS (Cmd) and Win/Linux (Ctrl) harmlessly; the keymap
-(`Mod-…`) still decides per-platform what actually runs. Wired into `MarkdownEditor.svelte`'s
-extension list.
+This is preferred over a separate `EditorView.domEventHandlers` keydown handler, which was the
+original plan: a hand-rolled `metaKey || ctrlKey` predicate would, on macOS, swallow `Ctrl+B/I/E`
+(matching the predicate) even though the toggle — bound to `Meta-` via `Mod-` — never runs, and a
+standalone handler carries an implicit extension-ordering dependency. The `stopPropagation` flag
+ties the call to actual handling and needs no extra extension.
 
 **Verification:** this can't be unit-tested (needs a real webview), so it's a **manual** check:
 in the running extension, focus the editor, press `Cmd+B`/`Cmd+I`/`Cmd+E` → text toggles and the
-sidebar does **not**. *Fallback if it still leaks* (VS Code listening in capture phase): handle
-the combo entirely in a window-capture listener added on mount — noted, not expected to be needed.
+sidebar does **not**. (A node unit test asserts the three bindings carry `stopPropagation: true`,
+guarding against a silent regression.) *Fallback if it still leaks* (VS Code listening in capture
+phase): handle the combo in a window-capture listener added on mount — noted, not expected.
 
 ---
 
@@ -188,10 +186,12 @@ the combo entirely in a window-capture listener added on mount — noted, not ex
 - **`src/core/markdownTransforms.ts`** — add `MarkerEdit` + `toggleMarker`.
 - **`src/core/markdownTransforms.unit.test.ts`** — add the §1 cases above.
 - **`src/webview/detail/editorExtensions.ts`** — `toggleMarkerSpec` + `toggleCommand`, `Mod-e`
-  binding, `stopFormattingShortcuts` handler; remove `wrapCommand`.
+  binding, `stopPropagation: true` on each `markdownKeymap` entry; remove `wrapCommand`.
 - **`src/webview/detail/editorExtensions.unit.test.ts`** *(new)* — `toggleMarkerSpec` over a
-  headless `EditorState`: single + multi-range; asserts resulting doc & selection.
-- **`src/webview/detail/MarkdownEditor.svelte`** — add `stopFormattingShortcuts` to extensions.
+  headless `EditorState` (single + multi-range, asserts doc & selection) + a `markdownKeymap`
+  guard test (keys + `stopPropagation: true`).
+- **`src/webview/detail/MarkdownEditor.svelte`** — no change needed for propagation (the keymap
+  carries it); `markdownKeymap` is already wired.
 - **`src/webview/detail/AnnotationView.svelte`** — `cancelEdit()` + Cancel button.
 - **`src/webview/detail/AnnotationView.svelte.test.ts`** — Cancel exits edit mode, restores
   original content, does not call `onsave`.

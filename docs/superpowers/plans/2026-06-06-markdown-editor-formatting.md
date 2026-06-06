@@ -349,6 +349,15 @@ git commit -m "feat(editor): toggle bold/italic + add Mod-e inline-code shortcut
 
 ### Task 3: Stop the shortcuts leaking to VS Code
 
+> **Implemented mechanism changed during code review.** Instead of the custom
+> `isFormattingShortcut` predicate + `stopFormattingShortcuts` DOM handler described in the steps
+> below, the fix uses CodeMirror's built-in **`stopPropagation: true`** on each `markdownKeymap`
+> entry. That ties `stopPropagation()` to actual command handling on the platform-correct `Mod-`
+> expansion — avoiding a macOS bug (the predicate would swallow `Ctrl+B/I/E` without running the
+> toggle) and an implicit extension-ordering dependency. The test became a `markdownKeymap` guard
+> (asserts the three keys + `stopPropagation: true`) rather than predicate tests. See spec §2.
+> The original steps are kept below for historical context.
+
 **Files:**
 - Modify: `src/webview/detail/editorExtensions.ts` (add predicate + handler)
 - Modify: `src/webview/detail/MarkdownEditor.svelte` (wire the handler)
