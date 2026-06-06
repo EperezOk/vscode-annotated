@@ -53,6 +53,7 @@ export function toggleMarker(doc: string, from: number, to: number, marker: stri
   if (from < to) {
     // Markers immediately outside the selection?
     const left = from - len;
+    // Don't strip the inner star of a **…** boundary when marker is *.
     if (at(left) && at(to) && (!italic || (doc[left - 1] !== '*' && doc[to + len] !== '*'))) {
       return {
         changes: [
@@ -69,6 +70,7 @@ export function toggleMarker(doc: string, from: number, to: number, marker: stri
       slice.length >= 2 * len &&
       slice.startsWith(marker) &&
       slice.endsWith(marker) &&
+      // Same guard as the outer check: don't strip the inner star of a **…** boundary.
       (!italic || (slice[len] !== '*' && slice[slice.length - len - 1] !== '*'))
     ) {
       return {

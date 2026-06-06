@@ -81,6 +81,11 @@ describe('toggleMarker', () => {
     expect(r.doc).toBe('foo');
     expect(r.sel).toBe('foo');
   });
+  it('unwraps italic when the selection includes the markers', () => {
+    const r = apply('*foo*', toggleMarker('*foo*', 0, 5, '*'));
+    expect(r.doc).toBe('foo');
+    expect(r.sel).toBe('foo');
+  });
   it('bold on bold+italic removes only the bold layer', () => {
     const r = apply('***foo***', toggleMarker('***foo***', 3, 6, '**'));
     expect(r.doc).toBe('*foo*');
