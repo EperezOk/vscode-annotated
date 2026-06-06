@@ -69,6 +69,10 @@
     onsave?.(annotation.id, draft);
     editing = false;
   }
+  function cancelEdit(): void {
+    draft = annotation.content;
+    editing = false;
+  }
 
   let copiedPath = $state(false);
   let copiedMd = $state(false);
@@ -120,6 +124,7 @@
   <div class="toolbar">
     {#if editing}
       <button type="button" class="btn" data-testid="save-btn" onclick={save}>Save</button>
+      <button type="button" class="btn ghost" data-testid="cancel-btn" onclick={cancelEdit}>Cancel</button>
     {:else}
       <button type="button" class="btn" data-testid="edit-btn" onclick={startEdit}>✎ Edit</button>
     {/if}

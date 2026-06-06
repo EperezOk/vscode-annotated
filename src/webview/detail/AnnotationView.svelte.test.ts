@@ -135,4 +135,15 @@ describe('AnnotationView', () => {
     expect(oncopyloc).toHaveBeenCalledWith('src/x.ts:2–4');
     expect(btn).toHaveTextContent('Copied');
   });
+
+  it('Cancel discards edits, restores the preview, and does not call onsave', async () => {
+    const onsave = vi.fn();
+    render(AnnotationView, { annotation: annotation('original'), onsave });
+    await userEvent.click(screen.getByTestId('edit-btn'));
+    await userEvent.type(screen.getByTestId('md-editor'), ' changed');
+    await userEvent.click(screen.getByTestId('cancel-btn'));
+    expect(onsave).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('md-editor')).toBeNull();
+    expect(screen.getByTestId('md-preview')).toBeInTheDocument();
+  });
 });
