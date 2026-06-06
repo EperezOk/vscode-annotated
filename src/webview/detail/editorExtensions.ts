@@ -78,3 +78,30 @@ export const fillHeightTheme: Extension = EditorView.theme({
   '.cm-content': { minHeight: '160px' },
   '.cm-scroller': { minHeight: '160px' },
 });
+
+/** True for the editor's formatting combos (Cmd/Ctrl + b/i/e, no shift/alt). */
+export function isFormattingShortcut(e: {
+  key: string;
+  metaKey: boolean;
+  ctrlKey: boolean;
+  altKey: boolean;
+  shiftKey: boolean;
+}): boolean {
+  const k = e.key.toLowerCase();
+  return (e.metaKey || e.ctrlKey) && !e.altKey && !e.shiftKey && (k === 'b' || k === 'i' || k === 'e');
+}
+
+/**
+ * Keep the formatting combos inside the editor. VS Code webviews forward keydowns to the
+ * workbench so global keybindings still fire in a webview — which is why Cmd+B also toggled
+ * the sidebar. The keymap still runs the toggle + preventDefault; we add stopPropagation so
+ * the event never reaches the window-level forwarder.
+ */
+export const stopFormattingShortcuts: Extension = EditorView.domEventHandlers({
+  keydown(event) {
+    if (isFormattingShortcut(event)) {
+      event.stopPropagation();
+    }
+    return false; // let the keymap run the command
+  },
+});
