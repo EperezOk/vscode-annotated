@@ -7,6 +7,7 @@ function run(doc: string, ranges: [number, number][], marker: string): { doc: st
   const state = EditorState.create({
     doc,
     selection: EditorSelection.create(ranges.map(([a, b]) => EditorSelection.range(a, b))),
+    // allowMultipleSelections: otherwise CodeMirror collapses multiple ranges to one, making the multi-cursor case vacuous.
     extensions: [EditorState.allowMultipleSelections.of(true)],
   });
   const next = state.update(toggleMarkerSpec(state, marker)).state;
@@ -25,7 +26,7 @@ describe('toggleMarkerSpec', () => {
     expect(r.doc).toBe('foo bar');
     expect(r.sels).toEqual(['foo']);
   });
-  it('applies to every range of a multi-cursor selection', () => {
+  it('processes all selection ranges via changeByRange', () => {
     const r = run('foo bar', [[0, 3], [4, 7]], '**');
     expect(r.doc).toBe('**foo** **bar**');
     expect(r.sels).toEqual(['foo', 'bar']);
