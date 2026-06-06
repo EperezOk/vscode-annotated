@@ -64,7 +64,7 @@
         <MarkdownEditor doc={editDraft} autofocus onChange={(v) => (editDraft = v)} onSubmit={() => saveEdit(c.id)} />
         <div class="crow">
           <button type="button" class="btn" data-testid="comment-save-btn" onclick={() => saveEdit(c.id)}>Save</button>
-          <button type="button" class="link" onclick={() => (editingId = null)}>cancel</button>
+          <button type="button" class="btn ghost" data-testid="comment-cancel-btn" onclick={() => (editingId = null)}>Cancel</button>
         </div>
       {:else}
         <MarkdownPreview source={c.content} />
@@ -77,7 +77,7 @@
       <MarkdownEditor doc={replyDraft} autofocus onChange={(v) => (replyDraft = v)} onSubmit={addReply} />
       <div class="crow">
         <button type="button" class="btn" data-testid="comment-add-btn" disabled={!replyDraft.trim()} onclick={addReply}>Add comment</button>
-        <button type="button" class="link" onclick={() => (replying = false)}>cancel</button>
+        <button type="button" class="btn ghost" data-testid="reply-cancel-btn" onclick={() => (replying = false)}>Cancel</button>
       </div>
     </div>
   {:else}
@@ -106,6 +106,7 @@
   .crow { display: flex; gap: 8px; align-items: center; margin-top: 4px; }
   .link { background: none; border: none; color: var(--vscode-textLink-foreground, #3794ff); cursor: pointer; font-size: 11px; padding: 0; }
   .btn { background: var(--vscode-button-background, #0e639c); color: var(--vscode-button-foreground, #fff); border: none; border-radius: 3px; padding: 3px 10px; font-size: 11.5px; cursor: pointer; }
+  .btn.ghost { background: var(--vscode-button-secondaryBackground, #3a3d41); color: var(--vscode-button-secondaryForeground, #ddd); }
   .btn:disabled { opacity: 0.4; cursor: default; }
   .reply-trigger { background: none; border: 1px dashed var(--vscode-input-border, #555); color: var(--vscode-descriptionForeground, #9a9a9a); border-radius: 4px; padding: 6px 10px; font-size: 11.5px; cursor: pointer; width: 100%; text-align: left; }
 </style>

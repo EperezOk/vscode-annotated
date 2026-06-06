@@ -114,4 +114,24 @@ describe('CommentThread', () => {
     await userEvent.type(editor, '{Meta>}{Enter}{/Meta}');
     expect(onedit).toHaveBeenCalledWith('c2', 'my note!');
   });
+
+  it('Cancel closes the reply composer without adding', async () => {
+    const onadd = vi.fn();
+    render(CommentThread, { comments: [], currentAuthor: 'Me', now: 200, onadd });
+    await userEvent.click(screen.getByTestId('comment-reply-trigger'));
+    await userEvent.type(screen.getByTestId('md-editor'), 'draft');
+    await userEvent.click(screen.getByTestId('reply-cancel-btn'));
+    expect(onadd).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('md-editor')).toBeNull();
+    expect(screen.getByTestId('comment-reply-trigger')).toBeInTheDocument();
+  });
+
+  it('Cancel closes the comment editor without saving', async () => {
+    const onedit = vi.fn();
+    render(CommentThread, { comments: thread, currentAuthor: 'Me', now: 200, onedit });
+    await userEvent.click(screen.getByTestId('comment-edit-btn'));
+    await userEvent.click(screen.getByTestId('comment-cancel-btn'));
+    expect(onedit).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('md-editor')).toBeNull();
+  });
 });
