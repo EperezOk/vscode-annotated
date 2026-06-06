@@ -48,11 +48,12 @@ function toggleCommand(marker: string) {
 /**
  * Bold (Mod-b), italic (Mod-i), inline code (Mod-e) toggle shortcuts.
  *
- * `stopPropagation: true` keeps the combo inside the editor: when the command handles the
- * key, CodeMirror calls both preventDefault and stopPropagation, so the keydown never reaches
- * the window-level forwarder that VS Code webviews use to fire global keybindings (otherwise
- * Cmd+B would also toggle the sidebar). It fires only on the platform-correct Mod- expansion
- * and only when the toggle actually runs.
+ * `stopPropagation: true` keeps the combo inside the editor: CodeMirror's keydown handler
+ * calls `preventDefault` (implicit for any handled binding) and, because `stopPropagation` is
+ * set, also calls `stopPropagation` — so the keydown never reaches the window-level forwarder
+ * that VS Code webviews use to fire global keybindings (otherwise Cmd+B would also toggle the
+ * sidebar). Both fire only when the toggle actually runs: the platform-correct Mod- key is
+ * pressed (Cmd on macOS, Ctrl elsewhere) and the command returns true.
  */
 export const markdownKeymap: readonly KeyBinding[] = [
   { key: 'Mod-b', run: toggleCommand('**'), stopPropagation: true },
