@@ -87,4 +87,3 @@ export const fillHeightTheme: Extension = EditorView.theme({
   '.cm-content': { minHeight: '160px' },
   '.cm-scroller': { minHeight: '160px' },
 });
-
