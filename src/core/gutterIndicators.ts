@@ -107,6 +107,15 @@ export function decorationGroups(
 }
 
 /**
+ * The 1-based line numbers eligible for the generic whole-line highlight: every line that
+ * has at least one gutter bar, sorted ascending. Resolved groups are already excluded by
+ * `gutterBarsByLine`, so they never appear here.
+ */
+export function highlightableLines(barsByLine: Map<number, string[]>): number[] {
+  return [...barsByLine.keys()].sort((a, b) => a - b);
+}
+
+/**
  * A trusted-MarkdownString body: one `command:` link per annotation covering a line,
  * each invoking `annotated.openAnnotation` with its `{ groupId, annotationId }` args.
  */

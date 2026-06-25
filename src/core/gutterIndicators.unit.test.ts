@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { gutterBarsByLine, buildGutterSvg, MAX_BARS, annotationsAtLine, hoverMarkdown, decorationGroups, hoverItems } from './gutterIndicators';
+import { gutterBarsByLine, buildGutterSvg, MAX_BARS, annotationsAtLine, hoverMarkdown, decorationGroups, hoverItems, highlightableLines } from './gutterIndicators';
 import { type AnnotationGroup } from '../shared/model';
 import { type TagColor } from '../shared/protocol';
 
@@ -136,6 +136,21 @@ describe('decorationGroups', () => {
 
   it('returns an empty array for an empty map', () => {
     expect(decorationGroups(new Map())).toEqual([]);
+  });
+});
+
+describe('highlightableLines', () => {
+  it('returns the lines that have bars, sorted ascending', () => {
+    const byLine = new Map<number, string[]>([
+      [5, ['#aa0000']],
+      [2, ['#aa0000', '#00aa00']],
+      [3, ['#00aa00']],
+    ]);
+    expect(highlightableLines(byLine)).toEqual([2, 3, 5]);
+  });
+
+  it('returns an empty array for an empty map', () => {
+    expect(highlightableLines(new Map())).toEqual([]);
   });
 });
 
