@@ -87,4 +87,16 @@ describe('runCreateAnnotation', () => {
     expect(result).toBeUndefined();
     expect(saveGroup).not.toHaveBeenCalled();
   });
+
+  it('does not offer resolved groups when picking a target group', async () => {
+    const open = createGroup({ id: 'g1', title: 'Open', author: 'A', tags: [], now: 1 });
+    const resolved: AnnotationGroup = {
+      ...createGroup({ id: 'g2', title: 'Done', author: 'A', tags: [], now: 1 }),
+      status: 'resolved',
+    };
+    const pickGroup = vi.fn(async () => ({ kind: 'new' as const }));
+    await runCreateAnnotation(deps({ listGroups: async () => [open, resolved], pickGroup }));
+    expect(pickGroup).toHaveBeenCalledTimes(1);
+    expect(pickGroup.mock.calls[0][0].map((g) => g.id)).toEqual(['g1']);
+  });
 });

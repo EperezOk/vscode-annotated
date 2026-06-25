@@ -56,7 +56,8 @@ export async function runCreateAnnotation(
   });
 
   const groups = await deps.listGroups();
-  const choice = await deps.pickGroup(groups);
+  // Resolved groups are closed work — don't offer them as annotation targets.
+  const choice = await deps.pickGroup(groups.filter((g) => g.status !== 'resolved'));
   if (!choice) {
     return undefined;
   }
