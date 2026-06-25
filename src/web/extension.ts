@@ -389,6 +389,16 @@ export function activate(context: vscode.ExtensionContext): void {
     }),
   );
 
+  const setHighlight = async (enabled: boolean): Promise<void> => {
+    await context.globalState.update(HIGHLIGHT_KEY, enabled);
+    await vscode.commands.executeCommand('setContext', 'annotated.lineHighlightEnabled', enabled);
+    await refreshDecorations();
+  };
+  context.subscriptions.push(
+    vscode.commands.registerCommand('annotated.enableLineHighlight', () => setHighlight(true)),
+    vscode.commands.registerCommand('annotated.disableLineHighlight', () => setHighlight(false)),
+  );
+
   // Webview context-menu commands (args come from each element's data-vscode-context).
   context.subscriptions.push(
     vscode.commands.registerCommand('annotated.deleteGroup', async (args?: { groupId?: string }) => {

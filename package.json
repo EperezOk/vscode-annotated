@@ -41,7 +41,9 @@
         "icon": "$(tag)"
       },
       { "command": "annotated.deleteGroup", "title": "Delete Group" },
-      { "command": "annotated.deleteAnnotation", "title": "Delete Annotation" }
+      { "command": "annotated.deleteAnnotation", "title": "Delete Annotation" },
+      { "command": "annotated.enableLineHighlight", "title": "Annotated: Show Annotation Line Highlight", "icon": "$(eye-closed)" },
+      { "command": "annotated.disableLineHighlight", "title": "Annotated: Hide Annotation Line Highlight", "icon": "$(eye)" }
     ],
     "keybindings": [
       {
@@ -60,6 +62,18 @@
         "command": "annotated.sidebar.focus",
         "key": "ctrl+alt+l",
         "mac": "cmd+alt+l"
+      },
+      {
+        "command": "annotated.disableLineHighlight",
+        "key": "ctrl+alt+h",
+        "mac": "cmd+alt+h",
+        "when": "annotated.lineHighlightEnabled"
+      },
+      {
+        "command": "annotated.enableLineHighlight",
+        "key": "ctrl+alt+h",
+        "mac": "cmd+alt+h",
+        "when": "!annotated.lineHighlightEnabled"
       }
     ],
     "menus": {
@@ -67,6 +81,16 @@
         {
           "command": "annotated.manageTags",
           "when": "view == annotated.sidebar",
+          "group": "navigation"
+        },
+        {
+          "command": "annotated.disableLineHighlight",
+          "when": "view == annotated.sidebar && annotated.lineHighlightEnabled",
+          "group": "navigation"
+        },
+        {
+          "command": "annotated.enableLineHighlight",
+          "when": "view == annotated.sidebar && !annotated.lineHighlightEnabled",
           "group": "navigation"
         }
       ],
@@ -82,7 +106,9 @@
       ],
       "commandPalette": [
         { "command": "annotated.deleteGroup", "when": "false" },
-        { "command": "annotated.deleteAnnotation", "when": "false" }
+        { "command": "annotated.deleteAnnotation", "when": "false" },
+        { "command": "annotated.enableLineHighlight", "when": "!annotated.lineHighlightEnabled" },
+        { "command": "annotated.disableLineHighlight", "when": "annotated.lineHighlightEnabled" }
       ]
     },
     "configuration": {
