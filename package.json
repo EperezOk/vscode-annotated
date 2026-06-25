@@ -110,7 +110,19 @@
           "description": "Email used to attribute your annotation comments (canonical identity)."
         }
       }
-    }
+    },
+    "colors": [
+      {
+        "id": "annotated.lineHighlightBackground",
+        "description": "Background highlight for lines covered by an annotation.",
+        "defaults": {
+          "dark": "editor.rangeHighlightBackground",
+          "light": "editor.rangeHighlightBackground",
+          "highContrast": "editor.rangeHighlightBackground",
+          "highContrastLight": "editor.rangeHighlightBackground"
+        }
+      }
+    ]
   },
   "scripts": {
     "compile": "node esbuild.mjs",

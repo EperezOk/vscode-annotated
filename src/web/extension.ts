@@ -40,12 +40,15 @@ export function activate(context: vscode.ExtensionContext): void {
   const gutter = new GutterDecorationManager();
   context.subscriptions.push({ dispose: () => gutter.dispose() });
 
+  const HIGHLIGHT_KEY = 'annotated.highlightAnnotatedLines';
+  const highlightOn = (): boolean => context.globalState.get<boolean>(HIGHLIGHT_KEY, true);
+
   const refreshDecorations = async (): Promise<void> => {
     const folder = vscode.workspace.workspaceFolders?.[0];
     const groups = folder
       ? await new GroupStore(new VscodeFileSystem(folder.uri)).listGroups()
       : [];
-    gutter.refresh(vscode.window.visibleTextEditors, groups, displayPalette(groups));
+    gutter.refresh(vscode.window.visibleTextEditors, groups, displayPalette(groups), highlightOn());
   };
 
   const reconcile = async (): Promise<void> => {
@@ -517,6 +520,7 @@ export function activate(context: vscode.ExtensionContext): void {
   provider.onRefreshRequested = (): void => void refreshDecorations();
   void reconcile();
   void refreshDecorations(); // initial paint for already-open editors
+  void vscode.commands.executeCommand('setContext', 'annotated.lineHighlightEnabled', highlightOn());
 }
 
 export function deactivate(): void {

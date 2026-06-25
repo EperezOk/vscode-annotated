@@ -8,6 +8,7 @@ import {
   annotationsAtLine,
   hoverMarkdown,
   hoverItems,
+  highlightableLines,
 } from '../core/gutterIndicators';
 
 /**
@@ -19,9 +20,15 @@ import {
  */
 export class GutterDecorationManager {
   private types = new Map<string, vscode.TextEditorDecorationType>();
+  private highlight: vscode.TextEditorDecorationType | undefined;
 
   /** Recompute and apply gutter decorations for the given (visible) editors. */
-  refresh(editors: readonly vscode.TextEditor[], groups: AnnotationGroup[], palette: TagColor[]): void {
+  refresh(
+    editors: readonly vscode.TextEditor[],
+    groups: AnnotationGroup[],
+    palette: TagColor[],
+    highlightLines: boolean,
+  ): void {
     const used = new Set<string>();
 
     for (const editor of editors) {
@@ -47,6 +54,14 @@ export class GutterDecorationManager {
       for (const type of this.types.values()) {
         editor.setDecorations(type, optionsByType.get(type) ?? []);
       }
+
+      // Generic whole-line highlight over every annotated line (cleared when toggled off).
+      const highlightRanges = highlightLines
+        ? highlightableLines(byLine)
+            .filter((line) => line >= 1 && line <= editor.document.lineCount)
+            .map((line) => editor.document.lineAt(line - 1).range)
+        : [];
+      editor.setDecorations(this.highlightType(), highlightRanges);
     }
 
     // Dispose signatures no longer present anywhere (keeps the cache bounded).
@@ -56,6 +71,17 @@ export class GutterDecorationManager {
         this.types.delete(signature);
       }
     }
+  }
+
+  /** The single, lazily-created generic whole-line highlight decoration (theme-adaptive color). */
+  private highlightType(): vscode.TextEditorDecorationType {
+    if (!this.highlight) {
+      this.highlight = vscode.window.createTextEditorDecorationType({
+        isWholeLine: true,
+        backgroundColor: new vscode.ThemeColor('annotated.lineHighlightBackground'),
+      });
+    }
+    return this.highlight;
   }
 
   private typeFor(signature: string, colors: string[]): vscode.TextEditorDecorationType {
@@ -83,5 +109,7 @@ export class GutterDecorationManager {
       type.dispose();
     }
     this.types.clear();
+    this.highlight?.dispose();
+    this.highlight = undefined;
   }
 }
