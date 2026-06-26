@@ -140,12 +140,12 @@
     "colors": [
       {
         "id": "annotated.lineHighlightBackground",
-        "description": "Background highlight for lines covered by an annotation.",
+        "description": "Background highlight for lines covered by an annotation. Intentionally a faint, neutral overlay so it stays distinct from the stronger highlight on the annotation you are currently viewing; override it to taste.",
         "defaults": {
-          "dark": "editor.rangeHighlightBackground",
-          "light": "editor.rangeHighlightBackground",
-          "highContrast": "editor.rangeHighlightBackground",
-          "highContrastLight": "editor.rangeHighlightBackground"
+          "dark": "#ffffff12",
+          "light": "#0000000f",
+          "highContrast": "#ffffff12",
+          "highContrastLight": "#0000000f"
         }
       }
     ]
