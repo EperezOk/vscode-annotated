@@ -2,7 +2,7 @@
   "name": "vscode-annotated",
   "displayName": "Annotated",
   "description": "Annotate a codebase with grouped, shareable Markdown annotations.",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "publisher": "eperezok",
   "license": "MIT",
   "icon": "media/logo.png",

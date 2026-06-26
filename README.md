@@ -32,6 +32,7 @@ groups. The everyday actions also have commands and keybindings:
 | `Annotated: Create Annotation` | `⌥⌘A` · `Ctrl+Alt+A` | Annotate the selected lines — pick an existing group or create one (title + tags). |
 | `Annotated: Open Annotation at Cursor` | `⌥⌘O` · `Ctrl+Alt+O` | Open the annotation under the cursor in the detail view. |
 | _Focus the Annotations sidebar_ | `⌥⌘L` · `Ctrl+Alt+L` | Reveal and focus the Annotations view. |
+| `Annotated: Show / Hide Annotation Line Highlight` | `⌥⌘H` · `Ctrl+Alt+H` | Toggle the tint over annotated lines in the editor. |
 | `Annotated: Manage Tags…` | — | Rename, recolor, or delete tags across your palette. |
 | `Annotated: Copy Location for Annotation Link` | — | Right-click selected lines → copy a `path#L10-L20` link to paste into an annotation. |
 
