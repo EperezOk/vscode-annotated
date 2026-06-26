@@ -88,3 +88,9 @@ npm test                  # type-check + all tiers
 
 npx @vscode/vsce package --no-dependencies   # build an installable .vsix
 ```
+
+**Releasing:** `npm run release -- <patch|minor|major>` (or an explicit `X.Y.Z`) bumps the version,
+scaffolds a [`CHANGELOG.md`](CHANGELOG.md) entry from the commits since the last tag (edit it, then
+re-run), runs the gate, commits, tags `vX.Y.Z`, builds the `.vsix`, and pushes the branch + tag to
+`origin` after a confirmation (`--no-push` to skip, `--yes` to skip the prompt, `--dry-run` to
+preview). See [`CHANGELOG.md`](CHANGELOG.md) for release notes.

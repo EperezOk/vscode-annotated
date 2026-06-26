@@ -173,6 +173,7 @@
     "test:e2e": "playwright test",
     "test": "npm run check-types && npm run test:unit && npm run test:integration && npm run test:e2e",
     "start": "vscode-test-web --browserType=chromium --extensionDevelopmentPath=.",
+    "release": "bash scripts/release.sh",
     "vscode:prepublish": "npm run package"
   },
   "dependencies": {
