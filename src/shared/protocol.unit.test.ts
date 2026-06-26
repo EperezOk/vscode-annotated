@@ -137,4 +137,14 @@ describe('parseDetailMessage', () => {
     expect(parseDetailMessage({ type: 'addGroupComment', content: 'hi' })).toEqual({ type: 'addGroupComment', content: 'hi' });
     expect(parseDetailMessage({ type: 'addGroupComment' })).toBeNull();
   });
+  it('accepts openLocalLink with a string file + number lines', () => {
+    expect(parseDetailMessage({ type: 'openLocalLink', file: 'src/x.ts', startLine: 3, endLine: 7 })).toEqual({
+      type: 'openLocalLink', file: 'src/x.ts', startLine: 3, endLine: 7,
+    });
+  });
+  it('rejects openLocalLink with a non-string file or non-number lines', () => {
+    expect(parseDetailMessage({ type: 'openLocalLink', file: 5, startLine: 3, endLine: 7 })).toBeNull();
+    expect(parseDetailMessage({ type: 'openLocalLink', file: 'src/x.ts', startLine: '3', endLine: 7 })).toBeNull();
+    expect(parseDetailMessage({ type: 'openLocalLink', file: 'src/x.ts', startLine: 3 })).toBeNull();
+  });
 });

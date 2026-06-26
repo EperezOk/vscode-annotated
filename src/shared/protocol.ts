@@ -48,6 +48,7 @@ export type DetailToHost =
   | { type: 'editTags' }
   | { type: 'editGitRef' }
   | { type: 'updateAnnotationRange'; annotationId: string; startLine: number; endLine: number }
+  | { type: 'openLocalLink'; file: string; startLine: number; endLine: number }
   | { type: 'reorderAnnotations'; annotationIds: string[] }
   | { type: 'updateGroupStatus'; status: GroupStatus }
   | { type: 'addComment'; annotationId: string; content: string }
@@ -111,6 +112,12 @@ export function parseDetailMessage(raw: unknown): DetailToHost | null {
         typeof raw.startLine === 'number' &&
         typeof raw.endLine === 'number'
         ? { type: 'updateAnnotationRange', annotationId: raw.annotationId, startLine: raw.startLine, endLine: raw.endLine }
+        : null;
+    case 'openLocalLink':
+      return typeof raw.file === 'string' &&
+        typeof raw.startLine === 'number' &&
+        typeof raw.endLine === 'number'
+        ? { type: 'openLocalLink', file: raw.file, startLine: raw.startLine, endLine: raw.endLine }
         : null;
     case 'reorderAnnotations':
       return Array.isArray(raw.annotationIds) && (raw.annotationIds as unknown[]).every((id) => typeof id === 'string')
