@@ -196,6 +196,13 @@ describe('GroupStore', () => {
       expect(await fs.exists(`.annotations/groups/${id}.json`)).toBe(false);
     });
 
+    it('reads a legacy <id>.json file whose id is not a uuid', async () => {
+      // Hand-authored / pre-uuid groups stored the file as `<id>.json` with a
+      // human-readable, hyphenated id. The stem equals the id but isn't a uuid.
+      await fs.writeFile('.annotations/groups/seed-group.json', enc(group('seed-group', 'Seed Group')));
+      expect((await store.getGroup('seed-group'))?.title).toBe('Seed Group');
+    });
+
     it('reads a new-format <slug>-<idseg>.json file by full id', async () => {
       const id = '550e8400-e29b-41d4-a716-446655440000';
       await fs.writeFile('.annotations/groups/misleading-docs-550e8400.json', enc(group(id, 'Misleading docs')));

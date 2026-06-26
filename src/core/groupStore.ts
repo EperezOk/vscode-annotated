@@ -19,7 +19,7 @@ export class GroupStore {
   /**
    * The real on-disk path for a group `id`, or null. The filename is cosmetic; the
    * canonical id lives inside the JSON. A file belongs to `id` when its stem equals
-   * `id` (legacy `<uuid>.json`) or its trailing `-` token is a prefix of the
+   * `id` (legacy `<id>.json`, e.g. a `<uuid>.json`) or its trailing `-` token is a prefix of the
    * de-hyphenated id (`<title-slug>-<idseg>.json`). Exact matches are unambiguous;
    * shorter-prefix matches are confirmed by reading each candidate's internal id.
    */
@@ -33,11 +33,12 @@ export class GroupStore {
         continue;
       }
       const stem = name.slice(0, -'.json'.length);
-      if (UUID_RE.test(stem)) {
-        if (stem === id) {
-          exact.push(name);
-        }
+      if (stem === id) {
+        exact.push(name); // legacy `<id>.json` — the stem is the canonical id verbatim
         continue;
+      }
+      if (UUID_RE.test(stem)) {
+        continue; // a uuid stem that isn't this id — a different group's legacy file
       }
       const seg = stem.slice(stem.lastIndexOf('-') + 1); // whole stem when there is no '-'
       if (seg.length === 0 || !deId.startsWith(seg)) {
