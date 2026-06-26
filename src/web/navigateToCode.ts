@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
-import { type Annotation } from '../shared/model';
+import { type Annotation, type LineRange } from '../shared/model';
+import { safeRelativeSegments } from '../shared/path';
 
 let highlightType: vscode.TextEditorDecorationType | undefined;
 let lastEditor: vscode.TextEditor | undefined;
@@ -27,6 +28,65 @@ export function clearHighlight(): void {
   lastEditor = undefined;
 }
 
+let linkHighlightType: vscode.TextEditorDecorationType | undefined;
+let lastLinkEditor: vscode.TextEditor | undefined;
+
+function linkDecorationType(): vscode.TextEditorDecorationType {
+  if (!linkHighlightType) {
+    linkHighlightType = vscode.window.createTextEditorDecorationType({
+      isWholeLine: true,
+      backgroundColor: new vscode.ThemeColor('editor.rangeHighlightBackground'),
+      borderWidth: '0 0 0 3px',
+      borderStyle: 'solid',
+      borderColor: new vscode.ThemeColor('textLink.foreground'),
+      overviewRulerColor: new vscode.ThemeColor('editorOverviewRuler.infoForeground'),
+      overviewRulerLane: vscode.OverviewRulerLane.Full,
+    });
+  }
+  return linkHighlightType;
+}
+
+/** Clear the link-target highlight applied by the previous local-link navigation, if any. */
+export function clearLinkHighlight(): void {
+  if (lastLinkEditor && linkHighlightType) {
+    lastLinkEditor.setDecorations(linkHighlightType, []);
+  }
+  lastLinkEditor = undefined;
+}
+
+/** Clear both the annotation highlight and the link-target highlight. */
+export function clearAllHighlights(): void {
+  clearHighlight();
+  clearLinkHighlight();
+}
+
+/**
+ * Open a local-link target (workspace-relative `file` + 1-based `range`), reveal + select the
+ * lines, and apply the link-target highlight (distinct from the annotation highlight). Keeps
+ * focus in the panel (preserveFocus) so the annotation view is untouched. Out-of-workspace or
+ * unopenable targets warn and no-op rather than throw.
+ */
+export async function revealLocation(folderUri: vscode.Uri, file: string, range: LineRange): Promise<void> {
+  const segments = safeRelativeSegments(file);
+  if (!segments) {
+    void vscode.window.showWarningMessage(`Annotated: cannot open "${file}" (outside the workspace).`);
+    return;
+  }
+  const uri = vscode.Uri.joinPath(folderUri, ...segments);
+  const vsRange = new vscode.Range(range.startLine - 1, 0, range.endLine - 1, Number.MAX_SAFE_INTEGER);
+  clearLinkHighlight();
+  let editor: vscode.TextEditor;
+  try {
+    editor = await vscode.window.showTextDocument(uri, { selection: vsRange, preserveFocus: true });
+  } catch {
+    void vscode.window.showWarningMessage(`Annotated: cannot open "${file}".`);
+    return;
+  }
+  editor.revealRange(vsRange, vscode.TextEditorRevealType.InCenterIfOutsideViewport);
+  editor.setDecorations(linkDecorationType(), [vsRange]);
+  lastLinkEditor = editor;
+}
+
 /**
  * Open the annotation's file, reveal + select its line range, and highlight those
  * full lines (clearing the previous highlight). `folderUri` is the workspace folder.
@@ -42,6 +102,7 @@ export async function revealAnnotation(folderUri: vscode.Uri, annotation: Annota
   );
 
   clearHighlight();
+  clearLinkHighlight(); // re-anchoring on the annotation drops any stale link-target highlight
 
   const editor = await vscode.window.showTextDocument(uri, { selection: range, preserveFocus: true });
   editor.revealRange(range, vscode.TextEditorRevealType.InCenterIfOutsideViewport);
