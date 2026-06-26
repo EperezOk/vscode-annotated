@@ -81,17 +81,17 @@
         {
           "command": "annotated.manageTags",
           "when": "view == annotated.sidebar",
-          "group": "navigation"
+          "group": "navigation@1"
         },
         {
           "command": "annotated.disableLineHighlight",
           "when": "view == annotated.sidebar && annotated.lineHighlightEnabled",
-          "group": "navigation"
+          "group": "navigation@2"
         },
         {
           "command": "annotated.enableLineHighlight",
           "when": "view == annotated.sidebar && !annotated.lineHighlightEnabled",
-          "group": "navigation"
+          "group": "navigation@2"
         }
       ],
       "webview/context": [
