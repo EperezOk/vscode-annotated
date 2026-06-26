@@ -5,6 +5,8 @@ import { removeAnnotation } from './annotationFactory';
 const dec = new TextDecoder();
 const enc = new TextEncoder();
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 /** Persistence CRUD for annotation groups, one JSON file per group. */
 export class GroupStore {
   constructor(
@@ -14,6 +16,51 @@ export class GroupStore {
 
   private path(id: string): string {
     return `${this.dir}/${id}.json`;
+  }
+
+  /**
+   * The real on-disk path for a group `id`, or null. The filename is cosmetic; the
+   * canonical id lives inside the JSON. A file belongs to `id` when its stem equals
+   * `id` (legacy `<uuid>.json`) or its trailing `-` token is a prefix of the
+   * de-hyphenated id (`<title-slug>-<idseg>.json`). Exact matches are unambiguous;
+   * shorter-prefix matches are confirmed by reading each candidate's internal id.
+   */
+  private async resolvePath(id: string): Promise<string | null> {
+    const names = await this.fs.readDirectory(this.dir);
+    const deId = id.replace(/-/g, '');
+    const exact: string[] = [];
+    const prefix: string[] = [];
+    for (const name of names) {
+      if (!name.endsWith('.json')) {
+        continue;
+      }
+      const stem = name.slice(0, -'.json'.length);
+      if (UUID_RE.test(stem)) {
+        if (stem === id) {
+          exact.push(name);
+        }
+        continue;
+      }
+      const seg = stem.slice(stem.lastIndexOf('-') + 1); // whole stem when there is no '-'
+      if (seg.length === 0 || !deId.startsWith(seg)) {
+        continue;
+      }
+      (seg === deId ? exact : prefix).push(name);
+    }
+    if (exact.length > 0) {
+      return `${this.dir}/${exact[0]}`;
+    }
+    for (const name of prefix) {
+      try {
+        const parsed = JSON.parse(dec.decode(await this.fs.readFile(`${this.dir}/${name}`)));
+        if (parsed?.id === id) {
+          return `${this.dir}/${name}`;
+        }
+      } catch {
+        // unparseable candidate — skip
+      }
+    }
+    return null;
   }
 
   /** Load all valid groups. Invalid/unparseable files are skipped (with a warning). */
@@ -36,9 +83,12 @@ export class GroupStore {
 
   /** Load one group by id, or null if missing/invalid. */
   async getGroup(id: string): Promise<AnnotationGroup | null> {
+    const path = await this.resolvePath(id);
+    if (!path) {
+      return null;
+    }
     try {
-      const bytes = await this.fs.readFile(this.path(id));
-      return parseGroup(JSON.parse(dec.decode(bytes)));
+      return parseGroup(JSON.parse(dec.decode(await this.fs.readFile(path))));
     } catch {
       return null;
     }
@@ -50,9 +100,12 @@ export class GroupStore {
     await this.fs.writeFile(this.path(group.id), enc.encode(serializeGroup(group)));
   }
 
-  /** Delete a group's file. No-op if absent. */
+  /** Delete a group's file (found by id). No-op if absent. */
   async deleteGroup(id: string): Promise<void> {
-    await this.fs.delete(this.path(id));
+    const path = await this.resolvePath(id);
+    if (path) {
+      await this.fs.delete(path);
+    }
   }
 
   /**

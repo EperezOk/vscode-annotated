@@ -184,6 +184,39 @@ describe('GroupStore', () => {
     expect(r?.updatedAt).toBe(909);
   });
 
+  describe('filename resolution (read-side)', () => {
+    const enc = (g: AnnotationGroup) => new TextEncoder().encode(serializeGroup(g));
+
+    it('reads and deletes a legacy <uuid>.json file by id', async () => {
+      const id = '550e8400-e29b-41d4-a716-446655440000';
+      await fs.writeFile(`.annotations/groups/${id}.json`, enc(group(id, 'Legacy')));
+      expect((await store.getGroup(id))?.title).toBe('Legacy');
+      await store.deleteGroup(id);
+      expect(await store.getGroup(id)).toBeNull();
+      expect(await fs.exists(`.annotations/groups/${id}.json`)).toBe(false);
+    });
+
+    it('reads a new-format <slug>-<idseg>.json file by full id', async () => {
+      const id = '550e8400-e29b-41d4-a716-446655440000';
+      await fs.writeFile('.annotations/groups/misleading-docs-550e8400.json', enc(group(id, 'Misleading docs')));
+      expect((await store.getGroup(id))?.title).toBe('Misleading docs');
+    });
+
+    it('resolves prefix-colliding slugged files by internal id', async () => {
+      const a = '550e8400-aaaa-41d4-a716-446655440000';
+      const b = '550e8400-bbbb-41d4-a716-446655440000';
+      await fs.writeFile('.annotations/groups/x-550e8400.json', enc(group(a, 'A')));
+      await fs.writeFile('.annotations/groups/y-550e8400b.json', enc(group(b, 'B')));
+      expect((await store.getGroup(a))?.title).toBe('A');
+      expect((await store.getGroup(b))?.title).toBe('B');
+    });
+
+    it('getGroup returns null when no file matches the id', async () => {
+      await fs.writeFile('.annotations/groups/other-deadbeef.json', enc(group('deadbeef-0000-0000-0000-000000000000', 'Other')));
+      expect(await store.getGroup('550e8400-e29b-41d4-a716-446655440000')).toBeNull();
+    });
+  });
+
   describe('deleteAnnotation', () => {
     function withAnnotations(id: string): AnnotationGroup {
       return {
