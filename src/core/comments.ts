@@ -1,9 +1,9 @@
 import { type AnnotationGroup, type CommentFile, type ThreadComment } from '../shared/model';
+import { slugify } from '../shared/slug';
 
 /** A filesystem-safe slug of an author display name (collisions are tolerated). */
 export function slugifyAuthor(name: string): string {
-  const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-  return slug || 'anon';
+  return slugify(name, { fallback: 'anon' });
 }
 
 /** Merge every comment across all files (author attached), sorted ascending by timestamp. */
