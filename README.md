@@ -33,11 +33,17 @@ groups. The everyday actions also have commands and keybindings:
 | `Annotated: Open Annotation at Cursor` | `⌥⌘O` · `Ctrl+Alt+O` | Open the annotation under the cursor in the detail view. |
 | _Focus the Annotations sidebar_ | `⌥⌘L` · `Ctrl+Alt+L` | Reveal and focus the Annotations view. |
 | `Annotated: Manage Tags…` | — | Rename, recolor, or delete tags across your palette. |
+| `Annotated: Copy Location for Annotation Link` | — | Right-click selected lines → copy a `path#L10-L20` link to paste into an annotation. |
 
 A few things that live in the UI rather than as keybindings:
 
 - **Detail view** (secondary sidebar): edit an annotation's Markdown, copy its content or
   `path:line` reference, jump prev/next, and reply in comment threads.
+- **Local links**: an annotation's Markdown can link to code with `[label](src/foo.ts#L10-L20)`.
+  Copy a target with **Copy Location for Annotation Link**, then paste it over selected text in the
+  editor to wrap it as a link. Clicking a local link opens the file and highlights those lines
+  (in a distinct colour) without leaving the annotation; **↩ Refocus code** jumps back to the
+  annotation's own lines.
 - **Bulk actions**: hit **Select** in the sidebar to tag, set a Git ref, resolve/restore, or
   delete multiple groups at once.
 - **Delete**: right-click a group or an annotation.
