@@ -20,4 +20,11 @@ suite('Annotated web extension', () => {
       }
     }
   });
+
+  test('registers the copyLocationLink command', async () => {
+    const commands = await vscode.commands.getCommands(true);
+    if (!commands.includes('annotated.copyLocationLink')) {
+      throw new Error('annotated.copyLocationLink not registered');
+    }
+  });
 });

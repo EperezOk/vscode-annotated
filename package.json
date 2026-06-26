@@ -43,7 +43,11 @@
       { "command": "annotated.deleteGroup", "title": "Delete Group" },
       { "command": "annotated.deleteAnnotation", "title": "Delete Annotation" },
       { "command": "annotated.enableLineHighlight", "title": "Annotated: Show Annotation Line Highlight", "icon": "$(eye-closed)" },
-      { "command": "annotated.disableLineHighlight", "title": "Annotated: Hide Annotation Line Highlight", "icon": "$(eye)" }
+      { "command": "annotated.disableLineHighlight", "title": "Annotated: Hide Annotation Line Highlight", "icon": "$(eye)" },
+      {
+        "command": "annotated.copyLocationLink",
+        "title": "Annotated: Copy Location for Annotation Link"
+      }
     ],
     "keybindings": [
       {
@@ -102,6 +106,13 @@
         {
           "command": "annotated.deleteAnnotation",
           "when": "webviewId == 'annotated.detail' && webviewSection == 'annotation'"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "annotated.copyLocationLink",
+          "when": "editorTextFocus",
+          "group": "9_cutcopypaste"
         }
       ],
       "commandPalette": [

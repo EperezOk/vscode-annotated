@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { SidebarViewProvider } from './sidebarViewProvider';
 import { registerCreateAnnotationCommand } from './createAnnotationCommand';
+import { registerCopyLocationLinkCommand } from './copyLocationLinkCommand';
 import { DetailPanelProvider } from './detailPanelProvider';
 import { GroupStore } from '../core/groupStore';
 import { VscodeFileSystem } from './vscodeFileSystem';
@@ -476,6 +477,7 @@ export function activate(context: vscode.ExtensionContext): void {
     }
   };
   context.subscriptions.push(registerCreateAnnotationCommand(openAnnotationInPanel));
+  context.subscriptions.push(registerCopyLocationLinkCommand());
 
   // Invoked by gutter-hover command links (not contributed to the palette — needs args).
   context.subscriptions.push(
