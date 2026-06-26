@@ -43,6 +43,9 @@ describe('parseLocationLink', () => {
     expect(parseLocationLink('mailto:x#L1')).toBeNull();
     expect(parseLocationLink('C:/foo.ts#L1')).toBeNull();
   });
+  it('returns null for an unsafely-large line number', () => {
+    expect(parseLocationLink('src/foo.ts#L99999999999999999999')).toBeNull();
+  });
 });
 
 describe('isLocationLink', () => {

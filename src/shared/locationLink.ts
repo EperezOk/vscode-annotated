@@ -32,10 +32,10 @@ export function parseLocationLink(href: string): { file: string; range: LineRang
   }
   const startLine = Number(match[1]);
   const endLine = match[2] !== undefined ? Number(match[2]) : startLine;
-  if (!Number.isInteger(startLine) || startLine < 1) {
+  if (!Number.isSafeInteger(startLine) || startLine < 1) {
     return null;
   }
-  if (!Number.isInteger(endLine) || endLine < startLine) {
+  if (!Number.isSafeInteger(endLine) || endLine < startLine) {
     return null;
   }
   return { file, range: { startLine, endLine } };
