@@ -1,6 +1,6 @@
 <script lang="ts">
   import { untrack, onDestroy } from 'svelte';
-  import { formatLineRange, type Annotation, type ThreadComment } from '../../shared/model';
+  import { formatLineRange, type Annotation, type LineRange, type ThreadComment } from '../../shared/model';
   import { fileName } from '../../shared/path';
   import MarkdownPreview from './MarkdownPreview.svelte';
   import MarkdownEditor from './MarkdownEditor.svelte';
@@ -22,6 +22,8 @@
     onaddcomment,
     oneditcomment,
     ondeletecomment,
+    onlocallink,
+    onrevealcode,
   }: {
     annotation: Annotation;
     stale?: boolean;
@@ -38,6 +40,8 @@
     onaddcomment?: (annotationId: string, content: string) => void;
     oneditcomment?: (commentId: string, content: string) => void;
     ondeletecomment?: (commentId: string) => void;
+    onlocallink?: (file: string, range: LineRange) => void;
+    onrevealcode?: (id: string) => void;
   } = $props();
 
   // Full path:range — stays the "copy path" payload and the hover tooltip.
@@ -110,6 +114,7 @@
       <span class="loc" data-testid="annotation-loc" title={location}>{shortLocation}</span>
       <button type="button" class="link" data-testid="edit-range-btn" onclick={startRangeEdit}>edit range</button>
     {/if}
+    <button type="button" class="link" data-testid="refocus-btn" onclick={() => onrevealcode?.(annotation.id)}>↩ Refocus code</button>
     <button type="button" class="link" data-testid="copy-loc-btn" onclick={copyPath}>{copiedPath ? '✓ Copied' : '⧉ path'}</button>
   </div>
 
@@ -134,7 +139,7 @@
   {#if editing}
     <MarkdownEditor doc={draft} autofocus onChange={(v) => (draft = v)} onSubmit={save} />
   {:else}
-    <MarkdownPreview source={annotation.content} />
+    <MarkdownPreview source={annotation.content} {onlocallink} />
   {/if}
 
   <CommentThread

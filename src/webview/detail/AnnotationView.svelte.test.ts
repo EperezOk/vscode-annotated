@@ -157,4 +157,21 @@ describe('AnnotationView', () => {
     await userEvent.click(screen.getByTestId('cancel-btn'));
     expect(screen.getByTestId('md-preview')).toBeInTheDocument();
   });
+
+  it('fires onrevealcode with the annotation id when Refocus code is clicked', async () => {
+    const onrevealcode = vi.fn();
+    render(AnnotationView, { annotation: annotation('# Note'), onrevealcode });
+    await userEvent.click(screen.getByTestId('refocus-btn'));
+    expect(onrevealcode).toHaveBeenCalledWith('a1');
+  });
+
+  it('forwards onlocallink to the preview (local link click bubbles up)', async () => {
+    const onlocallink = vi.fn();
+    render(AnnotationView, {
+      annotation: annotation('see [helper](src/core/foo.ts#L10-L20)'),
+      onlocallink,
+    });
+    await userEvent.click(screen.getByText('helper'));
+    expect(onlocallink).toHaveBeenCalledWith('src/core/foo.ts', { startLine: 10, endLine: 20 });
+  });
 });
