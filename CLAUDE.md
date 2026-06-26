@@ -30,8 +30,6 @@ Project-specific guidance for AI agents working in this repo.
 
 ## Build & test
 
-- Tests need **Node ≥20.19** (Vite 8 / Vitest 4). The machine default is 20.15.1 (too old).
-  Prefix node/npm/npx commands with: `export PATH="/opt/homebrew/opt/node@25/bin:$PATH"`
 - Tiers: `npm run test:unit` (Vitest unit + Svelte components), `npm run test:integration`
   (`@vscode/test-web` Mocha-in-browser), `npm run test:e2e` (Playwright against web VSCode),
   `npm test` (type-check + all tiers). Integration/e2e download/serve a VSCode web build (network).
