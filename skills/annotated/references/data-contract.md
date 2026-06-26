@@ -8,15 +8,15 @@ match this contract **exactly** or the extension won't read them back.
 
 ```
 .annotations/
-  groups/<group-id>.json        # one annotation group per file
+  groups/<title-slug>-<idseg>.json   # one annotation group per file
   comments/<author-slug>.json   # one comment file per author
 ```
 
-## Group — `.annotations/groups/<id>.json`
+## Group — `.annotations/groups/<title-slug>-<idseg>.json`
 
 ```jsonc
 {
-  "id": "550e8400-e29b-41d4-a716-446655440000",   // MUST equal the filename stem
+  "id": "550e8400-e29b-41d4-a716-446655440000",   // canonical id (full UUID); filename's <idseg> = its first 8 hex
   "title": "Login review",
   "author": "Claude",                              // your agent identity for groups you create
   "tags": [{ "name": "security", "color": "#E5484D" }], // tags carry their color (self-contained)
@@ -77,7 +77,12 @@ The UI's comment badges count a group's annotation comments **plus** its group c
 
 ## Invariants (must hold or the extension can't read your writes)
 
-- **Group `id` == filename stem.** `groups/<id>.json`; a mismatch hides the group.
+- **Filename = `<title-slug>-<idseg>.json`** (e.g. `misleading-docs-550e8400.json`), where
+  `<idseg>` is the first 8 hex chars of the de-hyphenated `id`. The extension keys off the
+  in-file `id`, not the filename, so a stale slug is cosmetic, not corrupting. Legacy
+  `groups/<id>.json` files are still read. When you create a group, name it this way; when you
+  edit/delete one, find it by its `id` (its filename ends with the id segment, or is the legacy
+  `<id>.json`).
 - **Comment filename == author slug** (see slug recipe). Edit/delete-own only works on your own slug file.
 - **One comment target.** Exactly one of `annotationId` / `groupId` per comment — a single
   invalid comment makes the extension skip the **whole** comment file.
@@ -129,6 +134,19 @@ printf '%s\n' "$s"
 ```
 
 Examples: `Claude` → `claude`; `Ana Díaz!` → `ana-d-az`; `` (empty) → `anon`.
+
+### Title slug (for the group filename)
+
+Same as the author slug, then **cap to 40 characters** (strip a trailing `-` left by the cut)
+and fall back to `untitled` if empty. `$TITLE` is the group title:
+
+```bash
+s=$(printf '%s' "$TITLE" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//' | cut -c1-40 | sed -E 's/-+$//')
+[ -n "$s" ] || s=untitled
+printf '%s\n' "$s"
+```
+
+The group filename is then `<title-slug>-<first-8-hex-of-id>.json`.
 
 ## Config — VSCode settings
 

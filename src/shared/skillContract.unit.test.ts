@@ -13,6 +13,7 @@ import {
   type CommentFile,
 } from './model';
 import { slugifyAuthor } from '../core/comments';
+import { slugifyTitle } from './slug';
 import { TAG_SWATCHES } from '../core/tags';
 
 const CONTRACT_DOC = 'skills/annotated/references/data-contract.md';
@@ -32,6 +33,16 @@ printf '%s\\n' "$s"`;
 
 function slugViaRecipe(name: string): string {
   return execSync(SLUG_RECIPE, { env: { ...process.env, NAME: name } }).toString().trim();
+}
+
+// Canonical node-free title-slug recipe. The doc MUST embed this verbatim, and it MUST match
+// slugifyTitle for every title. $TITLE is an env var.
+const TITLE_SLUG_RECIPE = `s=$(printf '%s' "$TITLE" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//' | cut -c1-40 | sed -E 's/-+$//')
+[ -n "$s" ] || s=untitled
+printf '%s\\n' "$s"`;
+
+function titleSlugViaRecipe(title: string): string {
+  return execSync(TITLE_SLUG_RECIPE, { env: { ...process.env, TITLE: title } }).toString().trim();
 }
 
 function recipeHash(text: string, start: number, end: number): string {
@@ -169,5 +180,26 @@ describe('annotated contract: slug recipe parity + doc embed', () => {
   it('data-contract.md embeds the exact SLUG_RECIPE', () => {
     const doc = readFileSync(CONTRACT_DOC, 'utf8');
     expect(doc.includes(SLUG_RECIPE)).toBe(true);
+  });
+});
+
+describe('annotated contract: title slug recipe parity + doc embed', () => {
+  const TITLES = [
+    'Misleading docs',
+    'Login Review!!',
+    'Ana Díaz',
+    '',
+    '###',
+    'a'.repeat(50),
+    'word word word word word word word word word',
+  ];
+  for (const title of TITLES) {
+    it(`shell title-slug recipe matches slugifyTitle — ${JSON.stringify(title)}`, () => {
+      expect(titleSlugViaRecipe(title)).toBe(slugifyTitle(title));
+    });
+  }
+  it('data-contract.md embeds the exact TITLE_SLUG_RECIPE', () => {
+    const doc = readFileSync(CONTRACT_DOC, 'utf8');
+    expect(doc.includes(TITLE_SLUG_RECIPE)).toBe(true);
   });
 });

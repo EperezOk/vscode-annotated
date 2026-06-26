@@ -84,7 +84,9 @@ Resolve your `agentName` per §0 first (ask the user if it's unset) — it becom
      "annotations": [ { "id": "<uuidgen>", "file": "...", "range": {...}, "content": "...", "contentHash": "..." } ]
    }
    ```
-4. Write `.annotations/groups/<id>.json` — **the filename stem MUST equal `id`**.
+4. Write `.annotations/groups/<title-slug>-<first-8-hex-of-id>.json` (title-slug recipe in
+   `data-contract.md`). The extension reads the canonical `id` from inside the file, so the
+   filename is a human-friendly handle, not load-bearing.
 
 **Add an annotation to a group you already authored:** append to its `annotations`, recompute
 nothing for existing entries, set the new entry's `contentHash`, bump `updatedAt` to `date +%s`,
@@ -96,7 +98,8 @@ Only on groups whose `author` is your `agentName`, and your own comment file:
 - **Resolve / restore a group:** set `status` to `"resolved"` / `"open"`, bump `updatedAt`.
 - **Delete an annotation:** remove it from the group's `annotations`, bump `updatedAt` — an
   emptied group (`"annotations": []`) stays valid; keep the file.
-- **Delete a group:** remove its `.annotations/groups/<id>.json`.
+- **Delete a group:** remove its file under `.annotations/groups/` — the one whose name ends
+  with the group's id segment (or the legacy `<id>.json`).
 - **Edit/delete your comment:** in your own slug file, change a comment's `content`, or drop it
   from `comments`; write back.
 
