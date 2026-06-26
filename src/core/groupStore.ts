@@ -1,6 +1,8 @@
 import { type FileSystem } from './fileSystem';
 import { type AnnotationGroup, type LineRange, parseGroup, serializeGroup } from '../shared/model';
 import { removeAnnotation } from './annotationFactory';
+import { slugifyTitle } from '../shared/slug';
+import { idSegment } from '../shared/ids';
 
 const dec = new TextDecoder();
 const enc = new TextEncoder();
@@ -13,10 +15,6 @@ export class GroupStore {
     private readonly fs: FileSystem,
     private readonly dir = '.annotations/groups',
   ) {}
-
-  private path(id: string): string {
-    return `${this.dir}/${id}.json`;
-  }
 
   /**
    * The real on-disk path for a group `id`, or null. The filename is cosmetic; the
@@ -94,10 +92,45 @@ export class GroupStore {
     }
   }
 
-  /** Write a group (whole-file). Caller is responsible for timestamps. */
+  /** Write a group (whole-file) under `<title-slug>-<idseg>.json`. Renames on
+   *  title change, migrates a legacy `<id>.json` file, and never clobbers a
+   *  different group. Caller is responsible for timestamps. */
   async saveGroup(group: AnnotationGroup): Promise<void> {
     await this.fs.createDirectory(this.dir);
-    await this.fs.writeFile(this.path(group.id), enc.encode(serializeGroup(group)));
+    const existing = await this.resolvePath(group.id);
+    let len = 8;
+    let target = this.nameFor(group, len);
+    while (await this.takenByOther(target, group.id)) {
+      const next = this.nameFor(group, ++len);
+      if (next === target) {
+        break; // id segment can't grow any further
+      }
+      target = next;
+    }
+    const targetPath = `${this.dir}/${target}`;
+    await this.fs.writeFile(targetPath, enc.encode(serializeGroup(group)));
+    if (existing && existing !== targetPath) {
+      await this.fs.delete(existing);
+    }
+  }
+
+  /** The canonical filename for `group`, using the first `len` chars of its id segment. */
+  private nameFor(group: AnnotationGroup, len: number): string {
+    return `${slugifyTitle(group.title)}-${idSegment(group.id, len)}.json`;
+  }
+
+  /** True when `name` exists and holds a group whose id differs from `id` (or is unreadable). */
+  private async takenByOther(name: string, id: string): Promise<boolean> {
+    const path = `${this.dir}/${name}`;
+    if (!(await this.fs.exists(path))) {
+      return false;
+    }
+    try {
+      const parsed = JSON.parse(dec.decode(await this.fs.readFile(path)));
+      return parsed?.id !== id;
+    } catch {
+      return true; // present but unreadable — don't clobber
+    }
   }
 
   /** Delete a group's file (found by id). No-op if absent. */

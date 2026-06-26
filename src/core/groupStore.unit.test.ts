@@ -31,9 +31,9 @@ describe('GroupStore', () => {
     expect(got?.title).toBe('Hello');
   });
 
-  it('writes to .annotations/groups/<id>.json', async () => {
+  it('writes to .annotations/groups/<title-slug>-<idseg>.json', async () => {
     await store.saveGroup(group('g1'));
-    expect(await fs.exists('.annotations/groups/g1.json')).toBe(true);
+    expect(await fs.exists('.annotations/groups/t-g1.json')).toBe(true);
   });
 
   it('getGroup returns null for a missing id', async () => {
@@ -75,7 +75,7 @@ describe('GroupStore', () => {
   it('persists exactly the serialized form', async () => {
     const g = group('g1', 'Exact');
     await store.saveGroup(g);
-    const bytes = await fs.readFile('.annotations/groups/g1.json');
+    const bytes = await fs.readFile('.annotations/groups/exact-g1.json');
     expect(new TextDecoder().decode(bytes)).toBe(serializeGroup(g));
   });
 
@@ -241,13 +241,56 @@ describe('GroupStore', () => {
       await store.saveGroup({ ...base, annotations: [base.annotations[0]] });
       expect(await store.deleteAnnotation('g1', 'a1', 99)).toBe(true);
       expect((await store.getGroup('g1'))?.annotations).toEqual([]);
-      expect(await fs.exists('.annotations/groups/g1.json')).toBe(true);
+      expect(await fs.exists('.annotations/groups/t-g1.json')).toBe(true);
     });
 
     it('returns false for a missing group or annotation', async () => {
       expect(await store.deleteAnnotation('nope', 'a1', 1)).toBe(false);
       await store.saveGroup(withAnnotations('g1'));
       expect(await store.deleteAnnotation('g1', 'missing', 1)).toBe(false);
+    });
+  });
+
+  describe('filename scheme (write-side)', () => {
+    const UID = '550e8400-e29b-41d4-a716-446655440000';
+
+    it('names a new group <title-slug>-<idseg>.json', async () => {
+      await store.saveGroup(group(UID, 'Misleading docs'));
+      expect(await fs.exists('.annotations/groups/misleading-docs-550e8400.json')).toBe(true);
+    });
+
+    it('renames the file when the title changes and removes the old one', async () => {
+      await store.saveGroup(group(UID, 'Old title'));
+      expect(await fs.exists('.annotations/groups/old-title-550e8400.json')).toBe(true);
+      await store.updateGroup(UID, { title: 'New title' }, 2);
+      expect(await fs.exists('.annotations/groups/old-title-550e8400.json')).toBe(false);
+      expect(await fs.exists('.annotations/groups/new-title-550e8400.json')).toBe(true);
+      expect((await store.getGroup(UID))?.title).toBe('New title');
+      expect((await fs.readDirectory('.annotations/groups')).length).toBe(1);
+    });
+
+    it('migrates a legacy <uuid>.json file to the slugged name on first write', async () => {
+      await fs.writeFile(`.annotations/groups/${UID}.json`, new TextEncoder().encode(serializeGroup(group(UID, 'Legacy'))));
+      await store.updateGroup(UID, { status: 'resolved' }, 2);
+      expect(await fs.exists(`.annotations/groups/${UID}.json`)).toBe(false);
+      expect(await fs.exists('.annotations/groups/legacy-550e8400.json')).toBe(true);
+      expect((await store.getGroup(UID))?.status).toBe('resolved');
+    });
+
+    it('does not overwrite a different group that wants the same filename', async () => {
+      const a = '550e8400-aaaa-41d4-a716-446655440000';
+      const b = '550e8400-bbbb-41d4-a716-446655440000';
+      await store.saveGroup(group(a, 'Same'));
+      await store.saveGroup(group(b, 'Same')); // same slug + same first-8 hex → guard lengthens idseg
+      const names = await fs.readDirectory('.annotations/groups');
+      expect(names.length).toBe(2);
+      expect((await store.getGroup(a))?.title).toBe('Same');
+      expect((await store.getGroup(b))?.title).toBe('Same');
+    });
+
+    it('falls back to untitled for an empty title', async () => {
+      await store.saveGroup(group(UID, ''));
+      expect(await fs.exists('.annotations/groups/untitled-550e8400.json')).toBe(true);
     });
   });
 });
