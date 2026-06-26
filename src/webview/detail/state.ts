@@ -2,6 +2,7 @@ import { writable } from 'svelte/store';
 import { initialDetailState, applyDetailMessage, openAnnotation as openAnnotationState, backToGroup as backToGroupState, type DetailState } from '../../core/detailState';
 import { type HostToDetail } from '../../shared/protocol';
 import { postToHost } from './vscodeApi';
+import { type LineRange } from '../../shared/model';
 
 export const detail = writable<DetailState>(initialDetailState());
 
@@ -79,4 +80,14 @@ export function deleteComment(commentId: string): void {
 /** Add a comment to the current group itself (host attributes + persists). */
 export function addGroupComment(content: string): void {
   postToHost({ type: 'addGroupComment', content });
+}
+
+/** Open a local link target in the editor. Does NOT change the annotation view. */
+export function openLocalLink(file: string, range: LineRange): void {
+  postToHost({ type: 'openLocalLink', file, startLine: range.startLine, endLine: range.endLine });
+}
+
+/** Re-reveal the current annotation's own code (reuses the selectAnnotation reveal path). */
+export function refocusCode(annotationId: string): void {
+  postToHost({ type: 'selectAnnotation', annotationId });
 }

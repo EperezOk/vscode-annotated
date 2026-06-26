@@ -3,7 +3,7 @@
   import {
     detail, openAnnotationView, showGroupView, saveAnnotationContent, copyToClipboard,
     renameGroup, requestEditTags, requestEditGitRef, saveAnnotationRange, reorderAnnotations, setGroupStatus,
-    addComment, editComment, deleteComment, addGroupComment,
+    addComment, editComment, deleteComment, addGroupComment, openLocalLink, refocusCode,
   } from './state';
   import { postToHost } from './vscodeApi';
   import AnnotationView from './AnnotationView.svelte';
@@ -43,6 +43,8 @@
         onaddcomment={(id, content) => addComment(id, content)}
         oneditcomment={(id, content) => editComment(id, content)}
         ondeletecomment={(id) => deleteComment(id)}
+        onlocallink={(file, range) => openLocalLink(file, range)}
+        onrevealcode={(id) => refocusCode(id)}
       />
     {/key}
   {:else}
