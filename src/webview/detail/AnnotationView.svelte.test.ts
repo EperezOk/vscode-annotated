@@ -13,12 +13,12 @@ function annotation(content: string): Annotation {
 }
 
 describe('AnnotationView', () => {
-  it('shows a preview and basename:range (full path on hover) for a non-empty annotation', () => {
+  it('shows a preview and basename:range (full path + copy hint on hover) for a non-empty annotation', () => {
     render(AnnotationView, { annotation: annotation('# Note') });
     expect(screen.getByTestId('md-preview')).toBeInTheDocument();
     const loc = screen.getByTestId('annotation-loc');
     expect(loc.textContent).toBe('x.ts:2–4');
-    expect(loc).toHaveAttribute('title', 'src/x.ts:2–4');
+    expect(loc).toHaveAttribute('title', 'Click to copy · src/x.ts:2–4');
     expect(screen.queryByTestId('md-editor')).toBeNull();
   });
 
@@ -28,7 +28,7 @@ describe('AnnotationView', () => {
     });
     const loc = screen.getByTestId('annotation-loc');
     expect(loc.textContent).toBe('x.ts:7');
-    expect(loc).toHaveAttribute('title', 'src/x.ts:7');
+    expect(loc).toHaveAttribute('title', 'Click to copy · src/x.ts:7');
   });
 
   it('starts in edit mode for an empty annotation', () => {
@@ -127,13 +127,21 @@ describe('AnnotationView', () => {
     expect(btn).toHaveTextContent('Copied');
   });
 
-  it('shows transient "Copied" feedback after copying the path (and still calls oncopyloc)', async () => {
+  it('copies the path by clicking the location, with transient "Copied" feedback (no separate path button)', async () => {
     const oncopyloc = vi.fn();
     render(AnnotationView, { annotation: annotation('# Note'), oncopyloc });
-    const btn = screen.getByTestId('copy-loc-btn');
-    await userEvent.click(btn);
+    expect(screen.queryByTestId('copy-loc-btn')).toBeNull();
+    const loc = screen.getByTestId('annotation-loc');
+    await userEvent.click(loc);
     expect(oncopyloc).toHaveBeenCalledWith('src/x.ts:2–4');
-    expect(btn).toHaveTextContent('Copied');
+    expect(loc).toHaveTextContent('Copied');
+  });
+
+  it('renders edit-range as an icon button with a descriptive tooltip', () => {
+    render(AnnotationView, { annotation: annotation('# Note') });
+    const editRange = screen.getByTestId('edit-range-btn');
+    expect(editRange).toHaveTextContent('✎');
+    expect(editRange).toHaveAttribute('title', 'Edit line range');
   });
 
   it('Cancel discards edits, restores the preview, and does not call onsave', async () => {

@@ -111,11 +111,10 @@
       </span>
       <button type="button" class="link" data-testid="save-range-btn" onclick={saveRange}>save</button>
     {:else}
-      <span class="loc" data-testid="annotation-loc" title={location}>{shortLocation}</span>
-      <button type="button" class="link" data-testid="edit-range-btn" onclick={startRangeEdit}>edit range</button>
+      <button type="button" class="loc loc-copy" data-testid="annotation-loc" title={`Click to copy · ${location}`} onclick={copyPath}>{copiedPath ? '✓ Copied' : shortLocation}</button>
+      <button type="button" class="icon-btn" data-testid="edit-range-btn" title="Edit line range" onclick={startRangeEdit}>✎</button>
     {/if}
-    <button type="button" class="link" data-testid="refocus-btn" onclick={() => onrevealcode?.(annotation.id)}>↩ Refocus code</button>
-    <button type="button" class="link" data-testid="copy-loc-btn" onclick={copyPath}>{copiedPath ? '✓ Copied' : '⧉ path'}</button>
+    <button type="button" class="link refocus" data-testid="refocus-btn" onclick={() => onrevealcode?.(annotation.id)}>↩ Refocus code</button>
   </div>
 
   <div class="nav" data-testid="nav-bar">
@@ -155,7 +154,13 @@
 <style>
   .annotation-view { padding: 4px 2px; }
   .bar { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-  .loc { flex: 1; font-family: monospace; font-size: 11px; color: var(--vscode-descriptionForeground, #9a9a9a); }
+  .loc { font-family: monospace; font-size: 11px; color: var(--vscode-descriptionForeground, #9a9a9a); }
+  /* The location doubles as the "copy path" affordance: click to copy, hover brightens + underlines. */
+  .loc-copy { background: none; border: none; padding: 0; cursor: pointer; text-align: left; }
+  .loc-copy:hover { color: var(--vscode-foreground, #ccc); text-decoration: underline; }
+  .icon-btn { background: none; border: none; color: var(--vscode-descriptionForeground, #9a9a9a); cursor: pointer; font-size: 13px; line-height: 1; padding: 0; }
+  .icon-btn:hover { color: var(--vscode-foreground, #ccc); }
+  .refocus { margin-left: auto; }
   .link { background: none; border: none; color: var(--vscode-textLink-foreground, #3794ff); cursor: pointer; font-size: 11.5px; padding: 0; }
   .toolbar { display: flex; gap: 6px; margin-bottom: 8px; }
   .btn { background: var(--vscode-button-background, #0e639c); color: var(--vscode-button-foreground, #fff); border: none; border-radius: 3px; padding: 4px 10px; font-size: 11.5px; cursor: pointer; }
