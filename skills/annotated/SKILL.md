@@ -45,7 +45,7 @@ without re-asking. Full steps: `references/operations.md` §0.
   only what you authored** (groups whose `author` is your identity, and your own comment file).
   Never modify or delete a human's group or another author's comments.
 - **Hash honesty.** Always compute `contentHash` with the documented recipe — never a placeholder.
-- **Uphold the invariants.** Group `id` == filename stem; comment filename == author slug;
+- **Uphold the invariants.** Group filename is `<title-slug>-<idseg>.json` (the extension keys off the in-file `id`, not the name); comment filename == author slug;
   1-based integer line ranges; epoch-**second** timestamps; 2-space JSON with no trailing newline.
 - **Read fresh before write.** The extension reloads files live; re-read a file right before
   mutating it to avoid clobbering concurrent edits.

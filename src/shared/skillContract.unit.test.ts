@@ -18,6 +18,7 @@ import { TAG_SWATCHES } from '../core/tags';
 
 const CONTRACT_DOC = 'skills/annotated/references/data-contract.md';
 const OPERATIONS_DOC = 'skills/annotated/references/operations.md';
+const SKILL_DOC = 'skills/annotated/SKILL.md';
 
 // Canonical node-free content-hash recipe. The doc MUST embed this verbatim, and it MUST hash
 // identically to sha256Hex(anchorText(...)). $FILE/$START/$END are env vars.
@@ -201,5 +202,16 @@ describe('annotated contract: title slug recipe parity + doc embed', () => {
   it('data-contract.md embeds the exact TITLE_SLUG_RECIPE', () => {
     const doc = readFileSync(CONTRACT_DOC, 'utf8');
     expect(doc.includes(TITLE_SLUG_RECIPE)).toBe(true);
+  });
+});
+
+describe('annotated contract: SKILL.md group-filename naming is current', () => {
+  it('SKILL.md does not contain the stale "filename stem" invariant', () => {
+    const doc = readFileSync(SKILL_DOC, 'utf8');
+    expect(doc.toLowerCase()).not.toContain('filename stem');
+  });
+  it('SKILL.md references the new <title-slug>-<idseg>.json naming', () => {
+    const doc = readFileSync(SKILL_DOC, 'utf8');
+    expect(doc).toMatch(/title-slug|idseg/);
   });
 });
