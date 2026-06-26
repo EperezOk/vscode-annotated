@@ -36,9 +36,28 @@
     if (!loc) {
       return;
     }
+    // stopPropagation is the load-bearing call: VS Code's webview registers a window-level click
+    // handler that opens ANY anchor's resolved href in a new browser tab and ignores
+    // preventDefault — so the event must not reach it. We listen in the CAPTURE phase (below) so
+    // we run before that bubble handler. preventDefault additionally stops the iframe from
+    // navigating to the relative href itself.
     event.preventDefault();
+    event.stopPropagation();
     onlocallink(loc.file, loc.range);
   }
+
+  // Attach in the CAPTURE phase: capture descends from window before any bubble handler runs, so
+  // this fires ahead of VS Code's window-level link handler, and stopPropagation keeps the click
+  // from ever reaching it. A bubble handler here would be too late (the window handler is an
+  // ancestor and the delegated-vs-native ordering is fragile).
+  $effect(() => {
+    const el = container;
+    if (!el) {
+      return;
+    }
+    el.addEventListener('click', onClick, true);
+    return () => el.removeEventListener('click', onClick, true);
+  });
 
   // After each render, mark local-link anchors with a class + tooltip (the visual cue).
   // Active only when navigation is wired (annotation body); comments render plain.
@@ -57,9 +76,7 @@
   });
 </script>
 
-<!-- svelte-ignore a11y_no_static_element_interactions -->
-<!-- svelte-ignore a11y_click_events_have_key_events -->
-<div class="md-preview" data-testid="md-preview" bind:this={container} onclick={onClick}>{@html html}</div>
+<div class="md-preview" data-testid="md-preview" bind:this={container}>{@html html}</div>
 
 <style>
   .md-preview { font-size: 13px; line-height: 1.5; }

@@ -51,4 +51,33 @@ describe('MarkdownPreview', () => {
     await tick();
     expect(container.querySelector('a.local-link')).toBeNull();
   });
+
+  // VS Code's webview registers a window-level click handler that opens ANY anchor as an external
+  // link and does NOT honour preventDefault — so a local-link click must STOP PROPAGATION before it
+  // bubbles out, or the file opens in a new browser tab. `globalClick` stands in for that handler.
+  it('stops a local-link click from bubbling to a window-level handler (and prevents default)', async () => {
+    const onlocallink = vi.fn();
+    const globalClick = vi.fn();
+    window.addEventListener('click', globalClick);
+    try {
+      render(MarkdownPreview, { source: '[local](src/x.ts#L5)', onlocallink });
+      await userEvent.click(screen.getByText('local'));
+      expect(onlocallink).toHaveBeenCalledWith('src/x.ts', { startLine: 5, endLine: 5 });
+      expect(globalClick).not.toHaveBeenCalled();
+    } finally {
+      window.removeEventListener('click', globalClick);
+    }
+  });
+
+  it('lets an external-link click bubble through (so the webview can open it in the browser)', async () => {
+    const globalClick = vi.fn();
+    window.addEventListener('click', globalClick);
+    try {
+      render(MarkdownPreview, { source: '[ext](https://example.com)', onlocallink: () => {} });
+      await userEvent.click(screen.getByText('ext'));
+      expect(globalClick).toHaveBeenCalled();
+    } finally {
+      window.removeEventListener('click', globalClick);
+    }
+  });
 });
