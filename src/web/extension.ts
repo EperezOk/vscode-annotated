@@ -7,7 +7,7 @@ import { VscodeFileSystem } from './vscodeFileSystem';
 import { displayPalette, reconcileWorkspaceTags, pickTagsWithNewOption } from './tagPalette';
 import { manageTags } from './tagAdminCommand';
 import { commonTagNames, partialTagNames, bulkTagPatches } from '../core/tagAdmin';
-import { revealAnnotation, clearHighlight } from './navigateToCode';
+import { revealAnnotation, revealLocation, clearAllHighlights } from './navigateToCode';
 import { readGitRefInfo } from './gitRefsSource';
 import { gitRefSuggestions } from '../core/gitRefs';
 import { computeStaleIds } from './staleness';
@@ -208,7 +208,13 @@ export function activate(context: vscode.ExtensionContext): void {
     }
   };
   detailProvider.onNavigationClosed = (): void => {
-    clearHighlight();
+    clearAllHighlights();
+  };
+  detailProvider.onOpenLocalLink = (file, startLine, endLine): void => {
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    if (folder) {
+      void revealLocation(folder.uri, file, { startLine, endLine });
+    }
   };
 
   detailProvider.onUpdateAnnotation = async (groupId, annotationId, content): Promise<void> => {

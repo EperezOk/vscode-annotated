@@ -23,6 +23,9 @@ export class DetailPanelProvider implements vscode.WebviewViewProvider {
   /** Set by the extension to persist an annotation's edited content. */
   public onUpdateAnnotation?: (groupId: string, annotationId: string, content: string) => void;
 
+  /** Set by the extension: open a local-link target in the editor (no annotation-view change). */
+  public onOpenLocalLink?: (file: string, startLine: number, endLine: number) => void;
+
   /** Set by the extension: rename the active group. */
   public onSetGroupTitle?: (groupId: string, title: string) => void;
   /** Set by the extension: edit the active group's tags (native picker). */
@@ -83,6 +86,8 @@ export class DetailPanelProvider implements vscode.WebviewViewProvider {
         if (this.group) {
           this.onUpdateAnnotationRange?.(this.group.id, message.annotationId, message.startLine, message.endLine);
         }
+      } else if (message.type === 'openLocalLink') {
+        this.onOpenLocalLink?.(message.file, message.startLine, message.endLine);
       } else if (message.type === 'copyText') {
         void vscode.env.clipboard.writeText(message.text);
       } else if (message.type === 'navigationClosed') {
