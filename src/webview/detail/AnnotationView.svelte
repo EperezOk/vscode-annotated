@@ -145,6 +145,7 @@
   <CommentThread
     comments={comments ?? []}
     currentAuthor={currentAuthor ?? ''}
+    {onlocallink}
     onadd={(content) => onaddcomment?.(annotation.id, content)}
     onedit={(id, content) => oneditcomment?.(id, content)}
     ondelete={(id) => ondeletecomment?.(id)}

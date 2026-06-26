@@ -174,4 +174,16 @@ describe('AnnotationView', () => {
     await userEvent.click(screen.getByText('helper'));
     expect(onlocallink).toHaveBeenCalledWith('src/core/foo.ts', { startLine: 10, endLine: 20 });
   });
+
+  it('forwards onlocallink to the comment thread (local link in a comment bubbles up)', async () => {
+    const onlocallink = vi.fn();
+    render(AnnotationView, {
+      annotation: annotation('# Note'),
+      comments: [{ id: 'c1', annotationId: 'a1', author: 'Ana', content: 'see [helper](src/core/foo.ts#L10-L20)', timestamp: 100 }],
+      currentAuthor: 'Me',
+      onlocallink,
+    });
+    await userEvent.click(screen.getByText('helper'));
+    expect(onlocallink).toHaveBeenCalledWith('src/core/foo.ts', { startLine: 10, endLine: 20 });
+  });
 });

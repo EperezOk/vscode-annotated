@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { type AnnotationGroup, type GroupStatus, type ThreadComment } from '../../shared/model';
+  import { type AnnotationGroup, type GroupStatus, type LineRange, type ThreadComment } from '../../shared/model';
   import { type TagColor } from '../../shared/protocol';
   import { tagColor } from '../../core/sidebarState';
   import { contrastColor } from '../../shared/color';
@@ -24,6 +24,7 @@
     onaddgroupcomment,
     oneditcomment,
     ondeletecomment,
+    onlocallink,
   }: {
     group: AnnotationGroup;
     palette: TagColor[];
@@ -39,6 +40,7 @@
     onaddgroupcomment?: (content: string) => void;
     oneditcomment?: (commentId: string, content: string) => void;
     ondeletecomment?: (commentId: string) => void;
+    onlocallink?: (file: string, range: LineRange) => void;
   } = $props();
 
   let editingTitle = $state(false);
@@ -144,6 +146,7 @@
   <CommentThread
     comments={groupComments}
     {currentAuthor}
+    {onlocallink}
     onadd={(content) => onaddgroupcomment?.(content)}
     onedit={(id, content) => oneditcomment?.(id, content)}
     ondelete={(id) => ondeletecomment?.(id)}

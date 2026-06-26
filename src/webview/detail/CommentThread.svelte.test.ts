@@ -134,4 +134,14 @@ describe('CommentThread', () => {
     expect(onedit).not.toHaveBeenCalled();
     expect(screen.queryByTestId('md-editor')).toBeNull();
   });
+
+  it('forwards a local-link click in a comment body to onlocallink', async () => {
+    const onlocallink = vi.fn();
+    const withLink: ThreadComment[] = [
+      { id: 'c1', annotationId: 'a1', author: 'Ana', content: 'see [helper](src/core/foo.ts#L10-L20)', timestamp: 100 },
+    ];
+    render(CommentThread, { comments: withLink, currentAuthor: 'Me', now: 200, onlocallink });
+    await userEvent.click(screen.getByText('helper'));
+    expect(onlocallink).toHaveBeenCalledWith('src/core/foo.ts', { startLine: 10, endLine: 20 });
+  });
 });

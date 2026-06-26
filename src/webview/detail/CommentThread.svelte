@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { type ThreadComment } from '../../shared/model';
+  import { type LineRange, type ThreadComment } from '../../shared/model';
   import { relativeTime } from '../../core/comments';
   import { authorHue } from '../../shared/color';
   import MarkdownPreview from './MarkdownPreview.svelte';
@@ -12,6 +12,7 @@
     onadd,
     onedit,
     ondelete,
+    onlocallink,
   }: {
     comments: ThreadComment[];
     currentAuthor: string;
@@ -19,6 +20,7 @@
     onadd?: (content: string) => void;
     onedit?: (commentId: string, content: string) => void;
     ondelete?: (commentId: string) => void;
+    onlocallink?: (file: string, range: LineRange) => void;
   } = $props();
 
   let replying = $state(false);
@@ -67,7 +69,7 @@
           <button type="button" class="btn ghost" data-testid="comment-cancel-btn" onclick={() => (editingId = null)}>Cancel</button>
         </div>
       {:else}
-        <MarkdownPreview source={c.content} />
+        <MarkdownPreview source={c.content} {onlocallink} />
       {/if}
     </div>
   {/each}

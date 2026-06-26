@@ -63,6 +63,7 @@
       onaddgroupcomment={(content) => addGroupComment(content)}
       oneditcomment={(id, content) => editComment(id, content)}
       ondeletecomment={(id) => deleteComment(id)}
+      onlocallink={(file, range) => openLocalLink(file, range)}
     />
   {/if}
 </main>

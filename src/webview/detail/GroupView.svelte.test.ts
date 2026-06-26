@@ -151,6 +151,16 @@ describe('GroupView', () => {
     expect(onaddgroupcomment).toHaveBeenCalledWith('hi');
   });
 
+  it('forwards onlocallink to the group comment thread (local link in a comment bubbles up)', async () => {
+    const onlocallink = vi.fn();
+    render(GroupView, {
+      group: group(), palette, currentAuthor: 'Me', onlocallink,
+      comments: [{ id: 'c1', groupId: 'g1', author: 'Ana', content: 'see [helper](src/core/foo.ts#L10-L20)', timestamp: 100 }],
+    });
+    await userEvent.click(screen.getByText('helper'));
+    expect(onlocallink).toHaveBeenCalledWith('src/core/foo.ts', { startLine: 10, endLine: 20 });
+  });
+
   it('shows per-annotation comment counts on rows', () => {
     render(GroupView, {
       group: group(), palette,
