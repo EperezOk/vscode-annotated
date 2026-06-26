@@ -1,8 +1,10 @@
 <script lang="ts">
   import MarkdownIt from 'markdown-it';
   import DOMPurify from 'dompurify';
+  import { parseLocationLink } from '../../shared/locationLink';
+  import { formatLineRange, type LineRange } from '../../shared/model';
 
-  let { source }: { source: string } = $props();
+  let { source, onlocallink }: { source: string; onlocallink?: (file: string, range: LineRange) => void } = $props();
 
   const md = new MarkdownIt({ html: true, linkify: true, typographer: true });
 
@@ -17,9 +19,47 @@
       ALLOW_DATA_ATTR: false,
     }),
   );
+
+  let container: HTMLDivElement;
+
+  // Read the raw href attribute (not a.href, which the webview resolves to an absolute URL).
+  function localLinkFor(a: HTMLAnchorElement): { file: string; range: LineRange } | null {
+    return parseLocationLink(a.getAttribute('href') ?? '');
+  }
+
+  function onClick(event: MouseEvent): void {
+    if (!onlocallink) {
+      return;
+    }
+    const a = (event.target as HTMLElement).closest('a');
+    const loc = a ? localLinkFor(a) : null;
+    if (!loc) {
+      return;
+    }
+    event.preventDefault();
+    onlocallink(loc.file, loc.range);
+  }
+
+  // After each render, mark local-link anchors with a class + tooltip (the visual cue).
+  // Active only when navigation is wired (annotation body); comments render plain.
+  $effect(() => {
+    html; // re-run when the rendered markup changes
+    if (!onlocallink || !container) {
+      return;
+    }
+    for (const a of Array.from(container.querySelectorAll('a'))) {
+      const loc = localLinkFor(a);
+      if (loc) {
+        a.classList.add('local-link');
+        a.title = `${loc.file}:${formatLineRange(loc.range)}`;
+      }
+    }
+  });
 </script>
 
-<div class="md-preview" data-testid="md-preview">{@html html}</div>
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<!-- svelte-ignore a11y_click_events_have_key_events -->
+<div class="md-preview" data-testid="md-preview" bind:this={container} onclick={onClick}>{@html html}</div>
 
 <style>
   .md-preview { font-size: 13px; line-height: 1.5; }
@@ -28,4 +68,7 @@
   .md-preview :global(code) { background: var(--vscode-textCodeBlock-background, #333); padding: 1px 4px; border-radius: 3px; }
   .md-preview :global(pre) { background: var(--vscode-textCodeBlock-background, #1e1e1e); padding: 8px; border-radius: 4px; overflow-x: auto; }
   .md-preview :global(a) { color: var(--vscode-textLink-foreground, #3794ff); }
+  /* Local (code) link cue: a leading glyph + dotted underline so it reads apart from web links. */
+  :global(.md-preview a.local-link) { text-decoration-style: dotted; }
+  :global(.md-preview a.local-link)::before { content: '⤷ '; opacity: 0.75; }
 </style>
