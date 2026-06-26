@@ -2,21 +2,18 @@ import { EditorView, type KeyBinding } from '@codemirror/view';
 import { EditorSelection, type EditorState, type Extension, type TransactionSpec } from '@codemirror/state';
 import { HighlightStyle } from '@codemirror/language';
 import { tags as t } from '@lezer/highlight';
-import { isUrl, linkSelection, toggleMarker } from '../../core/markdownTransforms';
+import { linkPasteEdit, toggleMarker } from '../../core/markdownTransforms';
 
-/** Select text + paste an http(s) URL → wrap the selection as a Markdown link. */
+/** Paste an http(s) URL or a local-link location over a selection → wrap as a Markdown link. */
 export const urlPasteHandler: Extension = EditorView.domEventHandlers({
   paste(event, view) {
-    const text = event.clipboardData?.getData('text/plain')?.trim() ?? '';
-    if (!text || !isUrl(text)) {
-      return false;
-    }
+    const text = event.clipboardData?.getData('text/plain') ?? '';
     const { main } = view.state.selection;
-    if (main.empty) {
+    const result = linkPasteEdit(view.state.doc.toString(), main.from, main.to, text);
+    if (!result) {
       return false;
     }
     event.preventDefault();
-    const result = linkSelection(view.state.doc.toString(), main.from, main.to, text);
     view.dispatch({
       changes: { from: 0, to: view.state.doc.length, insert: result.doc },
       selection: EditorSelection.range(result.selectionFrom, result.selectionTo),

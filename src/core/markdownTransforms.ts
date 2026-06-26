@@ -1,3 +1,5 @@
+import { isLocationLink } from '../shared/locationLink';
+
 /** True for an http(s) URL. */
 export function isUrl(text: string): boolean {
   try {
@@ -22,6 +24,24 @@ export function linkSelection(
     selectionFrom: from,
     selectionTo: from + replacement.length,
   };
+}
+
+/**
+ * Paste-over-selection decision: when `pasted` (trimmed) is an http(s) URL or a local link
+ * target and a non-empty selection exists, the wrapped-link edit; otherwise null (paste falls
+ * through to default). Pure — shared by the editor's paste handler.
+ */
+export function linkPasteEdit(
+  doc: string,
+  from: number,
+  to: number,
+  pasted: string,
+): { doc: string; selectionFrom: number; selectionTo: number } | null {
+  const text = pasted.trim();
+  if (from >= to || !(isUrl(text) || isLocationLink(text))) {
+    return null;
+  }
+  return linkSelection(doc, from, to, text);
 }
 
 /** A toggle edit: change ops in ORIGINAL-doc coordinates + the resulting selection. */

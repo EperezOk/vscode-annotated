@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isUrl, linkSelection, toggleMarker, type MarkerEdit } from './markdownTransforms';
+import { isUrl, linkSelection, toggleMarker, linkPasteEdit, type MarkerEdit } from './markdownTransforms';
 
 describe('isUrl', () => {
   it('accepts http/https URLs', () => {
@@ -100,5 +100,23 @@ describe('toggleMarker', () => {
     const r = apply('`foo`', toggleMarker('`foo`', 1, 4, '`'));
     expect(r.doc).toBe('foo');
     expect(r.sel).toBe('foo');
+  });
+});
+
+describe('linkPasteEdit', () => {
+  it('wraps a selection with a pasted http URL', () => {
+    expect(linkPasteEdit('see foo bar', 4, 7, 'https://e.com')).toEqual({
+      doc: 'see [foo](https://e.com) bar', selectionFrom: 4, selectionTo: 24,
+    });
+  });
+  it('wraps a selection with a pasted local location (trimmed)', () => {
+    const r = linkPasteEdit('see foo bar', 4, 7, '  src/x.ts#L10-L20  ');
+    expect(r).toEqual({ doc: 'see [foo](src/x.ts#L10-L20) bar', selectionFrom: 4, selectionTo: 27 });
+  });
+  it('returns null when there is no selection (from === to)', () => {
+    expect(linkPasteEdit('see foo', 4, 4, 'src/x.ts#L1')).toBeNull();
+  });
+  it('returns null when the pasted text is neither a URL nor a location', () => {
+    expect(linkPasteEdit('see foo bar', 4, 7, 'just text')).toBeNull();
   });
 });
