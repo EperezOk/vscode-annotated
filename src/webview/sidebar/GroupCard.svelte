@@ -76,11 +76,13 @@
   .title {
     font-weight: 600;
     font-size: 12.5px;
+    overflow-wrap: break-word;
   }
   .meta {
     color: var(--vscode-descriptionForeground, #9a9a9a);
     font-size: 11px;
     margin-top: 2px;
+    overflow-wrap: break-word;
   }
   .chips {
     display: flex;
@@ -92,6 +94,7 @@
     font-size: 10px;
     padding: 1px 7px;
     border-radius: 9px;
+    overflow-wrap: break-word;
   }
   .bulk-cb { margin-right: 6px; pointer-events: none; vertical-align: middle; }
 </style>
