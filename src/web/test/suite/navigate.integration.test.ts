@@ -53,7 +53,10 @@ suite('navigate-to-code', () => {
     if (!folder) {
       throw new Error('No workspace folder');
     }
-    const absoluteFile = `${folder.uri.path}/README.md`;
+    // Build a canonical in-workspace ABSOLUTE path. Uri.joinPath is host-robust: naive
+    // `${folder.uri.path}/README.md` doubles the slash when the workspace root path is "/"
+    // (as it is under @vscode/test-web's vscode-test-web://mount/).
+    const absoluteFile = vscode.Uri.joinPath(folder.uri, 'README.md').path;
     const annotation: Annotation = {
       id: 'nav-abs-inside',
       file: absoluteFile,
@@ -106,7 +109,10 @@ suite('navigate-to-code', () => {
     try {
       const annotation: Annotation = {
         id: 'nav-abs-outside',
-        file: '/tmp/elsewhere.ts',
+        // A workspace-escaping absolute path. A ".." escape (rather than a sibling dir like
+        // "/tmp/…") is rejected on ANY host — including @vscode/test-web, whose workspace-root
+        // path is "/", under which every non-escaping absolute path is technically "inside".
+        file: '/../../etc/passwd',
         range: { startLine: 1, endLine: 1 },
         content: '',
         contentHash: 'h',
