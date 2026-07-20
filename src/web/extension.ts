@@ -24,6 +24,10 @@ import { annotationsAtLine } from '../core/gutterIndicators';
 import { GutterDecorationManager } from './gutterDecorations';
 import { debounce } from '../shared/debounce';
 
+interface GitRefQuickPickItem extends vscode.QuickPickItem {
+  ref?: string;
+}
+
 export function activate(context: vscode.ExtensionContext): void {
   const provider = new SidebarViewProvider(context.extensionUri);
   context.subscriptions.push(
@@ -176,8 +180,12 @@ export function activate(context: vscode.ExtensionContext): void {
     const suggestions = gitRefSuggestions(info);
     const CLEAR = '$(close) Clear';
     const CUSTOM = '$(edit) Custom…';
-    const picked = await vscode.window.showQuickPick(
-      [{ label: CLEAR }, { label: CUSTOM }, ...suggestions.map((s) => ({ label: s.label, description: s.description }))],
+    const picked = await vscode.window.showQuickPick<GitRefQuickPickItem>(
+      [
+        { label: CLEAR },
+        { label: CUSTOM },
+        ...suggestions.map((s) => ({ label: s.label, description: s.description, ref: s.ref })),
+      ],
       { placeHolder: `Set the Git ref on ${groupIds.length} group(s)` },
     );
     if (!picked) {
@@ -193,7 +201,7 @@ export function activate(context: vscode.ExtensionContext): void {
       }
       gitRef = custom.trim() === '' ? null : custom.trim();
     } else {
-      gitRef = picked.label;
+      gitRef = picked.ref ?? picked.label;
     }
     const store = new GroupStore(new VscodeFileSystem(folder.uri));
     for (const id of groupIds) {
@@ -276,8 +284,12 @@ export function activate(context: vscode.ExtensionContext): void {
     if (suggestions.length > 0) {
       const CUSTOM = '$(edit) Custom…';
       const CLEAR = '$(close) Clear';
-      const picked = await vscode.window.showQuickPick(
-        [{ label: CLEAR }, { label: CUSTOM }, ...suggestions.map((s) => ({ label: s.label, description: s.description }))],
+      const picked = await vscode.window.showQuickPick<GitRefQuickPickItem>(
+        [
+          { label: CLEAR },
+          { label: CUSTOM },
+          ...suggestions.map((s) => ({ label: s.label, description: s.description, ref: s.ref })),
+        ],
         { placeHolder: 'Set the group’s Git ref' },
       );
       if (!picked) {
@@ -287,7 +299,7 @@ export function activate(context: vscode.ExtensionContext): void {
         await patchGroup(groupId, { gitRef: null });
         return;
       }
-      ref = picked.label === CUSTOM ? await vscode.window.showInputBox({ prompt: 'Git ref (branch / tag / SHA)' }) : picked.label;
+      ref = picked.label === CUSTOM ? await vscode.window.showInputBox({ prompt: 'Git ref (branch / tag / SHA)' }) : (picked.ref ?? picked.label);
     } else {
       ref = await vscode.window.showInputBox({ prompt: 'Git ref (branch / tag / SHA), or empty to clear' });
     }
