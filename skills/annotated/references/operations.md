@@ -58,6 +58,13 @@ Resolve your `agentName` per §0 first (ask the user if it's unset) — it becom
 
 1. For each annotation, gather `file` (workspace-relative POSIX), 1-based inclusive `range`,
    and markdown `content`. Compute `contentHash` via the hash recipe with that `file`/range.
+   - **Reference other code with local links instead of extra annotations.** When a
+     note needs to point at a *different* location (a call site, a related type,
+     prior art), embed a local link `[label](path/to/file.ts#L10-L20)` in the
+     `content` rather than creating a separate annotation just to point there. Keep
+     the annotation's own `file`/`range` for the code the note is *about*. Paths are
+     workspace-relative POSIX; line ranges are 1-based inclusive. See
+     `data-contract.md` → "Local links in annotation content".
 2. **Choose the group's tag(s) — ask the user.** Gather the existing tags from `annotated.tags`
    (workspace then global config) and from existing `.annotations/groups/*.json` (dedup by
    `name`) and offer them as suggestions. Ask which to apply: one or more existing tags and/or a

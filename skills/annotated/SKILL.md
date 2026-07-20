@@ -22,6 +22,10 @@ annotations/threads, **reply** in a thread (annotation threads and group-level t
    `contentHash` recipe right — a wrong hash makes your annotation render "stale."**
 2. Read `references/operations.md` for the step-by-step recipe for the operation at hand
    (surf / reply / create / manage-own / config).
+3. When composing annotation `content`, use **local links**
+   (`[label](path/to/file.ts#L10-L20)`) to reference other code locations instead
+   of adding extra annotations — see `references/data-contract.md` → "Local links
+   in annotation content".
 
 ## Identity
 

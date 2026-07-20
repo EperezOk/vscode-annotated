@@ -152,6 +152,18 @@ describe('annotated contract: doc covers group comments', () => {
   });
 });
 
+describe('annotated contract: docs cover local links', () => {
+  it('data-contract.md documents the local-link line fragment', () => {
+    const doc = readFileSync(CONTRACT_DOC, 'utf8');
+    expect(doc).toMatch(/#L10-L20/);
+  });
+  it('operations.md documents authoring local links', () => {
+    const ops = readFileSync(OPERATIONS_DOC, 'utf8');
+    expect(ops).toMatch(/#L/);
+    expect(ops.toLowerCase()).toMatch(/local link/);
+  });
+});
+
 describe('annotated contract: tag swatch palette parity', () => {
   // operations.md tells the agent to convert a color *name* to a hex itself, matching the
   // extension's built-in swatches. Keep that list in lockstep with TAG_SWATCHES (src/core/tags).
