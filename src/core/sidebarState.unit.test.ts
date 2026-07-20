@@ -1,14 +1,14 @@
 import { describe, it, expect } from 'vitest';
-import { initialSidebarState, applyHostMessage, tagColor, filterGroups, availableTags, availableAuthors, toggleInList, bulkStatusToggle, filterOptions } from './sidebarState';
+import { initialSidebarState, applyHostMessage, tagColor, filterGroups, availableTags, availableAuthors, availableGitRefs, toggleInList, bulkStatusToggle, filterOptions } from './sidebarState';
 import { type AnnotationGroup } from '../shared/model';
 
 function group(
   id: string,
-  opts: { author?: string; tags?: { name: string; color: string }[]; status?: 'open' | 'resolved' } = {},
+  opts: { author?: string; tags?: { name: string; color: string }[]; status?: 'open' | 'resolved'; gitRef?: string } = {},
 ): AnnotationGroup {
   return {
     id, title: id, author: opts.author ?? 'A', tags: opts.tags ?? [],
-    gitRef: null, status: opts.status ?? 'open', createdAt: 1, updatedAt: 1, annotations: [],
+    gitRef: opts.gitRef ?? null, status: opts.status ?? 'open', createdAt: 1, updatedAt: 1, annotations: [],
   };
 }
 
@@ -16,7 +16,7 @@ describe('initialSidebarState', () => {
   it('is empty with no selection and no filters', () => {
     expect(initialSidebarState()).toEqual({
       groups: [], palette: [], selectedId: null,
-      selectedTags: [], selectedAuthors: [], showResolved: false,
+      selectedTags: [], selectedAuthors: [], selectedGitRefs: [], showResolved: false,
       bulkMode: false, selectedGroupIds: [], commentCounts: {},
     });
   });
@@ -67,6 +67,13 @@ describe('availableTags / availableAuthors', () => {
   });
 });
 
+describe('availableGitRefs', () => {
+  it('returns sorted, de-duplicated non-null git refs', () => {
+    const groups = [group('g1', { gitRef: 'main' }), group('g2', { gitRef: 'dev' }), group('g3', { gitRef: 'main' }), group('g4')];
+    expect(availableGitRefs(groups)).toEqual(['dev', 'main']);
+  });
+});
+
 describe('toggleInList', () => {
   it('adds a value that is absent', () => {
     expect(toggleInList(['a'], 'b')).toEqual(['a', 'b']);
@@ -110,6 +117,18 @@ describe('filterGroups', () => {
   });
 });
 
+describe('filterGroups by git ref', () => {
+  const base = initialSidebarState();
+  const groups = [group('on-main', { gitRef: 'main' }), group('on-dev', { gitRef: 'dev' }), group('no-ref')];
+  it('keeps only groups whose gitRef is selected', () => {
+    expect(filterGroups({ ...base, groups, selectedGitRefs: ['main'] }).map((g) => g.id)).toEqual(['on-main']);
+  });
+  it('ANDs the git-ref facet with authors', () => {
+    const g2 = [group('a-main', { author: 'Ana', gitRef: 'main' }), group('z-main', { author: 'Zoe', gitRef: 'main' })];
+    expect(filterGroups({ ...base, groups: g2, selectedGitRefs: ['main'], selectedAuthors: ['Ana'] }).map((g) => g.id)).toEqual(['a-main']);
+  });
+});
+
 describe('applyHostMessage preserves + prunes filters', () => {
   it('keeps showResolved and prunes selected tags/authors no longer present', () => {
     const state = {
@@ -126,6 +145,14 @@ describe('applyHostMessage preserves + prunes filters', () => {
     expect(next.selectedTags).toEqual(['security']);
     expect(next.selectedAuthors).toEqual(['Ana']);
     expect(next.showResolved).toBe(true);
+  });
+});
+
+describe('applyHostMessage prunes git-ref filter', () => {
+  it('drops selected git refs no longer present', () => {
+    const state = { ...initialSidebarState(), selectedGitRefs: ['main', 'gone'] };
+    const next = applyHostMessage(state, { type: 'setState', groups: [group('g1', { gitRef: 'main' })], palette: [] });
+    expect(next.selectedGitRefs).toEqual(['main']);
   });
 });
 

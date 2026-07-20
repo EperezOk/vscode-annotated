@@ -6,22 +6,28 @@
   let {
     tags,
     authors,
+    gitRefs,
     selectedTags,
     selectedAuthors,
+    selectedGitRefs,
     showResolved,
     palette = [],
     ontoggletag,
     ontoggleauthor,
+    ontogglegitref,
     onshowresolved,
   }: {
     tags: string[];
     authors: string[];
+    gitRefs: string[];
     selectedTags: string[];
     selectedAuthors: string[];
+    selectedGitRefs: string[];
     showResolved: boolean;
     palette?: TagColor[];
     ontoggletag?: (tag: string) => void;
     ontoggleauthor?: (author: string) => void;
+    ontogglegitref?: (ref: string) => void;
     onshowresolved?: (value: boolean) => void;
   } = $props();
 </script>
@@ -44,6 +50,15 @@
       selected={selectedAuthors}
       onToggle={ontoggleauthor}
       placeholder="Filter by author…"
+    />
+  {/if}
+  {#if gitRefs.length > 0}
+    <FilterPicker
+      label="Git ref"
+      options={gitRefs}
+      selected={selectedGitRefs}
+      onToggle={ontogglegitref}
+      placeholder="Filter by git ref…"
     />
   {/if}
   <label class="resolved-toggle">

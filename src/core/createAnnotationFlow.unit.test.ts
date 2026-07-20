@@ -15,6 +15,7 @@ function deps(overrides: Partial<CreateAnnotationDeps>): CreateAnnotationDeps {
     newId: () => 'id-1',
     now: () => 1000,
     hashContent: async () => 'HASH',
+    getGitRef: async () => null,
     showInfo: vi.fn(),
     showWarning: vi.fn(),
     ...overrides,
@@ -98,5 +99,28 @@ describe('runCreateAnnotation', () => {
     await runCreateAnnotation(deps({ listGroups: async () => [open, resolved], pickGroup }));
     expect(pickGroup).toHaveBeenCalledTimes(1);
     expect(pickGroup.mock.calls[0][0].map((g) => g.id)).toEqual(['g1']);
+  });
+
+  it('captures the current git ref on a new group', async () => {
+    const saveGroup = vi.fn<(group: AnnotationGroup) => Promise<void>>(async () => {});
+    await runCreateAnnotation(deps({ getGitRef: async () => 'feature/login', saveGroup }));
+    expect((saveGroup.mock.calls[0][0] as AnnotationGroup).gitRef).toBe('feature/login');
+  });
+
+  it('leaves gitRef null on a new group when no ref is available', async () => {
+    const saveGroup = vi.fn<(group: AnnotationGroup) => Promise<void>>(async () => {});
+    await runCreateAnnotation(deps({ getGitRef: async () => null, saveGroup }));
+    expect((saveGroup.mock.calls[0][0] as AnnotationGroup).gitRef).toBeNull();
+  });
+
+  it('does not capture a ref when appending to an existing group', async () => {
+    const existing = createGroup({ id: 'g1', title: 'Existing', author: 'A', tags: [], now: 1 });
+    const getGitRef = vi.fn(async () => 'feature/login');
+    const saveGroup = vi.fn<(group: AnnotationGroup) => Promise<void>>(async () => {});
+    await runCreateAnnotation(
+      deps({ listGroups: async () => [existing], pickGroup: async () => ({ kind: 'existing', id: 'g1' }), getGitRef, saveGroup }),
+    );
+    expect(getGitRef).not.toHaveBeenCalled();
+    expect((saveGroup.mock.calls[0][0] as AnnotationGroup).gitRef).toBeNull();
   });
 });

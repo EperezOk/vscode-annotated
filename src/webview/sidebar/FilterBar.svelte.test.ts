@@ -4,8 +4,8 @@ import { describe, it, expect, vi } from 'vitest';
 import FilterBar from './FilterBar.svelte';
 
 const base = {
-  tags: [] as string[], authors: [] as string[],
-  selectedTags: [] as string[], selectedAuthors: [] as string[],
+  tags: [] as string[], authors: [] as string[], gitRefs: [] as string[],
+  selectedTags: [] as string[], selectedAuthors: [] as string[], selectedGitRefs: [] as string[],
   showResolved: false, palette: [] as { name: string; color: string }[],
 };
 
@@ -31,6 +31,14 @@ describe('FilterBar', () => {
     await userEvent.click(screen.getByTestId('picker-input-Authors'));
     await userEvent.click(screen.getByRole('option', { name: 'Ana' }));
     expect(ontoggleauthor).toHaveBeenCalledWith('Ana');
+  });
+
+  it('toggles a git ref when chosen from the git ref picker', async () => {
+    const ontogglegitref = vi.fn();
+    render(FilterBar, { ...base, gitRefs: ['main'], ontogglegitref });
+    await userEvent.click(screen.getByTestId('picker-input-Git ref'));
+    await userEvent.click(screen.getByRole('option', { name: 'main' }));
+    expect(ontogglegitref).toHaveBeenCalledWith('main');
   });
 
   it('shows a selected tag as a pill', () => {

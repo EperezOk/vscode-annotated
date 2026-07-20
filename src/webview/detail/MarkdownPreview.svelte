@@ -79,12 +79,12 @@
 <div class="md-preview" data-testid="md-preview" bind:this={container}>{@html html}</div>
 
 <style>
-  .md-preview { font-size: 13px; line-height: 1.5; }
+  .md-preview { font-size: 13px; line-height: 1.5; overflow-wrap: break-word; word-break: break-word; }
   .md-preview :global(h1) { font-size: 1.3em; }
   .md-preview :global(h2) { font-size: 1.15em; }
-  .md-preview :global(code) { background: var(--vscode-textCodeBlock-background, #333); padding: 1px 4px; border-radius: 3px; }
+  .md-preview :global(code) { background: var(--vscode-textCodeBlock-background, #333); padding: 1px 4px; border-radius: 3px; overflow-wrap: break-word; }
   .md-preview :global(pre) { background: var(--vscode-textCodeBlock-background, #1e1e1e); padding: 8px; border-radius: 4px; overflow-x: auto; }
-  .md-preview :global(a) { color: var(--vscode-textLink-foreground, #3794ff); }
+  .md-preview :global(a) { color: var(--vscode-textLink-foreground, #3794ff); overflow-wrap: break-word; }
   /* Local (code) link cue: a leading glyph + dotted underline so it reads apart from web links. */
   :global(.md-preview a.local-link) { text-decoration-style: dotted; }
   :global(.md-preview a.local-link)::before { content: '⤷ '; opacity: 0.75; }

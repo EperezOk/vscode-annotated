@@ -25,6 +25,11 @@ export function toggleAuthorFilter(author: string): void {
   sidebar.update((state) => ({ ...state, selectedAuthors: toggleInList(state.selectedAuthors, author) }));
 }
 
+/** Toggle a git ref in the active git-ref filter. */
+export function toggleGitRefFilter(ref: string): void {
+  sidebar.update((state) => ({ ...state, selectedGitRefs: toggleInList(state.selectedGitRefs, ref) }));
+}
+
 /** Show or hide resolved groups. */
 export function setShowResolved(value: boolean): void {
   sidebar.update((state) => ({ ...state, showResolved: value }));
@@ -38,6 +43,16 @@ export function toggleBulkMode(): void {
 /** Toggle a group in the bulk selection. */
 export function toggleGroupSelection(groupId: string): void {
   sidebar.update((state) => ({ ...state, selectedGroupIds: toggleInList(state.selectedGroupIds, groupId) }));
+}
+
+/** Select exactly the given group ids (used by "Select all" over the visible set). */
+export function selectAll(ids: string[]): void {
+  sidebar.update((state) => ({ ...state, selectedGroupIds: ids }));
+}
+
+/** Clear the bulk selection without leaving bulk mode. */
+export function clearSelection(): void {
+  sidebar.update((state) => ({ ...state, selectedGroupIds: [] }));
 }
 
 /** Bulk-action intents (host runs any native UI + applies to all selected). */

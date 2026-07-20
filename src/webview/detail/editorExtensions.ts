@@ -2,6 +2,7 @@ import { EditorView, type KeyBinding } from '@codemirror/view';
 import { EditorSelection, type EditorState, type Extension, type TransactionSpec } from '@codemirror/state';
 import { HighlightStyle } from '@codemirror/language';
 import { tags as t } from '@lezer/highlight';
+import { historyKeymap } from '@codemirror/commands';
 import { linkPasteEdit, toggleMarker } from '../../core/markdownTransforms';
 
 /** Paste an http(s) URL or a local-link location over a selection → wrap as a Markdown link. */
@@ -57,6 +58,17 @@ export const markdownKeymap: readonly KeyBinding[] = [
   { key: 'Mod-i', run: toggleCommand('*'), stopPropagation: true },
   { key: 'Mod-e', run: toggleCommand('`'), stopPropagation: true },
 ];
+
+/**
+ * historyKeymap (undo / redo / undoSelection / redoSelection) with `stopPropagation: true`
+ * added to every binding — so Cmd+Z/Cmd+Shift+Z stay inside CodeMirror and do NOT bubble to
+ * VS Code's window-level forwarder (which would ALSO fire the workbench "Undo"). Same fix as
+ * `markdownKeymap` applies for Cmd+B/I/E; the upstream historyKeymap sets only preventDefault.
+ */
+export const containedHistoryKeymap: readonly KeyBinding[] = historyKeymap.map((b) => ({
+  ...b,
+  stopPropagation: true,
+}));
 
 /**
  * Markdown highlight style tuned for the VSCode webview: colors come from VSCode theme

@@ -65,6 +65,23 @@ describe('App.svelte', () => {
     expect(cards[0]).toHaveTextContent('Sec');
   });
 
+  it('filters by git ref selected from the dropdown', async () => {
+    sidebar.set({
+      ...initialSidebarState(),
+      groups: [
+        { ...group('g1', 'On main'), gitRef: 'main' },
+        { ...group('g2', 'On dev'), gitRef: 'dev' },
+      ],
+      palette: [],
+    });
+    render(App);
+    await userEvent.click(screen.getByTestId('picker-input-Git ref'));
+    await userEvent.click(screen.getByRole('option', { name: 'main' }));
+    const cards = screen.getAllByTestId('group-card');
+    expect(cards).toHaveLength(1);
+    expect(cards[0]).toHaveTextContent('On main');
+  });
+
   it('renders the no-matches message when the only group is resolved and hidden', () => {
     sidebar.set({
       ...initialSidebarState(),
@@ -91,6 +108,30 @@ describe('App.svelte', () => {
     render(App);
     await userEvent.click(screen.getByTestId('bulk-resolve-btn'));
     expect(postToHost).toHaveBeenCalledWith({ type: 'bulkResolveRestore', groupIds: ['g1'] });
+  });
+
+  it('selects all visible groups then clears the selection', async () => {
+    sidebar.set({ ...initialSidebarState(), groups: [group('g1', 'One'), group('g2', 'Two')], palette: [], bulkMode: true });
+    render(App);
+    const btn = screen.getByTestId('bulk-select-all');
+    expect(btn).toHaveTextContent('Select all (2)');
+    await userEvent.click(btn);
+    expect(screen.getByTestId('bulk-count')).toHaveTextContent('2 selected');
+    expect(btn).toHaveTextContent('Clear');
+    await userEvent.click(btn);
+    expect(screen.getByTestId('bulk-count')).toHaveTextContent('0 selected');
+  });
+
+  it('select all targets only the visible (filtered) groups', async () => {
+    sidebar.set({
+      ...initialSidebarState(),
+      groups: [group('g1', 'Open'), group('g2', 'Resolved', { status: 'resolved' })],
+      palette: [], bulkMode: true, // showResolved stays false → the resolved group is hidden
+    });
+    render(App);
+    expect(screen.getByTestId('bulk-select-all')).toHaveTextContent('Select all (1)');
+    await userEvent.click(screen.getByTestId('bulk-select-all'));
+    expect(screen.getByTestId('bulk-count')).toHaveTextContent('1 selected');
   });
 
   it('posts a refresh message when the refresh button is clicked', async () => {

@@ -10,6 +10,8 @@ import {
   type GroupChoice,
   type SelectionInfo,
 } from '../core/createAnnotationFlow';
+import { currentRef } from '../core/gitRefs';
+import { readGitRefInfo } from './gitRefsSource';
 import { VscodeFileSystem } from './vscodeFileSystem';
 import { VscodeAuthorNameSources } from './authorSources';
 import { displayPalette, pickTagsWithNewOption } from './tagPalette';
@@ -43,6 +45,7 @@ export function registerCreateAnnotationCommand(
       newId,
       now: () => Math.floor(Date.now() / 1000),
       hashContent: (text) => sha256Hex(text),
+      getGitRef: async () => currentRef(await readGitRefInfo()),
       showInfo: (message) => void vscode.window.showInformationMessage(message),
       showWarning: (message) => void vscode.window.showWarningMessage(message),
     };
