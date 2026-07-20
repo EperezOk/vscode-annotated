@@ -43,6 +43,12 @@ describe('parseLocationLink', () => {
     expect(parseLocationLink('mailto:x#L1')).toBeNull();
     expect(parseLocationLink('C:/foo.ts#L1')).toBeNull();
   });
+  it('accepts a leading-slash POSIX absolute path (normalized later at navigation)', () => {
+    expect(parseLocationLink('/Users/me/repo/src/foo.ts#L5')).toEqual({
+      file: '/Users/me/repo/src/foo.ts',
+      range: { startLine: 5, endLine: 5 },
+    });
+  });
   it('returns null for an unsafely-large line number', () => {
     expect(parseLocationLink('src/foo.ts#L99999999999999999999')).toBeNull();
   });

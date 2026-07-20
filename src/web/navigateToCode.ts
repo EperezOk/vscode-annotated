@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { type Annotation, type LineRange } from '../shared/model';
-import { safeRelativeSegments } from '../shared/path';
+import { toWorkspaceRelativeSegments } from '../shared/path';
 
 let highlightType: vscode.TextEditorDecorationType | undefined;
 let lastEditor: vscode.TextEditor | undefined;
@@ -67,7 +67,7 @@ export function clearAllHighlights(): void {
  * unopenable targets warn and no-op rather than throw.
  */
 export async function revealLocation(folderUri: vscode.Uri, file: string, range: LineRange): Promise<void> {
-  const segments = safeRelativeSegments(file);
+  const segments = toWorkspaceRelativeSegments(file, folderUri.path);
   if (!segments) {
     void vscode.window.showWarningMessage(`Annotated: cannot open "${file}" (outside the workspace).`);
     return;
@@ -93,7 +93,12 @@ export async function revealLocation(folderUri: vscode.Uri, file: string, range:
  * Model line numbers are 1-based inclusive; VSCode ranges are 0-based.
  */
 export async function revealAnnotation(folderUri: vscode.Uri, annotation: Annotation): Promise<void> {
-  const uri = vscode.Uri.joinPath(folderUri, ...annotation.file.split('/').filter(Boolean));
+  const segments = toWorkspaceRelativeSegments(annotation.file, folderUri.path);
+  if (!segments) {
+    void vscode.window.showWarningMessage(`Annotated: cannot open "${annotation.file}" (outside the workspace).`);
+    return;
+  }
+  const uri = vscode.Uri.joinPath(folderUri, ...segments);
   const range = new vscode.Range(
     annotation.range.startLine - 1,
     0,

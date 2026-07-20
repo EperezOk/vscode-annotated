@@ -47,4 +47,82 @@ suite('navigate-to-code', () => {
       throw new Error(`unexpected selection ${editor.selection.start.line}-${editor.selection.end.line}`);
     }
   });
+
+  test('revealAnnotation resolves an absolute in-workspace file to the same document as its relative form', async () => {
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    if (!folder) {
+      throw new Error('No workspace folder');
+    }
+    const absoluteFile = `${folder.uri.path}/README.md`;
+    const annotation: Annotation = {
+      id: 'nav-abs-inside',
+      file: absoluteFile,
+      range: { startLine: 2, endLine: 3 },
+      content: '',
+      contentHash: 'h',
+    };
+
+    await revealAnnotation(folder.uri, annotation);
+
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+      throw new Error('no active editor after revealAnnotation');
+    }
+    if (!editor.document.uri.path.endsWith('/README.md')) {
+      throw new Error(`expected README.md, got ${editor.document.uri.path}`);
+    }
+    if (editor.selection.start.line !== 1) {
+      throw new Error(`expected selection to start at 0-based line 1, got ${editor.selection.start.line}`);
+    }
+    if (editor.selection.end.line !== 2) {
+      throw new Error(`expected selection to end at 0-based line 2, got ${editor.selection.end.line}`);
+    }
+  });
+
+  test('revealAnnotation warns and no-ops for an out-of-workspace absolute file', async () => {
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    if (!folder) {
+      throw new Error('No workspace folder');
+    }
+
+    // Establish a known "before" state so we can confirm no navigation happened.
+    await revealAnnotation(folder.uri, {
+      id: 'nav-baseline',
+      file: 'README.md',
+      range: { startLine: 1, endLine: 1 },
+      content: '',
+      contentHash: 'h',
+    });
+    const before = vscode.window.activeTextEditor?.document.uri.toString();
+
+    const originalShowWarningMessage = vscode.window.showWarningMessage;
+    let warning: string | undefined;
+    (vscode.window as unknown as { showWarningMessage: typeof vscode.window.showWarningMessage }).showWarningMessage =
+      ((message: string) => {
+        warning = message;
+        return Promise.resolve(undefined);
+      }) as typeof vscode.window.showWarningMessage;
+
+    try {
+      const annotation: Annotation = {
+        id: 'nav-abs-outside',
+        file: '/tmp/elsewhere.ts',
+        range: { startLine: 1, endLine: 1 },
+        content: '',
+        contentHash: 'h',
+      };
+      await revealAnnotation(folder.uri, annotation);
+    } finally {
+      (vscode.window as unknown as { showWarningMessage: typeof vscode.window.showWarningMessage }).showWarningMessage =
+        originalShowWarningMessage;
+    }
+
+    if (!warning || !warning.includes('outside the workspace')) {
+      throw new Error(`expected an "outside the workspace" warning, got ${warning}`);
+    }
+    const after = vscode.window.activeTextEditor?.document.uri.toString();
+    if (after !== before) {
+      throw new Error(`expected active editor to be unchanged; was ${before}, now ${after}`);
+    }
+  });
 });
