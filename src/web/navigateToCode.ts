@@ -109,7 +109,13 @@ export async function revealAnnotation(folderUri: vscode.Uri, annotation: Annota
   clearHighlight();
   clearLinkHighlight(); // re-anchoring on the annotation drops any stale link-target highlight
 
-  const editor = await vscode.window.showTextDocument(uri, { selection: range, preserveFocus: true });
+  let editor: vscode.TextEditor;
+  try {
+    editor = await vscode.window.showTextDocument(uri, { selection: range, preserveFocus: true });
+  } catch {
+    void vscode.window.showWarningMessage(`Annotated: cannot open "${annotation.file}".`);
+    return;
+  }
   editor.revealRange(range, vscode.TextEditorRevealType.InCenterIfOutsideViewport);
   editor.setDecorations(decorationType(), [range]);
   lastEditor = editor;
