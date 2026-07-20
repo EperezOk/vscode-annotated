@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { EditorState, EditorSelection } from '@codemirror/state';
-import { toggleMarkerSpec, markdownKeymap } from './editorExtensions';
+import { toggleMarkerSpec, markdownKeymap, containedHistoryKeymap } from './editorExtensions';
 
 /** Build a state with the given selection ranges, apply the toggle, return doc + selected slices. */
 function run(doc: string, ranges: [number, number][], marker: string): { doc: string; sels: string[] } {
@@ -43,5 +43,16 @@ describe('markdownKeymap', () => {
   it('binds Mod-b/i/e and stops propagation so the combos do not reach VS Code', () => {
     expect(markdownKeymap.map((b) => b.key)).toEqual(['Mod-b', 'Mod-i', 'Mod-e']);
     expect(markdownKeymap.every((b) => b.stopPropagation === true)).toBe(true);
+  });
+});
+
+describe('containedHistoryKeymap', () => {
+  it('sets stopPropagation on every history binding (so Cmd+Z does not also fire workbench Undo)', () => {
+    expect(containedHistoryKeymap.length).toBeGreaterThan(0);
+    expect(containedHistoryKeymap.every((b) => b.stopPropagation === true)).toBe(true);
+  });
+
+  it('still binds the undo shortcut', () => {
+    expect(containedHistoryKeymap.some((b) => b.key === 'Mod-z')).toBe(true);
   });
 });

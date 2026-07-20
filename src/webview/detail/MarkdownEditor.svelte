@@ -2,10 +2,10 @@
   import { onMount } from 'svelte';
   import { EditorState, EditorSelection } from '@codemirror/state';
   import { EditorView, keymap } from '@codemirror/view';
-  import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
+  import { defaultKeymap, history } from '@codemirror/commands';
   import { syntaxHighlighting } from '@codemirror/language';
   import { markdown } from '@codemirror/lang-markdown';
-  import { markdownKeymap, urlPasteHandler, markdownHighlightStyle, fillHeightTheme } from './editorExtensions';
+  import { markdownKeymap, containedHistoryKeymap, urlPasteHandler, markdownHighlightStyle, fillHeightTheme } from './editorExtensions';
 
   let { doc = '', autofocus = false, onChange, onSubmit }: { doc?: string; autofocus?: boolean; onChange?: (value: string) => void; onSubmit?: () => void } = $props();
 
@@ -63,7 +63,7 @@
             { key: 'Mod-Enter', run: () => (onSubmit ? (onSubmit(), true) : false) },
             ...markdownKeymap,
             ...defaultKeymap,
-            ...historyKeymap,
+            ...containedHistoryKeymap,
           ]),
           EditorView.lineWrapping,
           EditorView.updateListener.of((update) => {
