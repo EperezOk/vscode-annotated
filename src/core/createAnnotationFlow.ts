@@ -30,6 +30,8 @@ export interface CreateAnnotationDeps {
   /** Current time, epoch seconds. */
   now(): number;
   hashContent(text: string): Promise<string>;
+  /** Git ref to record on a NEW group (branch/tag/SHA), or null. */
+  getGitRef(): Promise<string | null>;
   showInfo(message: string): void;
   showWarning(message: string): void;
 }
@@ -83,8 +85,9 @@ export async function runCreateAnnotation(
     return undefined;
   }
   const author = await deps.resolveAuthor();
+  const gitRef = await deps.getGitRef();
   const now = deps.now();
-  const base = createGroup({ id: deps.newId(), title, author, tags, now });
+  const base = createGroup({ id: deps.newId(), title, author, tags, now, gitRef });
   const group = addAnnotation(base, annotation, now);
   await deps.saveGroup(group);
   deps.showInfo(`Created group "${group.title}".`);
