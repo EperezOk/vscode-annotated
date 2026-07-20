@@ -7,6 +7,7 @@ export interface SidebarState {
   selectedId: string | null;
   selectedTags: string[];
   selectedAuthors: string[];
+  selectedGitRefs: string[];
   showResolved: boolean;
   bulkMode: boolean;
   selectedGroupIds: string[];
@@ -14,7 +15,7 @@ export interface SidebarState {
 }
 
 export function initialSidebarState(): SidebarState {
-  return { groups: [], palette: [], selectedId: null, selectedTags: [], selectedAuthors: [], showResolved: false, bulkMode: false, selectedGroupIds: [], commentCounts: {} };
+  return { groups: [], palette: [], selectedId: null, selectedTags: [], selectedAuthors: [], selectedGitRefs: [], showResolved: false, bulkMode: false, selectedGroupIds: [], commentCounts: {} };
 }
 
 /** Apply a host→webview message, returning a new state. */
@@ -24,12 +25,14 @@ export function applyHostMessage(state: SidebarState, message: HostToWebview): S
       const stillExists = state.selectedId !== null && message.groups.some((g) => g.id === state.selectedId);
       const tags = new Set(message.groups.flatMap((g) => g.tags.map((t) => t.name)));
       const authors = new Set(message.groups.map((g) => g.author));
+      const gitRefs = new Set(message.groups.map((g) => g.gitRef).filter((r): r is string => r !== null));
       return {
         groups: message.groups,
         palette: message.palette,
         selectedId: stillExists ? state.selectedId : null,
         selectedTags: state.selectedTags.filter((t) => tags.has(t)),
         selectedAuthors: state.selectedAuthors.filter((a) => authors.has(a)),
+        selectedGitRefs: state.selectedGitRefs.filter((r) => gitRefs.has(r)),
         showResolved: state.showResolved,
         bulkMode: state.bulkMode,
         selectedGroupIds: state.selectedGroupIds.filter((id) => message.groups.some((g) => g.id === id)),
@@ -56,6 +59,11 @@ export function availableAuthors(groups: AnnotationGroup[]): string[] {
   return [...new Set(groups.map((g) => g.author))].sort();
 }
 
+/** Sorted, de-duplicated non-null git refs across all groups (filter options). */
+export function availableGitRefs(groups: AnnotationGroup[]): string[] {
+  return [...new Set(groups.map((g) => g.gitRef).filter((r): r is string => r !== null))].sort();
+}
+
 /** Toggle a value's membership in a list (immutable). */
 export function toggleInList(list: string[], value: string): string[] {
   return list.includes(value) ? list.filter((v) => v !== value) : [...list, value];
@@ -65,7 +73,8 @@ export function toggleInList(list: string[], value: string): string[] {
  * The groups to display given the current filters:
  * - resolved groups are hidden unless `showResolved`;
  * - if any tags are selected, keep groups with ANY of them;
- * - if any authors are selected, keep groups whose author is selected.
+ * - if any authors are selected, keep groups whose author is selected;
+ * - if any git refs are selected, keep groups whose gitRef is selected.
  */
 export function filterGroups(state: SidebarState): AnnotationGroup[] {
   return state.groups.filter((g) => {
@@ -76,6 +85,9 @@ export function filterGroups(state: SidebarState): AnnotationGroup[] {
       return false;
     }
     if (state.selectedAuthors.length > 0 && !state.selectedAuthors.includes(g.author)) {
+      return false;
+    }
+    if (state.selectedGitRefs.length > 0 && (g.gitRef === null || !state.selectedGitRefs.includes(g.gitRef))) {
       return false;
     }
     return true;
