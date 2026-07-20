@@ -161,11 +161,17 @@ dropped and there are no recent commits.
   (short sha + first line of the message). Extend the `GitRepository`/`GitApi`
   interfaces for `log`. Guard with try/catch (as today) so a `log` failure
   degrades to no commits rather than throwing.
-- **`src/core/gitRefs.ts`** — `GitRefInfo` gains `remoteBranches: string[]` and
-  `commits: { sha: string; summary: string }[]` (both default `[]`).
-  `gitRefSuggestions` appends, in order: HEAD short SHA → local branches → remote
-  branches (`description: 'remote branch'`) → tags → recent commits
-  (`label: <short sha> — <summary>`, `ref: <short sha>`, `description: 'commit'`).
+- **`src/core/gitRefs.ts`** — `GitRefInfo` gains **optional** `remoteBranches?:
+  string[]` and `commits?: { sha: string; summary: string }[]` (both treated as
+  `[]` when absent, so existing callers/tests that build `{ headSha, branches,
+  tags }` keep compiling). `gitRefSuggestions` appends, in order: HEAD short SHA →
+  local branches → remote branches (`description: 'remote branch'`) → tags →
+  recent commits (`label: '<short sha> — <summary>'`, **`ref: '<short sha>'`**,
+  `description: 'commit'`).
+- **`src/web/extension.ts`** — the `onEditGitRef` / `onBulkEditGitRef` QuickPicks
+  currently store `picked.label` as the ref. For recent commits `label` (`sha —
+  summary`) ≠ `ref` (`sha`), so the QuickPick items must **carry `ref`** and store
+  `picked.ref ?? picked.label` (an item type with an optional `ref` field).
 - Web-host degradation is unchanged and acceptable: no git extension → empty
   suggestions → the QuickPick falls back to free-text entry (existing behavior in
   `extension.ts`). This is called out, not silently accepted.
@@ -292,11 +298,12 @@ Absolute paths break at resolution:
   - `revealAnnotation`: replace the raw `split('/')` with the same helper +
     workspace root; on `null` show a warning (a clear message) instead of
     silently mis-joining — an honest improvement over today.
-- **`src/shared/locationLink.ts`** — relax `parseLocationLink` so a leading-`/`
-  POSIX absolute parses (it already does — no scheme). Add best-effort tolerance
-  for a Windows **drive** absolute (`^[a-zA-Z]:[\\/]`) so it is treated as a path,
-  not a URL scheme, while still rejecting real `scheme://` URLs. (POSIX/darwin is
-  the primary target; drive handling is a nicety.)
+- **`src/shared/locationLink.ts`** — **no code change.** A leading-`/` POSIX
+  absolute already parses (it has no URL scheme). A Windows **drive** absolute
+  (`C:/…`) stays rejected at parse (it matches the scheme guard) — accepted as a
+  documented limitation, since POSIX/darwin + the web host are the primary
+  targets and relaxing the guard risks misreading real single-letter schemes.
+  A confirming test is added.
 - **Capture side** — `createAnnotationCommand.ts` / `copyLocationLinkCommand.ts`
   already emit relative for in-workspace files via `asRelativePath(uri, false)`;
   no change required. (Out-of-workspace capture remains an edge case handled at
@@ -311,7 +318,8 @@ Absolute paths break at resolution:
   relative segments; absolute-outside-root → `null`; `..`-escape → `null`;
   relative passthrough; no-root + absolute → `null`.
 - `locationLink.unit.test.ts`: leading-`/` POSIX absolute parses to `{file,range}`;
-  a Windows drive absolute parses; a real `http(s)://…#L1` stays `null`.
+  a Windows drive absolute stays `null` (documented limitation); a real
+  `http(s)://…#L1` stays `null`.
 - `navigate.integration.test.ts`: an absolute-inside annotation/link resolves to
   the correct document + highlight; an absolute-outside target warns and no-ops
   (no throw).
@@ -327,6 +335,8 @@ Absolute paths break at resolution:
   v1 non-goal.
 - **Storing absolute paths** — explicitly rejected in favor of normalization to
   keep annotation JSON portable.
+- **Windows drive-letter absolute paths in local links** (`C:/…#L1`) — stay
+  rejected at parse (POSIX/darwin + web are the primary targets).
 
 ## Packaging & execution
 
@@ -349,8 +359,9 @@ Absolute paths break at resolution:
 - `src/webview/detail/editorExtensions.ts` — `containedHistoryKeymap`
 - `src/webview/detail/MarkdownEditor.svelte` — use it
 - `src/core/gitRefs.ts` — `currentRef`, `GitRefInfo` gains `headBranch`,
-  `remoteBranches`, `commits`; `gitRefSuggestions` extended
+  `remoteBranches?`, `commits?`; `gitRefSuggestions` extended
 - `src/web/gitRefsSource.ts` — read HEAD branch, remote branches, recent commits
+- `src/web/extension.ts` — capture ref on create; QuickPick items carry `ref`
 - `src/core/createAnnotationFlow.ts` + `src/web/createAnnotationCommand.ts` —
   thread the captured ref into `createGroup`
 - `src/core/sidebarState.ts` — `selectedGitRefs`, `availableGitRefs`,
@@ -359,7 +370,6 @@ Absolute paths break at resolution:
   `selectAll`/`clearSelection` + Select All control
 - `src/shared/path.ts` — `toWorkspaceRelativeSegments`
 - `src/web/navigateToCode.ts` — use it in `revealLocation` + `revealAnnotation`
-- `src/shared/locationLink.ts` — accept absolute paths in `parseLocationLink`
 - `src/webview/detail/MarkdownPreview.svelte`,
   `src/webview/sidebar/GroupCard.svelte`,
   `src/webview/detail/GroupView.svelte` — `overflow-wrap: break-word`
