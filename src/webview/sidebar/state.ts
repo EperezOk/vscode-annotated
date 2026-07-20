@@ -45,6 +45,16 @@ export function toggleGroupSelection(groupId: string): void {
   sidebar.update((state) => ({ ...state, selectedGroupIds: toggleInList(state.selectedGroupIds, groupId) }));
 }
 
+/** Select exactly the given group ids (used by "Select all" over the visible set). */
+export function selectAll(ids: string[]): void {
+  sidebar.update((state) => ({ ...state, selectedGroupIds: ids }));
+}
+
+/** Clear the bulk selection without leaving bulk mode. */
+export function clearSelection(): void {
+  sidebar.update((state) => ({ ...state, selectedGroupIds: [] }));
+}
+
 /** Bulk-action intents (host runs any native UI + applies to all selected). */
 export function bulkEditTags(groupIds: string[]): void {
   postToHost({ type: 'bulkEditTags', groupIds });

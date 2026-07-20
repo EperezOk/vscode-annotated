@@ -110,6 +110,30 @@ describe('App.svelte', () => {
     expect(postToHost).toHaveBeenCalledWith({ type: 'bulkResolveRestore', groupIds: ['g1'] });
   });
 
+  it('selects all visible groups then clears the selection', async () => {
+    sidebar.set({ ...initialSidebarState(), groups: [group('g1', 'One'), group('g2', 'Two')], palette: [], bulkMode: true });
+    render(App);
+    const btn = screen.getByTestId('bulk-select-all');
+    expect(btn).toHaveTextContent('Select all (2)');
+    await userEvent.click(btn);
+    expect(screen.getByTestId('bulk-count')).toHaveTextContent('2 selected');
+    expect(btn).toHaveTextContent('Clear');
+    await userEvent.click(btn);
+    expect(screen.getByTestId('bulk-count')).toHaveTextContent('0 selected');
+  });
+
+  it('select all targets only the visible (filtered) groups', async () => {
+    sidebar.set({
+      ...initialSidebarState(),
+      groups: [group('g1', 'Open'), group('g2', 'Resolved', { status: 'resolved' })],
+      palette: [], bulkMode: true, // showResolved stays false → the resolved group is hidden
+    });
+    render(App);
+    expect(screen.getByTestId('bulk-select-all')).toHaveTextContent('Select all (1)');
+    await userEvent.click(screen.getByTestId('bulk-select-all'));
+    expect(screen.getByTestId('bulk-count')).toHaveTextContent('1 selected');
+  });
+
   it('posts a refresh message when the refresh button is clicked', async () => {
     sidebar.set({ ...initialSidebarState(), groups: [group('g1', 'One')], palette: [] });
     render(App);
