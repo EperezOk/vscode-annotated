@@ -1,14 +1,15 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
-  import { sidebar, setSelected, toggleTagFilter, toggleAuthorFilter, setShowResolved, toggleBulkMode, toggleGroupSelection, bulkEditTags, bulkEditGitRef, bulkResolveRestore, bulkDelete } from './state';
+  import { sidebar, setSelected, toggleTagFilter, toggleAuthorFilter, toggleGitRefFilter, setShowResolved, toggleBulkMode, toggleGroupSelection, bulkEditTags, bulkEditGitRef, bulkResolveRestore, bulkDelete } from './state';
   import { postToHost } from './vscodeApi';
-  import { filterGroups, availableTags, availableAuthors } from '../../core/sidebarState';
+  import { filterGroups, availableTags, availableAuthors, availableGitRefs } from '../../core/sidebarState';
   import GroupCard from './GroupCard.svelte';
   import FilterBar from './FilterBar.svelte';
 
   const visible = $derived(filterGroups($sidebar));
   const tags = $derived(availableTags($sidebar.groups));
   const authors = $derived(availableAuthors($sidebar.groups));
+  const gitRefs = $derived(availableGitRefs($sidebar.groups));
 
   function onselect(id: string): void {
     setSelected(id);
@@ -52,12 +53,15 @@
       <FilterBar
         {tags}
         {authors}
+        {gitRefs}
         selectedTags={$sidebar.selectedTags}
         selectedAuthors={$sidebar.selectedAuthors}
+        selectedGitRefs={$sidebar.selectedGitRefs}
         showResolved={$sidebar.showResolved}
         palette={$sidebar.palette}
         ontoggletag={toggleTagFilter}
         ontoggleauthor={toggleAuthorFilter}
+        ontogglegitref={toggleGitRefFilter}
         onshowresolved={setShowResolved}
       />
     {/if}

@@ -25,6 +25,11 @@ export function toggleAuthorFilter(author: string): void {
   sidebar.update((state) => ({ ...state, selectedAuthors: toggleInList(state.selectedAuthors, author) }));
 }
 
+/** Toggle a git ref in the active git-ref filter. */
+export function toggleGitRefFilter(ref: string): void {
+  sidebar.update((state) => ({ ...state, selectedGitRefs: toggleInList(state.selectedGitRefs, ref) }));
+}
+
 /** Show or hide resolved groups. */
 export function setShowResolved(value: boolean): void {
   sidebar.update((state) => ({ ...state, showResolved: value }));

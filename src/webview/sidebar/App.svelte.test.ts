@@ -65,6 +65,23 @@ describe('App.svelte', () => {
     expect(cards[0]).toHaveTextContent('Sec');
   });
 
+  it('filters by git ref selected from the dropdown', async () => {
+    sidebar.set({
+      ...initialSidebarState(),
+      groups: [
+        { ...group('g1', 'On main'), gitRef: 'main' },
+        { ...group('g2', 'On dev'), gitRef: 'dev' },
+      ],
+      palette: [],
+    });
+    render(App);
+    await userEvent.click(screen.getByTestId('picker-input-Git ref'));
+    await userEvent.click(screen.getByRole('option', { name: 'main' }));
+    const cards = screen.getAllByTestId('group-card');
+    expect(cards).toHaveLength(1);
+    expect(cards[0]).toHaveTextContent('On main');
+  });
+
   it('renders the no-matches message when the only group is resolved and hidden', () => {
     sidebar.set({
       ...initialSidebarState(),
