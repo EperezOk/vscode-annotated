@@ -10,6 +10,8 @@ export interface FileSystem {
   writeFile(path: string, data: Uint8Array): Promise<void>;
   /** Names of files directly under `path`. Returns [] if the directory does not exist. */
   readDirectory(path: string): Promise<string[]>;
+  /** Entries directly under `path` (files + subdirectories). Returns [] if the directory does not exist. */
+  list(path: string): Promise<{ name: string; isDirectory: boolean }[]>;
   /** Create `path` and any missing ancestors. Idempotent. */
   createDirectory(path: string): Promise<void>;
   /** Delete a file. No-op if it does not exist. */

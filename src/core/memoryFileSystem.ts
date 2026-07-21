@@ -37,6 +37,32 @@ export class MemoryFileSystem implements FileSystem {
     return names;
   }
 
+  async list(path: string): Promise<{ name: string; isDirectory: boolean }[]> {
+    const dir = normalizePath(path);
+    const prefix = dir === '' ? '' : `${dir}/`;
+    const files = new Set<string>();
+    const subdirs = new Set<string>();
+    for (const key of this.files.keys()) {
+      if (prefix !== '' && !key.startsWith(prefix)) continue;
+      const rest = key.slice(prefix.length);
+      if (rest === '') continue;
+      const slash = rest.indexOf('/');
+      if (slash < 0) files.add(rest);
+      else subdirs.add(rest.slice(0, slash));
+    }
+    for (const key of this.dirs) {
+      if (prefix !== '' && !key.startsWith(prefix)) continue;
+      const rest = key.slice(prefix.length);
+      if (rest === '') continue;
+      const slash = rest.indexOf('/');
+      subdirs.add(slash < 0 ? rest : rest.slice(0, slash));
+    }
+    const out: { name: string; isDirectory: boolean }[] = [];
+    for (const name of subdirs) out.push({ name, isDirectory: true });
+    for (const name of files) if (!subdirs.has(name)) out.push({ name, isDirectory: false });
+    return out;
+  }
+
   async createDirectory(path: string): Promise<void> {
     this.dirs.add(normalizePath(path));
   }

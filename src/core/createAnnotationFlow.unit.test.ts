@@ -5,7 +5,8 @@ import { type AnnotationGroup } from '../shared/model';
 
 function deps(overrides: Partial<CreateAnnotationDeps>): CreateAnnotationDeps {
   return {
-    getSelection: () => ({ file: 'src/x.ts', range: { startLine: 1, endLine: 2 }, fileText: 'a\nb\nc' }),
+    getSelection: () => ({ file: 'src/x.ts', range: { startLine: 1, endLine: 2 } }),
+    readWorkingText: async () => 'a\nb\nc',
     resolveAuthor: async () => 'Author',
     listGroups: async () => [],
     pickGroup: async () => ({ kind: 'new' }),
@@ -32,6 +33,15 @@ describe('runCreateAnnotation', () => {
     expect(showWarning).toHaveBeenCalled();
   });
 
+  it('warns and aborts when the working-tree file cannot be read (e.g. a diff/virtual view)', async () => {
+    const showWarning = vi.fn();
+    const saveGroup = vi.fn(async () => {});
+    const result = await runCreateAnnotation(deps({ readWorkingText: async () => null, showWarning, saveGroup }));
+    expect(result).toBeUndefined();
+    expect(saveGroup).not.toHaveBeenCalled();
+    expect(showWarning).toHaveBeenCalled();
+  });
+
   it('creates a new group with the annotation and saves it', async () => {
     const saveGroup = vi.fn<(group: AnnotationGroup) => Promise<void>>(async () => {});
     let nextId = 0;
@@ -45,14 +55,20 @@ describe('runCreateAnnotation', () => {
     expect(saved.tags).toEqual([{ name: 'security', color: '#888888' }]);
     expect(saved.annotations).toHaveLength(1);
     expect(saved.annotations[0]).toMatchObject({ file: 'src/x.ts', range: { startLine: 1, endLine: 2 }, content: '', contentHash: 'HASH' });
-    expect(saved.createdAt).toBe(saved.updatedAt); // a brand-new group's first annotation shares one timestamp
+    expect(saved.createdAt).toBe(saved.updatedAt);
     expect(result?.group.id).toBe(saved.id);
     expect(result?.annotationId).toBe(saved.annotations[0].id);
   });
 
-  it('hashes the anchored code lines (not the whole file)', async () => {
+  it('hashes the anchored working-tree lines (not the whole file)', async () => {
     const hashContent = vi.fn(async () => 'HASH');
-    await runCreateAnnotation(deps({ hashContent, getSelection: () => ({ file: 'f', range: { startLine: 2, endLine: 3 }, fileText: 'l1\nl2\nl3\nl4' }) }));
+    await runCreateAnnotation(
+      deps({
+        hashContent,
+        getSelection: () => ({ file: 'f', range: { startLine: 2, endLine: 3 } }),
+        readWorkingText: async () => 'l1\nl2\nl3\nl4',
+      }),
+    );
     expect(hashContent).toHaveBeenCalledWith('l2\nl3');
   });
 
