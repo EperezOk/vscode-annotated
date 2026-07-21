@@ -7,8 +7,6 @@ export interface SelectionInfo {
   /** Workspace-relative POSIX path. */
   file: string;
   range: LineRange;
-  /** Full text of the file (used to compute the anchored content hash). */
-  fileText: string;
 }
 
 /** Result of the group QuickPick. */
@@ -17,6 +15,8 @@ export type GroupChoice = { kind: 'existing'; id: string } | { kind: 'new' };
 /** All side-effecting interactions the flow needs, injected for testability. */
 export interface CreateAnnotationDeps {
   getSelection(): SelectionInfo | undefined;
+  /** Working-tree text of the (workspace-relative) file, or null if it has no readable on-disk file. */
+  readWorkingText(file: string): Promise<string | null>;
   resolveAuthor(): Promise<string>;
   listGroups(): Promise<AnnotationGroup[]>;
   /** Pick an existing group or choose to create a new one; undefined = cancelled. */
@@ -49,7 +49,12 @@ export async function runCreateAnnotation(
     return undefined;
   }
 
-  const contentHash = await deps.hashContent(anchorText(selection.fileText, selection.range));
+  const text = await deps.readWorkingText(selection.file);
+  if (text === null) {
+    deps.showWarning('Annotated: open the file itself to annotate it — this view has no file on disk.');
+    return undefined;
+  }
+  const contentHash = await deps.hashContent(anchorText(text, selection.range));
   const annotation = makeAnnotation({
     id: deps.newId(),
     file: selection.file,
