@@ -3,6 +3,34 @@
 All notable changes to the **vscode-annotated** extension. This project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] — 2026-07-20
+
+### Added
+- **Filter groups by Git ref** — the sidebar filter bar has a new **Git ref** picker (alongside
+  Tags and Authors). New annotation groups now **auto-capture** the branch (or short HEAD SHA) they
+  were created on, and the Git-ref picker suggests **remote branches and recent commits** in addition
+  to local branches, tags, and HEAD. (Git-ref features are desktop-only — the web build has no Git
+  extension and falls back to free-text.)
+- **Select all / Clear in bulk mode** — when selecting multiple groups, a one-click
+  **Select all (N)** / **Clear** control over the currently visible (filtered) groups.
+- **Absolute paths accepted for locations and links** — annotation locations and internal links may
+  be given as absolute paths inside the workspace; they are normalized to workspace-relative when
+  resolved (targets outside the workspace are rejected with a warning). Relative paths remain the
+  portable, recommended form.
+
+### Changed
+- **The bundled `annotated` agent skill now documents internal links** — the `[label](src/file.ts#L10-L20)`
+  local-link syntax is explained (with a drift-guard test), so agents reference other code with links
+  instead of spawning extra annotations.
+
+### Fixed
+- **Undo (Cmd+Z)** in the annotation and comment editors no longer double-fires VS Code's global
+  Undo — the CodeMirror history shortcuts stay inside the editor.
+- **Long unbroken words / URLs** in the detail panel and sidebar cards now wrap instead of
+  overflowing the container (fenced code blocks still scroll horizontally).
+- Annotation navigation **warns instead of failing silently** when a target file can't be opened.
+- Legacy `<id>.json` group files now load correctly when the id isn't a UUID.
+
 ## [0.3.0] — 2026-06-26
 
 ### Added
