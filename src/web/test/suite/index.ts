@@ -14,6 +14,7 @@ export function run(): Promise<void> {
       import('./updateAnnotationRange.integration.test'),
       import('./reorderAnnotations.integration.test'),
       import('./commentStore.integration.test'),
+      import('./gitRefs.integration.test'),
     ])
       .then(() => {
         try {
