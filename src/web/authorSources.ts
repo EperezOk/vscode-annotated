@@ -1,61 +1,32 @@
 import * as vscode from 'vscode';
 import { type AuthorNameSources, type AuthorEmailSources } from '../core/authorIdentity';
-import { waitForGitInit, type GitInitApi } from '../core/gitInit';
+import { readGitIdentityFromFs } from '../core/gitConfig';
+import { VscodeFileSystem } from './vscodeFileSystem';
 
-/** Minimal shape of the built-in git extension API we use. */
-interface GitApiRepository {
-  getConfig(key: string): Promise<string>;
-  getGlobalConfig(key: string): Promise<string>;
-}
-interface GitApi extends GitInitApi {
-  repositories: GitApiRepository[];
-}
-interface GitExtensionExports {
-  getAPI(version: 1): GitApi;
-}
-
-/** AuthorNameSources backed by VSCode APIs. git is desktop-only; the rest work on web. */
+/**
+ * AuthorNameSources backed by VS Code APIs. The git identity is read from the
+ * repository's LOCAL `.git/config` via `vscode.workspace.fs` (host-agnostic —
+ * the built-in `vscode.git` extension's API is unreachable from this web-only
+ * extension across the extension-host boundary). The user's global
+ * `~/.gitconfig` is not reachable web-safely, so a globally-configured identity
+ * yields nothing here and resolution falls through to the `annotated.authorName`
+ * setting, the GitHub session label, then a prompt.
+ */
 export class VscodeAuthorNameSources implements AuthorNameSources, AuthorEmailSources {
-  /**
-   * The first git repository, awaiting the git API's async repo discovery first
-   * (right after activation `repositories` is empty until state is 'initialized').
-   */
-  private async gitRepo(): Promise<GitApiRepository | undefined> {
-    const ext = vscode.extensions.getExtension<GitExtensionExports>('vscode.git');
-    if (!ext) {
-      return undefined; // git extension is unavailable in the web host
-    }
+  private async gitIdentity(): Promise<{ name?: string; email?: string }> {
     try {
-      if (!ext.isActive) {
-        await ext.activate();
-      }
-      const api = ext.exports.getAPI(1);
-      await waitForGitInit(api);
-      return api.repositories[0];
+      return await readGitIdentityFromFs(VscodeFileSystem.forWorkspace());
     } catch {
-      return undefined;
+      return {}; // no workspace / unreadable .git/config
     }
-  }
-
-  /** Local-then-global `git config` lookup; undefined when unset/unavailable. */
-  private async gitConfig(key: string): Promise<string | undefined> {
-    const repo = await this.gitRepo();
-    if (!repo) {
-      return undefined;
-    }
-    const local = await repo.getConfig(key).catch(() => undefined);
-    if (local) {
-      return local;
-    }
-    return repo.getGlobalConfig(key).catch(() => undefined);
   }
 
   async gitUserName(): Promise<string | undefined> {
-    return this.gitConfig('user.name');
+    return (await this.gitIdentity()).name;
   }
 
   async gitUserEmail(): Promise<string | undefined> {
-    return this.gitConfig('user.email');
+    return (await this.gitIdentity()).email;
   }
 
   settingAuthorName(): string | undefined {

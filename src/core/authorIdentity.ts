@@ -1,11 +1,12 @@
 /**
  * Sources of an author display name, in priority order. Any source may return
- * undefined when unavailable. On the web host `gitUserName` is typically
- * undefined (the built-in git extension is desktop-only), so resolution falls
- * through to the configured setting, the GitHub session, then a prompt.
+ * undefined when unavailable. `gitUserName` reads the repo's LOCAL `.git/config`;
+ * a globally-configured identity (`~/.gitconfig`) is not readable web-safely and
+ * yields undefined, so resolution then falls through to the configured setting,
+ * the GitHub session, then a prompt.
  */
 export interface AuthorNameSources {
-  /** git config user.name (desktop only; undefined on web). */
+  /** git config user.name from the repo's local .git/config; undefined when unset there. */
   gitUserName(): Promise<string | undefined>;
   /** The `annotated.authorName` setting. */
   settingAuthorName(): string | undefined;
