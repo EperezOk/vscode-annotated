@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { type AnnotationGroup } from '../shared/model';
 import { newId } from '../shared/ids';
 import { sha256Hex } from '../shared/hash';
+import { toWorkspaceRelativeSegments } from '../shared/path';
 import { GroupStore } from '../core/groupStore';
 import { resolveAuthor } from '../core/authorIdentity';
 import {
@@ -28,11 +29,20 @@ export function registerCreateAnnotationCommand(
       void vscode.window.showWarningMessage('Annotated: open a folder to create annotations.');
       return;
     }
-    const store = new GroupStore(new VscodeFileSystem(folder.uri));
+    const fs = new VscodeFileSystem(folder.uri);
+    const store = new GroupStore(fs);
     const editor = vscode.window.activeTextEditor;
+    const dec = new TextDecoder();
 
     const deps: CreateAnnotationDeps = {
-      getSelection: () => getSelection(editor),
+      getSelection: () => getSelection(editor, folder.uri.path),
+      readWorkingText: async (file) => {
+        try {
+          return dec.decode(await fs.readFile(file));
+        } catch {
+          return null;
+        }
+      },
       resolveAuthor: () => resolveAuthor(new VscodeAuthorNameSources()),
       listGroups: () => store.listGroups(),
       pickGroup: (groups) => pickGroup(groups),
@@ -57,7 +67,7 @@ export function registerCreateAnnotationCommand(
   });
 }
 
-function getSelection(editor: vscode.TextEditor | undefined): SelectionInfo | undefined {
+function getSelection(editor: vscode.TextEditor | undefined, workspaceRootPath?: string): SelectionInfo | undefined {
   if (!editor) {
     return undefined;
   }
@@ -66,10 +76,11 @@ function getSelection(editor: vscode.TextEditor | undefined): SelectionInfo | un
   const startLine = sel.start.line + 1;
   // If the selection ends at column 0 of a later line, that line is not really included.
   const endLine = sel.end.character === 0 && sel.end.line > sel.start.line ? sel.end.line : sel.end.line + 1;
+  const raw = vscode.workspace.asRelativePath(editor.document.uri, false);
+  const segments = toWorkspaceRelativeSegments(raw, workspaceRootPath);
   return {
-    file: vscode.workspace.asRelativePath(editor.document.uri, false),
+    file: segments ? segments.join('/') : raw,
     range: { startLine, endLine },
-    fileText: editor.document.getText(),
   };
 }
 
