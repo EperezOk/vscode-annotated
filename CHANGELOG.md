@@ -3,6 +3,23 @@
 All notable changes to the **vscode-annotated** extension. This project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1] — 2026-07-21
+
+### Fixed
+- **Git ref now works on the desktop app.** New groups auto-capture the current branch (or
+  commit), and the Git-ref picker lists branches, remote branches, tags, and recent commits. The
+  extension now reads the repository's `.git` directly instead of relying on an API a web extension
+  can't reach across VS Code's extension-host boundary — so the field, which was previously always
+  empty, is now populated. On the web (github.dev / vscode.dev) it still falls back to free-text.
+- **Annotating a diff/preview view no longer shows a false "lines changed."** Annotations created
+  from a diff (e.g. a GitLens diff) are now anchored to the working-tree file — the same source the
+  staleness check reads — so a fresh annotation isn't immediately flagged. A view with no file on
+  disk now warns instead of creating a mis-anchored annotation.
+- **Git-based author detection.** Your annotation author name/email is picked up from the
+  repository's local `.git/config` when set (this used the same unreachable API and had gone inert);
+  a global-only git identity continues to fall back to the `annotated.authorName` setting or your
+  GitHub sign-in.
+
 ## [0.4.0] — 2026-07-20
 
 ### Added
