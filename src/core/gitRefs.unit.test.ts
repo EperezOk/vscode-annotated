@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { currentRef, gitRefSuggestions } from './gitRefs';
+import { currentRef, gitRefSuggestions, readGitRefInfoFromFs } from './gitRefs';
+import { MemoryFileSystem } from './memoryFileSystem';
 
 describe('gitRefSuggestions', () => {
   it('lists the HEAD short SHA first, then branches, then tags', () => {
@@ -59,9 +60,6 @@ describe('gitRefSuggestions — remote branches and recent commits', () => {
     ]);
   });
 });
-
-import { readGitRefInfoFromFs } from './gitRefs';
-import { MemoryFileSystem } from './memoryFileSystem';
 
 const enc = new TextEncoder();
 const HEXA = 'a'.repeat(40);

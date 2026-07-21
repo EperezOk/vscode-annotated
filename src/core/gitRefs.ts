@@ -1,5 +1,5 @@
 import { type FileSystem } from './fileSystem';
-import { parseHead, parsePackedRefs, classifyRef, parseReflog } from './gitRefParse';
+import { parseHead, parsePackedRefs, classifyRef, parseReflog, SHA_RE } from './gitRefParse';
 
 export interface GitRefInfo {
   /** Full HEAD commit SHA, if a repo/commit is available. */
@@ -57,7 +57,6 @@ export function gitRefSuggestions(info: GitRefInfo): RefSuggestion[] {
 }
 
 const dec = new TextDecoder();
-const SHA_RE = /^[0-9a-f]{40}$/i;
 
 async function readGitText(fs: FileSystem, path: string): Promise<string | null> {
   try {

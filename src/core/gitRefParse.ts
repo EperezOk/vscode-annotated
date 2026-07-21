@@ -1,4 +1,4 @@
-const SHA_RE = /^[0-9a-f]{40}$/i;
+export const SHA_RE = /^[0-9a-f]{40}$/i;
 const COMMIT_MSG = /^(commit|merge|rebase|cherry-pick|pull|am|revert)\b/i;
 
 /** Parse `.git/HEAD`: a `ref: refs/heads/<name>` symref, or a detached 40-hex SHA. */
