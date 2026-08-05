@@ -40,7 +40,7 @@
     onaddgroupcomment?: (content: string) => void;
     oneditcomment?: (commentId: string, content: string) => void;
     ondeletecomment?: (commentId: string) => void;
-    onlocallink?: (file: string, range: LineRange) => void;
+    onlocallink?: (file: string, range: LineRange | null) => void;
   } = $props();
 
   let editingTitle = $state(false);

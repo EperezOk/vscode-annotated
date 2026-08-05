@@ -168,4 +168,15 @@ describe('parseDetailMessage', () => {
       expect(parseDetailMessage({ type: 'updateAnnotationRange', startLine: null, endLine: null })).toBeNull();
     });
   });
+
+  describe('openLocalLink with nulls', () => {
+    it('accepts a whole-file target', () => {
+      expect(parseDetailMessage({ type: 'openLocalLink', file: 'src/foo.ts', startLine: null, endLine: null }))
+        .toEqual({ type: 'openLocalLink', file: 'src/foo.ts', startLine: null, endLine: null });
+    });
+
+    it('rejects a mixed pair', () => {
+      expect(parseDetailMessage({ type: 'openLocalLink', file: 'src/foo.ts', startLine: null, endLine: 3 })).toBeNull();
+    });
+  });
 });

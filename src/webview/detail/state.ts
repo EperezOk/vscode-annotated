@@ -82,9 +82,14 @@ export function addGroupComment(content: string): void {
   postToHost({ type: 'addGroupComment', content });
 }
 
-/** Open a local link target in the editor. Does NOT change the annotation view. */
-export function openLocalLink(file: string, range: LineRange): void {
-  postToHost({ type: 'openLocalLink', file, startLine: range.startLine, endLine: range.endLine });
+/** Open a local-link target: a line range, or the whole file when `range` is null. */
+export function openLocalLink(file: string, range: LineRange | null): void {
+  postToHost({
+    type: 'openLocalLink',
+    file,
+    startLine: range?.startLine ?? null,
+    endLine: range?.endLine ?? null,
+  });
 }
 
 /** Re-reveal the current annotation's own code (reuses the selectAnnotation reveal path). */

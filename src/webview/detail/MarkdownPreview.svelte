@@ -2,9 +2,9 @@
   import MarkdownIt from 'markdown-it';
   import DOMPurify from 'dompurify';
   import { parseLocationLink } from '../../shared/locationLink';
-  import { formatLineRange, type LineRange } from '../../shared/model';
+  import { formatAnnotationLocation, type LineRange } from '../../shared/model';
 
-  let { source, onlocallink }: { source: string; onlocallink?: (file: string, range: LineRange) => void } = $props();
+  let { source, onlocallink }: { source: string; onlocallink?: (file: string, range: LineRange | null) => void } = $props();
 
   const md = new MarkdownIt({ html: true, linkify: true, typographer: true });
 
@@ -23,7 +23,7 @@
   let container: HTMLDivElement;
 
   // Read the raw href attribute (not a.href, which the webview resolves to an absolute URL).
-  function localLinkFor(a: HTMLAnchorElement): { file: string; range: LineRange } | null {
+  function localLinkFor(a: HTMLAnchorElement): { file: string; range: LineRange | null } | null {
     return parseLocationLink(a.getAttribute('href') ?? '');
   }
 
@@ -70,7 +70,7 @@
       const loc = localLinkFor(a);
       if (loc) {
         a.classList.add('local-link');
-        a.title = `${loc.file}:${formatLineRange(loc.range)}`;
+        a.title = formatAnnotationLocation(loc);
       }
     }
   });

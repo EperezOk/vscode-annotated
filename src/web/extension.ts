@@ -222,7 +222,7 @@ export function activate(context: vscode.ExtensionContext): void {
   detailProvider.onOpenLocalLink = (file, startLine, endLine): void => {
     const folder = vscode.workspace.workspaceFolders?.[0];
     if (folder) {
-      void revealLocation(folder.uri, file, { startLine, endLine });
+      void revealLocation(folder.uri, file, startLine === null || endLine === null ? null : { startLine, endLine });
     }
   };
 

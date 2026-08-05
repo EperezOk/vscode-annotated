@@ -1,26 +1,37 @@
-// Pure parse/format for "local link" targets: workspace-relative path + #L line fragment.
-// GitHub-style. No vscode/I-O dependency. Single source of truth for the local-link syntax.
+// Pure parse/format for "local link" targets: workspace-relative path, optionally with a #L line
+// fragment. GitHub-style. No vscode/I-O dependency. Single source of truth for the syntax.
 import { type LineRange } from './model';
 
-/** Format a workspace-relative file + range as `path#L10-L20` (or `path#L42` when single-line). */
-export function formatLocationLink(file: string, range: LineRange): string {
+/** `path#L10-L20` / `path#L42`, or just `path` when `range` is null (whole-file target). */
+export function formatLocationLink(file: string, range: LineRange | null): string {
+  if (range === null) {
+    return file;
+  }
   return range.startLine === range.endLine
     ? `${file}#L${range.startLine}`
     : `${file}#L${range.startLine}-L${range.endLine}`;
 }
 
+/** A target with no fragment counts as a local link only if it looks like a path. */
+function looksLikePath(file: string): boolean {
+  return file.includes('/') || /\.[A-Za-z0-9]+$/.test(file);
+}
+
 /**
- * Parse `path#L10-L20` / `path#L42` → { file, range }, or null when `href` is not a local link.
- * Rejects anything with a URL scheme (`http://`, `mailto:`, a Windows drive `C:` …) — the http(s)
- * check is self-contained here so `shared` does not depend upward on `core`'s `isUrl`.
+ * Parse `path#L10-L20` / `path#L42` → a line range, or `path` → `range: null` (whole file).
+ * Returns null when `href` is not a local link. Rejects anything with a URL scheme (`http://`,
+ * `mailto:`, a Windows drive `C:` …) — the check is self-contained here so `shared` does not
+ * depend upward on `core`'s `isUrl`. A fragment that is not a valid `#L…` spec is NOT a local
+ * link (e.g. `docs/adr.md#heading` stays an ordinary link).
  */
-export function parseLocationLink(href: string): { file: string; range: LineRange } | null {
+export function parseLocationLink(href: string): { file: string; range: LineRange | null } | null {
   if (typeof href !== 'string' || /^[a-z][a-z0-9+.-]*:/i.test(href)) {
     return null;
   }
   const hash = href.lastIndexOf('#');
   if (hash < 0) {
-    return null;
+    const file = href.replace(/\\/g, '/');
+    return file.length > 0 && looksLikePath(file) ? { file, range: null } : null;
   }
   const file = href.slice(0, hash).replace(/\\/g, '/');
   if (file.length === 0) {

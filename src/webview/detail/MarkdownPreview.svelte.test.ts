@@ -107,4 +107,26 @@ describe('MarkdownPreview', () => {
     expect(source).toMatch(/blockquote[^{]*{[^}]*margin: 0\.5em 0/);
     expect(source).toMatch(/blockquote[^{]*{[^}]*border-left: 3px solid/);
   });
+
+  it('fires onlocallink with a null range for a file-only link', async () => {
+    const onlocallink = vi.fn();
+    render(MarkdownPreview, { source: 'see [the module](src/core/foo.ts).', onlocallink });
+    await userEvent.click(screen.getByText('the module'));
+    expect(onlocallink).toHaveBeenCalledWith('src/core/foo.ts', null);
+  });
+
+  it('titles a file-only local link with the bare path', async () => {
+    const { container } = render(MarkdownPreview, { source: '[mod](src/core/foo.ts)', onlocallink: () => {} });
+    await tick();
+    expect(container.querySelector('a.local-link')?.getAttribute('title')).toBe('src/core/foo.ts');
+  });
+
+  it('leaves prose links alone', async () => {
+    const onlocallink = vi.fn();
+    const { container } = render(MarkdownPreview, { source: '[see above](whatever)', onlocallink });
+    await tick();
+    expect(container.querySelector('a.local-link')).toBeNull();
+    await userEvent.click(screen.getByText('see above'));
+    expect(onlocallink).not.toHaveBeenCalled();
+  });
 });
