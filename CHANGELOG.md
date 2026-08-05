@@ -3,6 +3,23 @@
 All notable changes to the **vscode-annotated** extension. This project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Added
+- Annotations can target a **whole file** instead of a line range: new command
+  "Annotated: Create File Annotation" (command palette + Explorer context menu), a
+  "whole file" toggle in the annotation's range editor, and `"range": null` on disk.
+  Whole-file annotations open the file when clicked, never go "lines changed" stale, and
+  draw no gutter indicator.
+- Local links in annotation and comment bodies may omit the line fragment —
+  `[the session module](src/auth/session.ts)` opens the file.
+
+### Fixed
+- Top-level lists and blockquotes in the detail panel are no longer indented (nesting still
+  indents one step per level).
+- Gutter-hover entries whose snippet contained `]`, a trailing `\`, or a backtick code span
+  showed raw Markdown instead of a clickable link.
+
 ## [0.4.1] — 2026-07-21
 
 ### Fixed

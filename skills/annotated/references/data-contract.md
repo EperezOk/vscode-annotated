@@ -31,10 +31,22 @@ match this contract **exactly** or the extension won't read them back.
       "range": { "startLine": 42, "endLine": 47 }, // 1-based, inclusive, integers
       "content": "Markdown body…",
       "contentHash": "<sha256 hex of the anchored lines — see recipe>"
+    },
+    {
+      "id": "9f1c0e2a-3b4d-4c5e-8f70-1a2b3c4d5e6f",
+      "file": "src/auth/session.ts",              // workspace-relative POSIX path
+      "range": null,                               // null (or omitted) = whole-file annotation
+      "content": "This module owns session lifetime…",
+      "contentHash": ""                            // no anchored lines → no hash
     }
   ]
 }
 ```
+
+> **Whole-file annotations** target a file as a whole rather than specific lines: write
+> `"range": null` and `"contentHash": ""` (the content-hash recipe below does not apply). They
+> open the file when clicked, never go "lines changed" stale, and draw no gutter indicator.
+> A missing `range` key is read as `null`, but write the explicit `null`.
 
 > **Tags** are objects `{ name, color }` — colors travel with the group so it's self-contained.
 > The displayed color resolves **local config > global config > this JSON**. Legacy `"tags":
@@ -52,11 +64,14 @@ links in the detail panel:
 
 - `[the retry helper](src/core/retry.ts#L42)` — single line (line 42).
 - `[the login flow](src/auth/login.ts#L10-L20)` — range, 1-based inclusive.
+- `[the session module](src/auth/session.ts)` — no `#L` fragment: opens the file.
 
 Rules: the path is **workspace-relative POSIX** (write relative for portable,
 shareable annotations); line numbers are 1-based inclusive. A target with an
-`http(s)`/`scheme:` prefix or without an `#L` fragment is treated as a normal
-link, not a local link.
+`http(s)`/`scheme:` prefix is treated as a normal link, not a local link. A
+target with no `#L` fragment is a local link only when it looks like a path
+(contains `/` or ends in a `.ext`); `[see above](whatever)` stays an ordinary
+link. A non-line fragment (`docs/adr.md#heading`) is also an ordinary link.
 
 ## Comment file — `.annotations/comments/<author-slug>.json`
 

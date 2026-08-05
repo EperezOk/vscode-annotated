@@ -227,3 +227,29 @@ describe('annotated contract: SKILL.md group-filename naming is current', () => 
     expect(doc).toMatch(/title-slug|idseg/);
   });
 });
+
+describe('whole-file annotations are documented', () => {
+  it('the data contract documents a null range + empty content hash', () => {
+    const doc = readFileSync(CONTRACT_DOC, 'utf8');
+    expect(doc).toContain('"range": null');
+    expect(doc).toMatch(/whole-file annotation/i);
+  });
+
+  it('a whole-file annotation as documented round-trips through parseGroup', () => {
+    const group = parseGroup({
+      id: 'g', title: 'T', author: 'A', tags: [], gitRef: null, status: 'open',
+      createdAt: 1, updatedAt: 1,
+      annotations: [{ id: 'a', file: 'src/foo.ts', range: null, content: 'note', contentHash: '' }],
+    });
+    expect(serializeGroup(group)).toContain('"range": null');
+  });
+
+  it('operations + SKILL mention whole-file annotations', () => {
+    expect(readFileSync(OPERATIONS_DOC, 'utf8')).toMatch(/whole-file annotation/i);
+    expect(readFileSync(SKILL_DOC, 'utf8')).toMatch(/whole-file/i);
+  });
+
+  it('the data contract documents file-only local links', () => {
+    expect(readFileSync(CONTRACT_DOC, 'utf8')).toMatch(/\[[^\]]+\]\(src\/[^)#]+\.ts\)/);
+  });
+});
