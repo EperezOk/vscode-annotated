@@ -58,9 +58,9 @@ match this contract **exactly** or the extension won't read them back.
 ## Local links in annotation content
 
 An annotation's `content` (and comment bodies) may reference **other** code
-locations with a Markdown link whose target is a workspace-relative path plus a
-GitHub-style `#L` line fragment — the extension turns these into click-to-reveal
-links in the detail panel:
+locations with a Markdown link whose target is a workspace-relative path,
+optionally with a GitHub-style `#L` line fragment — the extension turns these
+into click-to-reveal links in the detail panel:
 
 - `[the retry helper](src/core/retry.ts#L42)` — single line (line 42).
 - `[the login flow](src/auth/login.ts#L10-L20)` — range, 1-based inclusive.

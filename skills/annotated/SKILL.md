@@ -20,8 +20,8 @@ annotations/threads, **reply** in a thread (annotation threads and group-level t
 1. Read `references/data-contract.md` for the exact on-disk schema, the invariants, and the
    node-free recipes (content hash, UUID, timestamp, author slug). **Get the schema and the
    `contentHash` recipe right — a wrong hash makes your annotation render "stale."** An
-   annotation anchors to a line range, or to the **whole-file** (`"range": null`,
-   `"contentHash": ""`).
+   annotation anchors to a line range, or is a **whole-file annotation** targeting the
+   file itself (`"range": null`, `"contentHash": ""`).
 2. Read `references/operations.md` for the step-by-step recipe for the operation at hand
    (surf / reply / create / manage-own / config).
 3. When composing annotation `content`, use **local links**
