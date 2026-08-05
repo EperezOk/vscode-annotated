@@ -26,8 +26,9 @@ describe('hoverMarkdown label escaping', () => {
   });
 
   it('survives a label ending in a backslash', () => {
-    const [a] = anchors(hoverMarkdown([item('Group · path C:\\\\tmp\\\\')]));
+    const [a] = anchors(hoverMarkdown([item('Group · path C:\\tmp\\')]));
     expect(a.href).toContain('command:annotated.openAnnotation?');
+    expect(a.text).toBe('📝 Group · path C:\\tmp\\');
   });
 
   it('survives a code span containing a link-ish sequence', () => {
@@ -39,5 +40,9 @@ describe('hoverMarkdown label escaping', () => {
   it('keeps each item a separate link', () => {
     const links = anchors(hoverMarkdown([item('One · a]'), item('Two · `b')]));
     expect(links.length).toBe(2);
+    expect(links[0].href).toContain('command:annotated.openAnnotation?');
+    expect(links[0].text).toBe('📝 One · a]');
+    expect(links[1].href).toContain('command:annotated.openAnnotation?');
+    expect(links[1].text).toBe('📝 Two · `b');
   });
 });
