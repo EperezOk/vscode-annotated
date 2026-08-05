@@ -122,6 +122,16 @@ export function highlightableLines(barsByLine: Map<number, string[]>): number[] 
 }
 
 /**
+ * Backslash-escape the characters that can break a Markdown link label: `\` (escapes the
+ * closing bracket when trailing), `[`/`]` (end the label early), and backticks (a code span
+ * outranks link parsing and can swallow the `](…)`). Emphasis markers cannot break bracket or
+ * destination parsing, so `*`/`_` are left alone and still render.
+ */
+function escapeLinkLabel(text: string): string {
+  return text.replace(/([\\`[\]])/g, '\\$1');
+}
+
+/**
  * A trusted-MarkdownString body: one `command:` link per annotation covering a line,
  * each invoking `annotated.openAnnotation` with its `{ groupId, annotationId }` args.
  */
@@ -131,7 +141,7 @@ export function hoverMarkdown(
   return items
     .map((it) => {
       const args = encodeURIComponent(JSON.stringify({ groupId: it.groupId, annotationId: it.annotationId }));
-      return `[📝 ${it.label}](command:annotated.openAnnotation?${args})`;
+      return `[📝 ${escapeLinkLabel(it.label)}](command:annotated.openAnnotation?${args})`;
     })
     .join('\n\n');
 }
