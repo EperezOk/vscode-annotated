@@ -1,6 +1,9 @@
 import { render, screen } from '@testing-library/svelte';
 import userEvent from '@testing-library/user-event';
 import { tick } from 'svelte';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { join, dirname } from 'node:path';
 import { describe, it, expect, vi } from 'vitest';
 import MarkdownPreview from './MarkdownPreview.svelte';
 
@@ -79,5 +82,29 @@ describe('MarkdownPreview', () => {
     } finally {
       window.removeEventListener('click', globalClick);
     }
+  });
+
+  it('styles top-level lists and quotes flush-left', () => {
+    render(MarkdownPreview, { source: '- one\n  - nested\n\n> quoted' });
+    const css = Array.from(document.querySelectorAll('style'))
+      .map((s) => s.textContent ?? '')
+      .join('\n')
+      .replace(/\s+/g, ' ');
+    // jsdom in this environment does not expose the component CSS that vite-plugin-svelte
+    // injects (the `style` tags collected above come back empty), so fall back to asserting
+    // the same four rules are present in the component's raw <style> block source. (Note:
+    // jsdom's global `URL` mis-resolves relative-to-file: bases against window.location, so
+    // derive the sibling path from fileURLToPath(import.meta.url) instead of `new URL(rel, base)`.)
+    const testFilePath = fileURLToPath(import.meta.url);
+    const componentPath = join(dirname(testFilePath), 'MarkdownPreview.svelte');
+    const source = css.trim().length > 0
+      ? css
+      : readFileSync(componentPath, 'utf8').replace(/\s+/g, ' ');
+    // Lists indent by one small step per nesting level instead of the UA's 40px.
+    expect(source).toMatch(/ul[^{]*{[^}]*padding-left: 1\.4em/);
+    expect(source).toMatch(/ol[^{]*{[^}]*padding-left: 1\.4em/);
+    // Quotes use a left border, not a 40px side margin.
+    expect(source).toMatch(/blockquote[^{]*{[^}]*margin: 0\.5em 0/);
+    expect(source).toMatch(/blockquote[^{]*{[^}]*border-left: 3px solid/);
   });
 });
