@@ -147,4 +147,25 @@ describe('parseDetailMessage', () => {
     expect(parseDetailMessage({ type: 'openLocalLink', file: 'src/x.ts', startLine: '3', endLine: 7 })).toBeNull();
     expect(parseDetailMessage({ type: 'openLocalLink', file: 'src/x.ts', startLine: 3 })).toBeNull();
   });
+
+  describe('updateAnnotationRange with nulls', () => {
+    it('accepts both lines null (whole file)', () => {
+      expect(parseDetailMessage({ type: 'updateAnnotationRange', annotationId: 'a1', startLine: null, endLine: null }))
+        .toEqual({ type: 'updateAnnotationRange', annotationId: 'a1', startLine: null, endLine: null });
+    });
+
+    it('still accepts numeric lines', () => {
+      expect(parseDetailMessage({ type: 'updateAnnotationRange', annotationId: 'a1', startLine: 2, endLine: 4 }))
+        .toEqual({ type: 'updateAnnotationRange', annotationId: 'a1', startLine: 2, endLine: 4 });
+    });
+
+    it('rejects a mixed null/number pair', () => {
+      expect(parseDetailMessage({ type: 'updateAnnotationRange', annotationId: 'a1', startLine: null, endLine: 4 })).toBeNull();
+      expect(parseDetailMessage({ type: 'updateAnnotationRange', annotationId: 'a1', startLine: 2, endLine: null })).toBeNull();
+    });
+
+    it('rejects a missing annotationId', () => {
+      expect(parseDetailMessage({ type: 'updateAnnotationRange', startLine: null, endLine: null })).toBeNull();
+    });
+  });
 });

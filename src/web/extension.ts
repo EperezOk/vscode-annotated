@@ -385,6 +385,13 @@ export function activate(context: vscode.ExtensionContext): void {
     if (!annotation) {
       return;
     }
+    // Whole file: no anchored lines, so no hash to keep.
+    if (startLine === null || endLine === null) {
+      if (await store.updateAnnotationRange(groupId, annotationId, null, '', now())) {
+        await showGroupWithStale(groupId);
+      }
+      return;
+    }
     const range = { startLine, endLine };
     let contentHash = annotation.contentHash;
     try {

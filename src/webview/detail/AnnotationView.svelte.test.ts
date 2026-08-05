@@ -221,4 +221,34 @@ describe('AnnotationView', () => {
     });
     expect(screen.getByTestId('stale-banner').textContent).toContain('Lines changed');
   });
+
+  it('sends a null range when "whole file" is checked', async () => {
+    const onsaverange = vi.fn();
+    render(AnnotationView, {
+      annotation: { id: 'a1', file: 'src/foo.ts', range: { startLine: 3, endLine: 5 }, content: 'x', contentHash: 'h' },
+      onsaverange,
+    });
+    await userEvent.click(screen.getByTestId('edit-range-btn'));
+    await userEvent.click(screen.getByTestId('whole-file-toggle'));
+    await userEvent.click(screen.getByTestId('save-range-btn'));
+    expect(onsaverange).toHaveBeenCalledWith('a1', null, null);
+  });
+
+  it('starts a whole-file annotation with the toggle checked and can convert it back to lines', async () => {
+    const onsaverange = vi.fn();
+    render(AnnotationView, {
+      annotation: { id: 'a1', file: 'src/foo.ts', range: null, content: 'x', contentHash: '' },
+      onsaverange,
+    });
+    await userEvent.click(screen.getByTestId('edit-range-btn'));
+    const toggle = screen.getByTestId('whole-file-toggle') as HTMLInputElement;
+    expect(toggle.checked).toBe(true);
+    await userEvent.click(toggle);
+    await userEvent.clear(screen.getByTestId('range-start'));
+    await userEvent.type(screen.getByTestId('range-start'), '4');
+    await userEvent.clear(screen.getByTestId('range-end'));
+    await userEvent.type(screen.getByTestId('range-end'), '6');
+    await userEvent.click(screen.getByTestId('save-range-btn'));
+    expect(onsaverange).toHaveBeenCalledWith('a1', 4, 6);
+  });
 });

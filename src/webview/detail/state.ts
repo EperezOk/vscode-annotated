@@ -47,8 +47,8 @@ export function requestEditGitRef(): void {
   postToHost({ type: 'editGitRef' });
 }
 
-/** Persist an annotation's edited line range (host recomputes the hash). */
-export function saveAnnotationRange(annotationId: string, startLine: number, endLine: number): void {
+/** Persist a new line range, or null/null to make the annotation whole-file. */
+export function saveAnnotationRange(annotationId: string, startLine: number | null, endLine: number | null): void {
   postToHost({ type: 'updateAnnotationRange', annotationId, startLine, endLine });
 }
 

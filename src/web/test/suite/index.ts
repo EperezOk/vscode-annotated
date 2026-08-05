@@ -16,6 +16,7 @@ export function run(): Promise<void> {
       import('./commentStore.integration.test'),
       import('./gitRefs.integration.test'),
       import('./createFileAnnotation.integration.test'),
+      import('./wholeFileRange.integration.test'),
     ])
       .then(() => {
         try {

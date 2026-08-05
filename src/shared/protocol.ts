@@ -47,7 +47,7 @@ export type DetailToHost =
   | { type: 'setGroupTitle'; title: string }
   | { type: 'editTags' }
   | { type: 'editGitRef' }
-  | { type: 'updateAnnotationRange'; annotationId: string; startLine: number; endLine: number }
+  | { type: 'updateAnnotationRange'; annotationId: string; startLine: number | null; endLine: number | null }
   | { type: 'openLocalLink'; file: string; startLine: number; endLine: number }
   | { type: 'reorderAnnotations'; annotationIds: string[] }
   | { type: 'updateGroupStatus'; status: GroupStatus }
@@ -107,12 +107,19 @@ export function parseDetailMessage(raw: unknown): DetailToHost | null {
       return { type: 'editTags' };
     case 'editGitRef':
       return { type: 'editGitRef' };
-    case 'updateAnnotationRange':
-      return typeof raw.annotationId === 'string' &&
-        typeof raw.startLine === 'number' &&
-        typeof raw.endLine === 'number'
-        ? { type: 'updateAnnotationRange', annotationId: raw.annotationId, startLine: raw.startLine, endLine: raw.endLine }
+    case 'updateAnnotationRange': {
+      // Both null = whole file; both numbers = line range. A mixed pair is malformed.
+      const bothNull = raw.startLine === null && raw.endLine === null;
+      const bothNumbers = typeof raw.startLine === 'number' && typeof raw.endLine === 'number';
+      return typeof raw.annotationId === 'string' && (bothNull || bothNumbers)
+        ? {
+            type: 'updateAnnotationRange',
+            annotationId: raw.annotationId,
+            startLine: raw.startLine as number | null,
+            endLine: raw.endLine as number | null,
+          }
         : null;
+    }
     case 'openLocalLink':
       return typeof raw.file === 'string' &&
         typeof raw.startLine === 'number' &&
