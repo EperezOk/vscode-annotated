@@ -154,6 +154,27 @@ describe('highlightableLines', () => {
   });
 });
 
+describe('whole-file annotations are not line indicators', () => {
+  const wfGroup: AnnotationGroup = {
+    id: 'g1', title: 'G', author: 'A', tags: [], gitRef: null, status: 'open',
+    createdAt: 1, updatedAt: 1,
+    annotations: [
+      { id: 'file-level', file: 'src/foo.ts', range: null, content: 'about the file', contentHash: '' },
+      { id: 'lines', file: 'src/foo.ts', range: { startLine: 2, endLine: 2 }, content: 'about line 2', contentHash: 'h' },
+    ],
+  };
+
+  it('draws no gutter bar for a range-less annotation', () => {
+    const bars = gutterBarsByLine([wfGroup], 'src/foo.ts', []);
+    expect([...bars.keys()]).toEqual([2]);
+  });
+
+  it('never surfaces a range-less annotation in the line hover', () => {
+    expect(annotationsAtLine([wfGroup], 'src/foo.ts', 2).map((m) => m.annotation.id)).toEqual(['lines']);
+    expect(annotationsAtLine([wfGroup], 'src/foo.ts', 1)).toEqual([]);
+  });
+});
+
 describe('hoverItems', () => {
   it('labels each item with group title + a one-line content snippet', () => {
     const g = group({ id: 'g1', title: 'Login', annotations: [

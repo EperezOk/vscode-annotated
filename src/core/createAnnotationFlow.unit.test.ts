@@ -129,6 +129,34 @@ describe('runCreateAnnotation', () => {
     expect((saveGroup.mock.calls[0][0] as AnnotationGroup).gitRef).toBeNull();
   });
 
+  it('creates a whole-file annotation with no range and an empty content hash', async () => {
+    const hashContent = vi.fn(async () => 'HASH');
+    const result = await runCreateAnnotation(
+      deps({
+        getSelection: () => ({ file: 'src/foo.ts', range: null }),
+        pickGroup: async () => ({ kind: 'new' as const }),
+        hashContent,
+      }),
+    );
+    const annotation = result?.group.annotations[0];
+    expect(annotation?.range).toBeNull();
+    expect(annotation?.contentHash).toBe('');
+    expect(hashContent).not.toHaveBeenCalled();
+  });
+
+  it('still refuses a whole-file annotation on a document with no file on disk', async () => {
+    const showWarning = vi.fn();
+    const result = await runCreateAnnotation(
+      deps({
+        getSelection: () => ({ file: 'src/foo.ts', range: null }),
+        readWorkingText: async () => null,
+        showWarning,
+      }),
+    );
+    expect(result).toBeUndefined();
+    expect(showWarning).toHaveBeenCalled();
+  });
+
   it('does not capture a ref when appending to an existing group', async () => {
     const existing = createGroup({ id: 'g1', title: 'Existing', author: 'A', tags: [], now: 1 });
     const getGitRef = vi.fn(async () => 'feature/login');

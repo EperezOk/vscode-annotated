@@ -22,7 +22,7 @@ suite('GroupStore.updateAnnotationRange (vscode.workspace.fs)', () => {
         throw new Error('updateAnnotationRange returned false');
       }
       const r = await store.getGroup('rng-itest');
-      if (r?.annotations[0]?.range.endLine !== 3 || r?.annotations[0]?.contentHash !== 'newhash') {
+      if (r?.annotations[0]?.range?.endLine !== 3 || r?.annotations[0]?.contentHash !== 'newhash') {
         throw new Error(`range/hash not persisted: ${JSON.stringify(r?.annotations[0])}`);
       }
     } finally {

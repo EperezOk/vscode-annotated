@@ -29,7 +29,8 @@ export function gutterBarsByLine(
     }
     const color = groupBarColor(group, palette);
     for (const annotation of group.annotations) {
-      if (annotation.file !== file) {
+      // A whole-file annotation has no line to point at — no bar, no hover (spec: nothing in the editor).
+      if (annotation.range === null || annotation.file !== file) {
         continue;
       }
       for (let line = annotation.range.startLine; line <= annotation.range.endLine; line++) {
@@ -73,7 +74,12 @@ export function annotationsAtLine(
       continue;
     }
     for (const annotation of group.annotations) {
-      if (annotation.file === file && annotation.range.startLine <= line && line <= annotation.range.endLine) {
+      if (
+        annotation.range !== null &&
+        annotation.file === file &&
+        annotation.range.startLine <= line &&
+        line <= annotation.range.endLine
+      ) {
         out.push({ group, annotation });
       }
     }

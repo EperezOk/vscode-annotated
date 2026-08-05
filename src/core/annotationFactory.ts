@@ -26,7 +26,8 @@ export function createGroup(input: {
 export function makeAnnotation(input: {
   id: string;
   file: string;
-  range: LineRange;
+  /** null for a whole-file annotation. */
+  range: LineRange | null;
   content?: string;
   contentHash: string;
 }): Annotation {

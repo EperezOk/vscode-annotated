@@ -36,7 +36,7 @@ suite('GroupStore over vscode.workspace.fs', () => {
       if (!got || got.title !== 'Integration') {
         throw new Error('getGroup did not round-trip the title');
       }
-      if (got.annotations[0]?.range.endLine !== 2) {
+      if (got.annotations[0]?.range?.endLine !== 2) {
         throw new Error('getGroup did not round-trip the annotation range');
       }
     } finally {
