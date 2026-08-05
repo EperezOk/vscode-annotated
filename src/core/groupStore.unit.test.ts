@@ -145,6 +145,19 @@ describe('GroupStore', () => {
     expect(await store.updateAnnotationRange('g1', 'missing', { startLine: 1, endLine: 1 }, 'h', 1)).toBe(false);
   });
 
+  it('updateAnnotationRange can convert an annotation to whole-file', async () => {
+    const fs = new MemoryFileSystem();
+    const store = new GroupStore(fs);
+    await store.saveGroup({
+      id: 'g1', title: 'G', author: 'A', tags: [], gitRef: null, status: 'open', createdAt: 1, updatedAt: 1,
+      annotations: [{ id: 'a1', file: 'src/foo.ts', range: { startLine: 1, endLine: 2 }, content: '', contentHash: 'h' }],
+    });
+    expect(await store.updateAnnotationRange('g1', 'a1', null, '', 9)).toBe(true);
+    const saved = await store.getGroup('g1');
+    expect(saved?.annotations[0].range).toBeNull();
+    expect(saved?.annotations[0].contentHash).toBe('');
+  });
+
   it('reorderAnnotations rewrites the array order, bumps updatedAt, persists', async () => {
     const g = group('g1');
     g.annotations.push(

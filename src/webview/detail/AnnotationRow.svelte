@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { formatLineRange, type Annotation } from '../../shared/model';
+  import { formatAnnotationLocation, type Annotation } from '../../shared/model';
   import { oneLine } from '../../core/detailState';
   import { fileName } from '../../shared/path';
   import CommentBadge from '../shared/CommentBadge.svelte';
@@ -19,9 +19,8 @@
   } = $props();
 
   const summary = $derived(oneLine(annotation.content) || '(empty)');
-  const range = $derived(formatLineRange(annotation.range));
-  const shortLoc = $derived(`${fileName(annotation.file)}:${range}`);
-  const fullLoc = $derived(`${annotation.file}:${range}`);
+  const fullLoc = $derived(formatAnnotationLocation(annotation));
+  const shortLoc = $derived(formatAnnotationLocation({ file: fileName(annotation.file), range: annotation.range }));
 </script>
 
 <button
@@ -31,7 +30,7 @@
   data-testid="annotation-row"
   onclick={() => onselect?.(annotation.id)}
 >
-  {#if stale}<span class="stale-dot" data-testid="stale-dot" title="Lines changed since this was written">●</span>{/if}
+  {#if stale}<span class="stale-dot" data-testid="stale-dot" title={annotation.range === null ? 'File not found' : 'Lines changed since this was written'}>●</span>{/if}
   <span class="summary">{summary}</span>
   <CommentBadge count={commentCount} />
   <span class="loc" data-testid="annotation-loc" title={fullLoc}>{shortLoc}</span>

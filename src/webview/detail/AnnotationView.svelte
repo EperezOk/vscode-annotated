@@ -1,6 +1,6 @@
 <script lang="ts">
   import { untrack, onDestroy } from 'svelte';
-  import { formatLineRange, type Annotation, type LineRange, type ThreadComment } from '../../shared/model';
+  import { formatAnnotationLocation, type Annotation, type LineRange, type ThreadComment } from '../../shared/model';
   import { fileName } from '../../shared/path';
   import MarkdownPreview from './MarkdownPreview.svelte';
   import MarkdownEditor from './MarkdownEditor.svelte';
@@ -44,9 +44,9 @@
     onrevealcode?: (id: string) => void;
   } = $props();
 
-  // Full path:range — stays the "copy path" payload and the hover tooltip.
-  const location = $derived(`${annotation.file}:${formatLineRange(annotation.range)}`);
-  const shortLocation = $derived(`${fileName(annotation.file)}:${formatLineRange(annotation.range)}`);
+  // Full path (+ range when line-anchored) — the "copy path" payload and hover tooltip.
+  const location = $derived(formatAnnotationLocation(annotation));
+  const shortLocation = $derived(formatAnnotationLocation({ file: fileName(annotation.file), range: annotation.range }));
 
   // Seed once from the prop (intentional — DetailApp keys this component by
   // annotation id, so it remounts on switch). untrack() avoids the spurious
@@ -55,9 +55,13 @@
   let draft = $state(untrack(() => annotation.content));
 
   let editingRange = $state(false);
-  let rangeStart = $state(untrack(() => annotation.range.startLine));
-  let rangeEnd = $state(untrack(() => annotation.range.endLine));
-  function startRangeEdit(): void { rangeStart = annotation.range.startLine; rangeEnd = annotation.range.endLine; editingRange = true; }
+  let rangeStart = $state(untrack(() => annotation.range?.startLine ?? 1));
+  let rangeEnd = $state(untrack(() => annotation.range?.endLine ?? 1));
+  function startRangeEdit(): void {
+    rangeStart = annotation.range?.startLine ?? 1;
+    rangeEnd = annotation.range?.endLine ?? 1;
+    editingRange = true;
+  }
   function saveRange(): void {
     const s = Math.max(1, Math.floor(Number(rangeStart) || 1));
     const e = Math.max(s, Math.floor(Number(rangeEnd) || s));
@@ -123,7 +127,13 @@
     <button type="button" class="nav-btn" data-testid="next-btn" disabled={!onnext} onclick={() => onnext?.()}>Next ›</button>
   </div>
 
-  {#if stale}<div class="stale-banner" data-testid="stale-banner">⚠ Lines changed since this was written — content may no longer match.</div>{/if}
+  {#if stale}
+    <div class="stale-banner" data-testid="stale-banner">
+      {annotation.range === null
+        ? '⚠ File not found — it may have been moved or deleted.'
+        : '⚠ Lines changed since this was written — content may no longer match.'}
+    </div>
+  {/if}
 
   <div class="toolbar">
     {#if editing}

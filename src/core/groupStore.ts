@@ -167,7 +167,8 @@ export class GroupStore {
   async updateAnnotationRange(
     groupId: string,
     annotationId: string,
-    range: LineRange,
+    /** null converts the annotation to whole-file (caller passes contentHash ''). */
+    range: LineRange | null,
     contentHash: string,
     now: number,
   ): Promise<boolean> {

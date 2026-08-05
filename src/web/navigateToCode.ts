@@ -99,15 +99,26 @@ export async function revealAnnotation(folderUri: vscode.Uri, annotation: Annota
     return;
   }
   const uri = vscode.Uri.joinPath(folderUri, ...segments);
+
+  clearHighlight();
+  clearLinkHighlight(); // re-anchoring on the annotation drops any stale link-target highlight
+
+  // A whole-file annotation has no lines to reveal: just open the file (no selection, no highlight).
+  if (annotation.range === null) {
+    try {
+      await vscode.window.showTextDocument(uri, { preserveFocus: true });
+    } catch {
+      void vscode.window.showWarningMessage(`Annotated: cannot open "${annotation.file}".`);
+    }
+    return;
+  }
+
   const range = new vscode.Range(
     annotation.range.startLine - 1,
     0,
     annotation.range.endLine - 1,
     Number.MAX_SAFE_INTEGER,
   );
-
-  clearHighlight();
-  clearLinkHighlight(); // re-anchoring on the annotation drops any stale link-target highlight
 
   let editor: vscode.TextEditor;
   try {

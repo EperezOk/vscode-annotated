@@ -194,4 +194,31 @@ describe('AnnotationView', () => {
     await userEvent.click(screen.getByText('helper'));
     expect(onlocallink).toHaveBeenCalledWith('src/core/foo.ts', { startLine: 10, endLine: 20 });
   });
+
+  const fileLevel = { id: 'a1', file: 'src/deep/foo.ts', range: null, content: 'note', contentHash: '' };
+
+  it('shows a lines-free location for a whole-file annotation', () => {
+    render(AnnotationView, { annotation: fileLevel });
+    expect(screen.getByTestId('annotation-loc').textContent).toBe('foo.ts');
+  });
+
+  it('copies the bare path for a whole-file annotation', async () => {
+    const oncopyloc = vi.fn();
+    render(AnnotationView, { annotation: fileLevel, oncopyloc });
+    await userEvent.click(screen.getByTestId('annotation-loc'));
+    expect(oncopyloc).toHaveBeenCalledWith('src/deep/foo.ts');
+  });
+
+  it('uses file-specific stale copy for a whole-file annotation', () => {
+    render(AnnotationView, { annotation: fileLevel, stale: true });
+    expect(screen.getByTestId('stale-banner').textContent).toContain('File not found');
+  });
+
+  it('keeps lines-changed stale copy for a line annotation', () => {
+    render(AnnotationView, {
+      annotation: { id: 'a2', file: 'src/foo.ts', range: { startLine: 1, endLine: 2 }, content: '', contentHash: 'h' },
+      stale: true,
+    });
+    expect(screen.getByTestId('stale-banner').textContent).toContain('Lines changed');
+  });
 });
