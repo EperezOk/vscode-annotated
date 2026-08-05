@@ -19,6 +19,40 @@ import { displayPalette, pickTagsWithNewOption } from './tagPalette';
 
 const CREATE_NEW_LABEL = '$(add) Create new group…';
 
+/** Build the flow deps for one invocation. `getSelection` decides selection- vs file-scope. */
+function buildDeps(
+  fs: VscodeFileSystem,
+  store: GroupStore,
+  getSelection: () => SelectionInfo | undefined,
+): CreateAnnotationDeps {
+  const dec = new TextDecoder();
+  return {
+    getSelection,
+    readWorkingText: async (file) => {
+      try {
+        return dec.decode(await fs.readFile(file));
+      } catch {
+        return null;
+      }
+    },
+    resolveAuthor: () => resolveAuthor(new VscodeAuthorNameSources()),
+    listGroups: () => store.listGroups(),
+    pickGroup: (groups) => pickGroup(groups),
+    promptGroupTitle: () => promptGroupTitle(),
+    pickTags: async () =>
+      pickTagsWithNewOption(displayPalette(await store.listGroups()), {
+        placeHolder: 'Select tags (optional)',
+      }),
+    saveGroup: (group) => store.saveGroup(group),
+    newId,
+    now: () => Math.floor(Date.now() / 1000),
+    hashContent: (text) => sha256Hex(text),
+    getGitRef: async () => currentRef(await readGitRefInfo()),
+    showInfo: (message) => void vscode.window.showInformationMessage(message),
+    showWarning: (message) => void vscode.window.showWarningMessage(message),
+  };
+}
+
 /** Register the `annotated.createAnnotation` command. */
 export function registerCreateAnnotationCommand(
   onCreated?: (groupId: string, annotationId: string) => void | Promise<void>,
@@ -32,34 +66,51 @@ export function registerCreateAnnotationCommand(
     const fs = new VscodeFileSystem(folder.uri);
     const store = new GroupStore(fs);
     const editor = vscode.window.activeTextEditor;
-    const dec = new TextDecoder();
+    const deps = buildDeps(fs, store, () => getSelection(editor, folder.uri.path));
+    const result = await runCreateAnnotation(deps);
+    if (result && onCreated) {
+      await onCreated(result.group.id, result.annotationId);
+    }
+  });
+}
 
-    const deps: CreateAnnotationDeps = {
-      getSelection: () => getSelection(editor, folder.uri.path),
-      readWorkingText: async (file) => {
-        try {
-          return dec.decode(await fs.readFile(file));
-        } catch {
-          return null;
-        }
-      },
-      resolveAuthor: () => resolveAuthor(new VscodeAuthorNameSources()),
-      listGroups: () => store.listGroups(),
-      pickGroup: (groups) => pickGroup(groups),
-      promptGroupTitle: () => promptGroupTitle(),
-      pickTags: async () =>
-        pickTagsWithNewOption(displayPalette(await store.listGroups()), {
-          placeHolder: 'Select tags (optional)',
-        }),
-      saveGroup: (group) => store.saveGroup(group),
-      newId,
-      now: () => Math.floor(Date.now() / 1000),
-      hashContent: (text) => sha256Hex(text),
-      getGitRef: async () => currentRef(await readGitRefInfo()),
-      showInfo: (message) => void vscode.window.showInformationMessage(message),
-      showWarning: (message) => void vscode.window.showWarningMessage(message),
-    };
-
+/**
+ * Register `annotated.createFileAnnotation`: annotate a whole file (no line range). The target is
+ * the Explorer-provided `Uri` when invoked from the context menu, else the active editor's file.
+ */
+export function registerCreateFileAnnotationCommand(
+  onCreated?: (groupId: string, annotationId: string) => void | Promise<void>,
+): vscode.Disposable {
+  return vscode.commands.registerCommand('annotated.createFileAnnotation', async (resource?: vscode.Uri) => {
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    if (!folder) {
+      void vscode.window.showWarningMessage('Annotated: open a folder to create annotations.');
+      return;
+    }
+    const uri = resource ?? vscode.window.activeTextEditor?.document.uri;
+    if (!uri) {
+      void vscode.window.showWarningMessage('Annotated: open a file (or pick one in the Explorer) to annotate it.');
+      return;
+    }
+    // Folders (and anything unreadable) are not annotatable targets.
+    try {
+      const stat = await vscode.workspace.fs.stat(uri);
+      if (stat.type === vscode.FileType.Directory) {
+        void vscode.window.showWarningMessage('Annotated: pick a file, not a folder.');
+        return;
+      }
+    } catch {
+      void vscode.window.showWarningMessage(`Annotated: cannot read "${uri.path}".`);
+      return;
+    }
+    const fs = new VscodeFileSystem(folder.uri);
+    const store = new GroupStore(fs);
+    const raw = vscode.workspace.asRelativePath(uri, false);
+    const segments = toWorkspaceRelativeSegments(raw, folder.uri.path);
+    const deps = buildDeps(fs, store, () => ({
+      file: segments ? segments.join('/') : raw,
+      range: null,
+    }));
     const result = await runCreateAnnotation(deps);
     if (result && onCreated) {
       await onCreated(result.group.id, result.annotationId);
