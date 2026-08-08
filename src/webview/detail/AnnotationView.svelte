@@ -117,7 +117,9 @@
     <button type="button" class="link" data-testid="back-btn" onclick={() => onback?.()}>‹ Back</button>
     {#if editingRange}
       <span class="loc">{fileName(annotation.file)}:
-        <input class="num" data-testid="range-start" type="number" min="1" bind:value={rangeStart} disabled={wholeFile} />–<input class="num" data-testid="range-end" type="number" min="1" bind:value={rangeEnd} disabled={wholeFile} />
+        {#if !wholeFile}
+          <input class="num" data-testid="range-start" type="number" min="1" bind:value={rangeStart} />–<input class="num" data-testid="range-end" type="number" min="1" bind:value={rangeEnd} />
+        {/if}
       </span>
       <label class="whole-file" title="Annotate the whole file (no line range)">
         <input type="checkbox" data-testid="whole-file-toggle" bind:checked={wholeFile} /> whole file

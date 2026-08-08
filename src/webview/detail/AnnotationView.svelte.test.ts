@@ -234,6 +234,17 @@ describe('AnnotationView', () => {
     expect(onsaverange).toHaveBeenCalledWith('a1', null, null);
   });
 
+  it('hides the range inputs (and separator) while "whole file" is checked, keeping the filename visible', async () => {
+    render(AnnotationView, {
+      annotation: { id: 'a1', file: 'src/foo.ts', range: null, content: 'x', contentHash: '' },
+    });
+    await userEvent.click(screen.getByTestId('edit-range-btn'));
+    expect((screen.getByTestId('whole-file-toggle') as HTMLInputElement).checked).toBe(true);
+    expect(screen.queryByTestId('range-start')).toBeNull();
+    expect(screen.queryByTestId('range-end')).toBeNull();
+    expect(screen.getByText('foo.ts:')).toBeInTheDocument();
+  });
+
   it('starts a whole-file annotation with the toggle checked and can convert it back to lines', async () => {
     const onsaverange = vi.fn();
     render(AnnotationView, {
