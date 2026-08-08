@@ -69,9 +69,11 @@ into click-to-reveal links in the detail panel:
 Rules: the path is **workspace-relative POSIX** (write relative for portable,
 shareable annotations); line numbers are 1-based inclusive. A target with an
 `http(s)`/`scheme:` prefix is treated as a normal link, not a local link. A
-target with no `#L` fragment is a local link only when it looks like a path
-(contains `/` or ends in a `.ext`); `[see above](whatever)` stays an ordinary
-link. A non-line fragment (`docs/adr.md#heading`) is also an ordinary link.
+target with no `#L` fragment is a local link only when it looks like a path:
+no whitespace, and either it ends in a `.ext` or it contains a `/` with
+real path-like segments (more than one character each); `[see above](whatever)`
+and `[n/a](N/A)` stay ordinary links. A non-line fragment (`docs/adr.md#heading`)
+is also an ordinary link.
 
 ## Comment file — `.annotations/comments/<author-slug>.json`
 

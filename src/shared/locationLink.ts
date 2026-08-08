@@ -12,9 +12,26 @@ export function formatLocationLink(file: string, range: LineRange | null): strin
     : `${file}#L${range.startLine}-L${range.endLine}`;
 }
 
-/** A target with no fragment counts as a local link only if it looks like a path. */
+/**
+ * A target with no fragment counts as a local link only if it looks like a path: no whitespace
+ * (a Markdown link destination can't contain unescaped whitespace anyway, so prose like "see
+ * section 3.2" or a multi-line clipboard payload is never mistaken for one) and either it ends
+ * in a `.ext`, or it contains a `/` with real path-like segments (more than one character each,
+ * ignoring empty segments from a leading/trailing slash) — so a short abbreviation like "N/A"
+ * doesn't pass just because it has a slash in it.
+ */
 function looksLikePath(file: string): boolean {
-  return file.includes('/') || /\.[A-Za-z0-9]+$/.test(file);
+  if (/\s/.test(file)) {
+    return false;
+  }
+  if (/\.[A-Za-z0-9]+$/.test(file)) {
+    return true;
+  }
+  if (!file.includes('/')) {
+    return false;
+  }
+  const segments = file.split('/').filter((s) => s.length > 0);
+  return segments.length > 0 && segments.every((s) => s.length > 1);
 }
 
 /**

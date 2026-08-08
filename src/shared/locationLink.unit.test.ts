@@ -100,3 +100,32 @@ describe('file-only local links', () => {
     expect(isLocationLink('just words')).toBe(false);
   });
 });
+
+describe('paste-guard precision (no whitespace, no bare-slash abbreviations)', () => {
+  it('rejects a short slash abbreviation that is not a real path', () => {
+    expect(parseLocationLink('N/A')).toBeNull();
+  });
+
+  it('rejects prose that happens to end in what looks like an extension', () => {
+    expect(parseLocationLink('see section 3.2')).toBeNull();
+  });
+
+  it('rejects a multi-line clipboard payload that contains a slash', () => {
+    const snippet = 'function foo() {\n  return a/b;\n}';
+    expect(parseLocationLink(snippet)).toBeNull();
+  });
+
+  it('rejects targets with tabs or carriage returns', () => {
+    expect(parseLocationLink('src/foo.ts\tbar')).toBeNull();
+    expect(parseLocationLink('src/foo.ts\rbar')).toBeNull();
+  });
+
+  it('still accepts real paths with no fragment', () => {
+    expect(parseLocationLink('src/core/foo.ts')).toEqual({ file: 'src/core/foo.ts', range: null });
+    expect(parseLocationLink('README.md')).toEqual({ file: 'README.md', range: null });
+  });
+
+  it('still accepts a line-fragment link', () => {
+    expect(parseLocationLink('src/foo.ts#L4-L9')).toEqual({ file: 'src/foo.ts', range: { startLine: 4, endLine: 9 } });
+  });
+});
