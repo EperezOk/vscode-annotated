@@ -70,10 +70,12 @@ Rules: the path is **workspace-relative POSIX** (write relative for portable,
 shareable annotations); line numbers are 1-based inclusive. A target with an
 `http(s)`/`scheme:` prefix is treated as a normal link, not a local link. A
 target with no `#L` fragment is a local link only when it looks like a path:
-no whitespace, and either it ends in a `.ext` or it contains a `/` with
-real path-like segments (more than one character each); `[see above](whatever)`
-and `[n/a](N/A)` stay ordinary links. A non-line fragment (`docs/adr.md#heading`)
-is also an ordinary link.
+no whitespace, and either it ends in a `.ext` or it contains a `/` with at
+least one real path-like segment (more than one character) — so an
+extensionless path with a short segment (`bin/x`, `src/d/utils`) still
+counts, but a short two-sided abbreviation like `[n/a](N/A)` does not.
+`[see above](whatever)` also stays an ordinary link. A non-line fragment
+(`docs/adr.md#heading`) is also an ordinary link.
 
 ## Comment file — `.annotations/comments/<author-slug>.json`
 

@@ -128,4 +128,15 @@ describe('paste-guard precision (no whitespace, no bare-slash abbreviations)', (
   it('still accepts a line-fragment link', () => {
     expect(parseLocationLink('src/foo.ts#L4-L9')).toEqual({ file: 'src/foo.ts', range: { startLine: 4, endLine: 9 } });
   });
+
+  it('accepts an extensionless path with a short segment as long as one segment is a real name', () => {
+    expect(parseLocationLink('bin/x')).toEqual({ file: 'bin/x', range: null });
+    expect(parseLocationLink('src/d/utils')).toEqual({ file: 'src/d/utils', range: null });
+    expect(parseLocationLink('a/deeply/nested/path')).toEqual({ file: 'a/deeply/nested/path', range: null });
+  });
+
+  it('still rejects an extensionless path where every segment is single-character', () => {
+    expect(parseLocationLink('N/A')).toBeNull();
+    expect(parseLocationLink('x/y/z')).toBeNull();
+  });
 });
