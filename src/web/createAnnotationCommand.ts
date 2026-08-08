@@ -103,6 +103,12 @@ export function registerCreateFileAnnotationCommand(
       void vscode.window.showWarningMessage(`Annotated: cannot read "${uri.path}".`);
       return;
     }
+    // Multi-root workspaces: annotations are always resolved/stored against workspaceFolders[0],
+    // so a file from another root would silently be recorded under the wrong folder's path.
+    if (vscode.workspace.getWorkspaceFolder(uri)?.uri.toString() !== folder.uri.toString()) {
+      void vscode.window.showWarningMessage('Annotated: that file is outside the annotated workspace folder.');
+      return;
+    }
     const fs = new VscodeFileSystem(folder.uri);
     const store = new GroupStore(fs);
     const raw = vscode.workspace.asRelativePath(uri, false);
