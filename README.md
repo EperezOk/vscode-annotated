@@ -14,7 +14,7 @@ Annotate a codebase with grouped, shareable Markdown annotations.
 
 ---
 
-**Annotated** attaches grouped, Markdown annotations to ranges of code — for reviews, code tours,
+**Annotated** attaches grouped, Markdown annotations to ranges of code — or to whole files — for reviews, code tours,
 onboarding notes, or just thinking out loud. Annotations live as plain JSON under `.annotations/`
 in your repo, so they're diffable, shareable (commit them), and readable by AI agents. Organize
 groups with tags, discuss them in comment threads, link a group to a Git ref, and resolve them
@@ -30,6 +30,7 @@ groups. The everyday actions also have commands and keybindings:
 | Command | Keybinding (mac · Win/Linux) | What it does |
 | --- | --- | --- |
 | `Annotated: Create Annotation` | `⌥⌘A` · `Ctrl+Alt+A` | Annotate the selected lines — pick an existing group or create one (title + tags). |
+| `Annotated: Create File Annotation` | — | Annotate a whole file, with no line range — from the palette, or right-click a file in the Explorer. |
 | `Annotated: Open Annotation at Cursor` | `⌥⌘O` · `Ctrl+Alt+O` | Open the annotation under the cursor in the detail view. |
 | _Focus the Annotations sidebar_ | `⌥⌘L` · `Ctrl+Alt+L` | Reveal and focus the Annotations view. |
 | `Annotated: Show / Hide Annotation Line Highlight` | `⌥⌘H` · `Ctrl+Alt+H` | Toggle the tint over annotated lines in the editor. |
@@ -40,11 +41,15 @@ A few things that live in the UI rather than as keybindings:
 
 - **Detail view** (secondary sidebar): edit an annotation's Markdown, copy its content or
   `path:line` reference, jump prev/next, and reply in comment threads.
-- **Local links**: an annotation's Markdown can link to code with `[label](src/foo.ts#L10-L20)`.
-  Copy a target with **Copy Location for Annotation Link**, then paste it over selected text in the
-  editor to wrap it as a link. Clicking a local link opens the file and highlights those lines
-  (in a distinct colour) without leaving the annotation; **↩ Refocus code** jumps back to the
-  annotation's own lines.
+- **Whole-file annotations**: an annotation can target a file as a whole instead of specific lines
+  — use **Create File Annotation**, or tick **whole file** in the detail view's range editor to
+  convert an existing one (and untick it to go back). They open the file when clicked, and never
+  go stale from edits elsewhere in it.
+- **Local links**: an annotation's Markdown can link to code with `[label](src/foo.ts#L10-L20)`, or
+  to a whole file with `[label](src/foo.ts)`. Copy a target with **Copy Location for Annotation
+  Link**, then paste it over selected text in the editor to wrap it as a link. Clicking a local
+  link opens the file and highlights those lines (in a distinct colour) without leaving the
+  annotation; **↩ Refocus code** jumps back to the annotation's own lines.
 - **Bulk actions**: hit **Select** in the sidebar to tag, set a Git ref, resolve/restore, or
   delete multiple groups at once.
 - **Delete**: right-click a group or an annotation.
