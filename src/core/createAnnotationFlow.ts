@@ -2,11 +2,12 @@ import { type AnnotationGroup, type LineRange, type Tag } from '../shared/model'
 import { anchorText } from '../shared/hash';
 import { addAnnotation, createGroup, makeAnnotation } from './annotationFactory';
 
-/** The current editor selection to annotate. */
+/** The current editor selection (or whole file) to annotate. */
 export interface SelectionInfo {
   /** Workspace-relative POSIX path. */
   file: string;
-  range: LineRange;
+  /** Lines to anchor to, or null for a whole-file annotation. */
+  range: LineRange | null;
 }
 
 /** Result of the group QuickPick. */
@@ -45,7 +46,7 @@ export async function runCreateAnnotation(
 ): Promise<{ group: AnnotationGroup; annotationId: string } | undefined> {
   const selection = deps.getSelection();
   if (!selection) {
-    deps.showWarning('Select one or more lines to annotate.');
+    deps.showWarning('Annotated: open a file (and select lines) to annotate.');
     return undefined;
   }
 
@@ -54,7 +55,9 @@ export async function runCreateAnnotation(
     deps.showWarning('Annotated: open the file itself to annotate it — this view has no file on disk.');
     return undefined;
   }
-  const contentHash = await deps.hashContent(anchorText(text, selection.range));
+  // A whole-file annotation has no anchored lines, so there is nothing to hash (and it can
+  // never go "lines changed" stale). The read above still guards diff/virtual documents.
+  const contentHash = selection.range === null ? '' : await deps.hashContent(anchorText(text, selection.range));
   const annotation = makeAnnotation({
     id: deps.newId(),
     file: selection.file,

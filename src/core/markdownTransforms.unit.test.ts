@@ -119,4 +119,14 @@ describe('linkPasteEdit', () => {
   it('returns null when the pasted text is neither a URL nor a location', () => {
     expect(linkPasteEdit('see foo bar', 4, 7, 'just text')).toBeNull();
   });
+  it('does not link a short slash abbreviation like "N/A"', () => {
+    expect(linkPasteEdit('see foo bar', 4, 7, 'N/A')).toBeNull();
+  });
+  it('does not link a multi-word phrase pasted over a selection', () => {
+    expect(linkPasteEdit('see foo bar', 4, 7, 'see section 3.2')).toBeNull();
+  });
+  it('still links a real path pasted over a selection (no regression)', () => {
+    const r = linkPasteEdit('see foo bar', 4, 7, 'src/core/foo.ts');
+    expect(r).toEqual({ doc: 'see [foo](src/core/foo.ts) bar', selectionFrom: 4, selectionTo: 26 });
+  });
 });

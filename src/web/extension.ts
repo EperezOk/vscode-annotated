@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { SidebarViewProvider } from './sidebarViewProvider';
-import { registerCreateAnnotationCommand } from './createAnnotationCommand';
+import { registerCreateAnnotationCommand, registerCreateFileAnnotationCommand } from './createAnnotationCommand';
 import { registerCopyLocationLinkCommand } from './copyLocationLinkCommand';
 import { DetailPanelProvider } from './detailPanelProvider';
 import { GroupStore } from '../core/groupStore';
@@ -13,7 +13,7 @@ import { readGitRefInfo } from './gitRefsSource';
 import { gitRefSuggestions } from '../core/gitRefs';
 import { computeStaleIds } from './staleness';
 import { sha256Hex, anchorText } from '../shared/hash';
-import { formatLineRange, type AnnotationGroup, type GroupStatus, type Tag } from '../shared/model';
+import { formatAnnotationLocation, type AnnotationGroup, type GroupStatus, type Tag } from '../shared/model';
 import { bulkStatusToggle } from '../core/sidebarState';
 import { CommentStore } from '../core/commentStore';
 import { flattenComments, slugifyAuthor } from '../core/comments';
@@ -222,7 +222,7 @@ export function activate(context: vscode.ExtensionContext): void {
   detailProvider.onOpenLocalLink = (file, startLine, endLine): void => {
     const folder = vscode.workspace.workspaceFolders?.[0];
     if (folder) {
-      void revealLocation(folder.uri, file, { startLine, endLine });
+      void revealLocation(folder.uri, file, startLine === null || endLine === null ? null : { startLine, endLine });
     }
   };
 
@@ -385,6 +385,13 @@ export function activate(context: vscode.ExtensionContext): void {
     if (!annotation) {
       return;
     }
+    // Whole file: no anchored lines, so no hash to keep.
+    if (startLine === null || endLine === null) {
+      if (await store.updateAnnotationRange(groupId, annotationId, null, '', now())) {
+        await showGroupWithStale(groupId);
+      }
+      return;
+    }
     const range = { startLine, endLine };
     let contentHash = annotation.contentHash;
     try {
@@ -489,6 +496,7 @@ export function activate(context: vscode.ExtensionContext): void {
     }
   };
   context.subscriptions.push(registerCreateAnnotationCommand(openAnnotationInPanel));
+  context.subscriptions.push(registerCreateFileAnnotationCommand(openAnnotationInPanel));
   context.subscriptions.push(registerCopyLocationLinkCommand());
 
   // Invoked by gutter-hover command links (not contributed to the palette — needs args).
@@ -525,7 +533,7 @@ export function activate(context: vscode.ExtensionContext): void {
       const picked = await vscode.window.showQuickPick(
         matches.map((m) => ({
           label: m.group.title,
-          description: `${m.annotation.file}:${formatLineRange(m.annotation.range)}`,
+          description: formatAnnotationLocation(m.annotation),
           groupId: m.group.id,
           annotationId: m.annotation.id,
         })),

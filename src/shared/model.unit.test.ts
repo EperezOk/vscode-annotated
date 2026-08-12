@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseGroup, serializeGroup, parseCommentFile, serializeCommentFile, formatLineRange, type AnnotationGroup } from './model';
+import { parseGroup, serializeGroup, parseCommentFile, serializeCommentFile, formatLineRange, formatAnnotationLocation, type AnnotationGroup } from './model';
 
 const validGroup: AnnotationGroup = {
   id: 'g1',
@@ -113,5 +113,59 @@ describe('parseCommentFile comment targets', () => {
   });
   it('rejects a comment with neither target', () => {
     expect(() => parseCommentFile({ ...base, comments: [{ id: 'c1', content: 'x', timestamp: 1 }] })).toThrow(/exactly one/);
+  });
+});
+
+describe('whole-file annotations', () => {
+  const base = {
+    id: 'g1', title: 'G', author: 'A', tags: [], gitRef: null, status: 'open',
+    createdAt: 1, updatedAt: 1,
+  };
+
+  it('parses an explicit null range as null', () => {
+    const group = parseGroup({
+      ...base,
+      annotations: [{ id: 'a1', file: 'src/foo.ts', range: null, content: 'x', contentHash: '' }],
+    });
+    expect(group.annotations[0].range).toBeNull();
+  });
+
+  it('parses a missing range as null', () => {
+    const group = parseGroup({
+      ...base,
+      annotations: [{ id: 'a1', file: 'src/foo.ts', content: 'x', contentHash: '' }],
+    });
+    expect(group.annotations[0].range).toBeNull();
+  });
+
+  it('still rejects a malformed range', () => {
+    expect(() =>
+      parseGroup({
+        ...base,
+        annotations: [{ id: 'a1', file: 'src/foo.ts', range: { startLine: 0, endLine: 3 }, content: '', contentHash: '' }],
+      }),
+    ).toThrow(/range.startLine/);
+  });
+
+  it('serializes a whole-file annotation with an explicit null range', () => {
+    const group = parseGroup({
+      ...base,
+      annotations: [{ id: 'a1', file: 'src/foo.ts', range: null, content: 'x', contentHash: '' }],
+    });
+    expect(serializeGroup(group)).toContain('"range": null');
+  });
+});
+
+describe('formatAnnotationLocation', () => {
+  it('appends a single line', () => {
+    expect(formatAnnotationLocation({ file: 'src/foo.ts', range: { startLine: 12, endLine: 12 } })).toBe('src/foo.ts:12');
+  });
+
+  it('appends an en-dash range', () => {
+    expect(formatAnnotationLocation({ file: 'src/foo.ts', range: { startLine: 12, endLine: 18 } })).toBe('src/foo.ts:12–18');
+  });
+
+  it('is just the path for a whole-file annotation', () => {
+    expect(formatAnnotationLocation({ file: 'src/foo.ts', range: null })).toBe('src/foo.ts');
   });
 });

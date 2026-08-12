@@ -2,9 +2,9 @@
   import MarkdownIt from 'markdown-it';
   import DOMPurify from 'dompurify';
   import { parseLocationLink } from '../../shared/locationLink';
-  import { formatLineRange, type LineRange } from '../../shared/model';
+  import { formatAnnotationLocation, type LineRange } from '../../shared/model';
 
-  let { source, onlocallink }: { source: string; onlocallink?: (file: string, range: LineRange) => void } = $props();
+  let { source, onlocallink }: { source: string; onlocallink?: (file: string, range: LineRange | null) => void } = $props();
 
   const md = new MarkdownIt({ html: true, linkify: true, typographer: true });
 
@@ -23,7 +23,7 @@
   let container: HTMLDivElement;
 
   // Read the raw href attribute (not a.href, which the webview resolves to an absolute URL).
-  function localLinkFor(a: HTMLAnchorElement): { file: string; range: LineRange } | null {
+  function localLinkFor(a: HTMLAnchorElement): { file: string; range: LineRange | null } | null {
     return parseLocationLink(a.getAttribute('href') ?? '');
   }
 
@@ -70,7 +70,7 @@
       const loc = localLinkFor(a);
       if (loc) {
         a.classList.add('local-link');
-        a.title = `${loc.file}:${formatLineRange(loc.range)}`;
+        a.title = formatAnnotationLocation(loc);
       }
     }
   });
@@ -84,6 +84,16 @@
   .md-preview :global(h2) { font-size: 1.15em; }
   .md-preview :global(code) { background: var(--vscode-textCodeBlock-background, #333); padding: 1px 4px; border-radius: 3px; overflow-wrap: break-word; }
   .md-preview :global(pre) { background: var(--vscode-textCodeBlock-background, #1e1e1e); padding: 8px; border-radius: 4px; overflow-x: auto; }
+  /* UA defaults indent lists 40px and quotes 40px on both sides; annotations read better
+     flush-left, with nesting adding exactly one step and quotes marked by a left border. */
+  .md-preview :global(ul), .md-preview :global(ol) { margin: 0.4em 0; padding-left: 1.4em; }
+  .md-preview :global(li) { margin: 0.15em 0; }
+  .md-preview :global(blockquote) {
+    margin: 0.5em 0;
+    padding: 0 0 0 8px;
+    border-left: 3px solid var(--vscode-textBlockQuote-border, #454545);
+    background: var(--vscode-textBlockQuote-background, transparent);
+  }
   .md-preview :global(a) { color: var(--vscode-textLink-foreground, #3794ff); overflow-wrap: break-word; }
   /* Local (code) link cue: a leading glyph + dotted underline so it reads apart from web links. */
   :global(.md-preview a.local-link) { text-decoration-style: dotted; }

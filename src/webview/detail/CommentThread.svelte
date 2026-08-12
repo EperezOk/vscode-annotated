@@ -20,7 +20,7 @@
     onadd?: (content: string) => void;
     onedit?: (commentId: string, content: string) => void;
     ondelete?: (commentId: string) => void;
-    onlocallink?: (file: string, range: LineRange) => void;
+    onlocallink?: (file: string, range: LineRange | null) => void;
   } = $props();
 
   let replying = $state(false);

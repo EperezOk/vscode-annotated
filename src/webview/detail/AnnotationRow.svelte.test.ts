@@ -54,4 +54,13 @@ describe('AnnotationRow', () => {
     render(AnnotationRow, { annotation: annotation('x') });
     expect(screen.queryByTestId('comment-badge')).toBeNull();
   });
+
+  it('shows just the file name for a whole-file annotation', () => {
+    render(AnnotationRow, {
+      annotation: { id: 'a1', file: 'src/deep/foo.ts', range: null, content: 'note', contentHash: '' },
+    });
+    const loc = screen.getByTestId('annotation-loc');
+    expect(loc.textContent).toBe('foo.ts');
+    expect(loc.getAttribute('title')).toBe('src/deep/foo.ts');
+  });
 });

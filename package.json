@@ -34,6 +34,7 @@
     },
     "commands": [
       { "command": "annotated.createAnnotation", "title": "Annotated: Create Annotation" },
+      { "command": "annotated.createFileAnnotation", "title": "Annotated: Create File Annotation" },
       { "command": "annotated.openAnnotationAtCursor", "title": "Annotated: Open Annotation at Cursor" },
       {
         "command": "annotated.manageTags",
@@ -113,6 +114,13 @@
           "command": "annotated.copyLocationLink",
           "when": "editorTextFocus",
           "group": "9_cutcopypaste"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "annotated.createFileAnnotation",
+          "when": "!explorerResourceIsFolder",
+          "group": "7_modification"
         }
       ],
       "commandPalette": [

@@ -1,6 +1,9 @@
 import { render, screen } from '@testing-library/svelte';
 import userEvent from '@testing-library/user-event';
 import { tick } from 'svelte';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { join, dirname } from 'node:path';
 import { describe, it, expect, vi } from 'vitest';
 import MarkdownPreview from './MarkdownPreview.svelte';
 
@@ -79,5 +82,47 @@ describe('MarkdownPreview', () => {
     } finally {
       window.removeEventListener('click', globalClick);
     }
+  });
+
+  it('styles top-level lists and quotes flush-left', () => {
+    render(MarkdownPreview, { source: '- one\n  - nested\n\n> quoted' });
+    // jsdom in this environment does not expose the component CSS that vite-plugin-svelte
+    // injects at runtime (a `document.querySelectorAll('style')` scan comes back empty), so this
+    // asserts against the component's raw <style> block source instead. (Note: jsdom's global
+    // `URL` mis-resolves relative-to-file: bases against window.location, so derive the sibling
+    // path from fileURLToPath(import.meta.url) instead of `new URL(rel, base)`.)
+    const testFilePath = fileURLToPath(import.meta.url);
+    const componentPath = join(dirname(testFilePath), 'MarkdownPreview.svelte');
+    const source = readFileSync(componentPath, 'utf8').replace(/\s+/g, ' ');
+    // Rules must be scoped under `.md-preview` — an unscoped `ul { … }` elsewhere must not pass.
+    // Lists indent by one small step per nesting level instead of the UA's 40px.
+    expect(source).toMatch(/\.md-preview :global\(ul\)[^{]*{[^}]*padding-left: 1\.4em/);
+    expect(source).toMatch(/\.md-preview :global\(ol\)[^{]*{[^}]*padding-left: 1\.4em/);
+    expect(source).toMatch(/\.md-preview :global\(li\)[^{]*{[^}]*margin: 0\.15em 0/);
+    // Quotes use a left border, not a 40px side margin.
+    expect(source).toMatch(/\.md-preview :global\(blockquote\)[^{]*{[^}]*margin: 0\.5em 0/);
+    expect(source).toMatch(/\.md-preview :global\(blockquote\)[^{]*{[^}]*border-left: 3px solid/);
+  });
+
+  it('fires onlocallink with a null range for a file-only link', async () => {
+    const onlocallink = vi.fn();
+    render(MarkdownPreview, { source: 'see [the module](src/core/foo.ts).', onlocallink });
+    await userEvent.click(screen.getByText('the module'));
+    expect(onlocallink).toHaveBeenCalledWith('src/core/foo.ts', null);
+  });
+
+  it('titles a file-only local link with the bare path', async () => {
+    const { container } = render(MarkdownPreview, { source: '[mod](src/core/foo.ts)', onlocallink: () => {} });
+    await tick();
+    expect(container.querySelector('a.local-link')?.getAttribute('title')).toBe('src/core/foo.ts');
+  });
+
+  it('leaves prose links alone', async () => {
+    const onlocallink = vi.fn();
+    const { container } = render(MarkdownPreview, { source: '[see above](whatever)', onlocallink });
+    await tick();
+    expect(container.querySelector('a.local-link')).toBeNull();
+    await userEvent.click(screen.getByText('see above'));
+    expect(onlocallink).not.toHaveBeenCalled();
   });
 });

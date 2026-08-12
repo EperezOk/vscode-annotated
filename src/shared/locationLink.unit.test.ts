@@ -28,8 +28,8 @@ describe('parseLocationLink', () => {
     expect(parseLocationLink('https://example.com/x#L1')).toBeNull();
     expect(parseLocationLink('http://x.co#L1-L2')).toBeNull();
   });
-  it('returns null when there is no #L fragment', () => {
-    expect(parseLocationLink('src/foo.ts')).toBeNull();
+  it('returns a whole-file target when there is no #L fragment, but null for a non-#L fragment', () => {
+    expect(parseLocationLink('src/foo.ts')).toEqual({ file: 'src/foo.ts', range: null });
     expect(parseLocationLink('src/foo.ts#section')).toBeNull();
   });
   it('returns null for an empty file part', () => {
@@ -61,5 +61,82 @@ describe('isLocationLink', () => {
   it('is false for a URL or plain text', () => {
     expect(isLocationLink('https://example.com')).toBe(false);
     expect(isLocationLink('hello world')).toBe(false);
+  });
+});
+
+describe('file-only local links', () => {
+  it('parses a path with no fragment as a whole-file target', () => {
+    expect(parseLocationLink('src/core/foo.ts')).toEqual({ file: 'src/core/foo.ts', range: null });
+  });
+
+  it('parses a bare filename with an extension', () => {
+    expect(parseLocationLink('README.md')).toEqual({ file: 'README.md', range: null });
+  });
+
+  it('normalizes backslashes', () => {
+    expect(parseLocationLink('src\\core\\foo.ts')).toEqual({ file: 'src/core/foo.ts', range: null });
+  });
+
+  it('ignores prose targets that do not look like paths', () => {
+    expect(parseLocationLink('whatever')).toBeNull();
+    expect(parseLocationLink('')).toBeNull();
+  });
+
+  it('still ignores URLs and non-line fragments', () => {
+    expect(parseLocationLink('https://example.com/a/b.ts')).toBeNull();
+    expect(parseLocationLink('docs/adr.md#heading')).toBeNull();
+  });
+
+  it('still parses line fragments', () => {
+    expect(parseLocationLink('src/foo.ts#L4-L9')).toEqual({ file: 'src/foo.ts', range: { startLine: 4, endLine: 9 } });
+  });
+
+  it('formats a null range as the bare path', () => {
+    expect(formatLocationLink('src/foo.ts', null)).toBe('src/foo.ts');
+  });
+
+  it('treats a bare path as a location link for the paste guard', () => {
+    expect(isLocationLink(' src/foo.ts ')).toBe(true);
+    expect(isLocationLink('just words')).toBe(false);
+  });
+});
+
+describe('paste-guard precision (no whitespace, no bare-slash abbreviations)', () => {
+  it('rejects a short slash abbreviation that is not a real path', () => {
+    expect(parseLocationLink('N/A')).toBeNull();
+  });
+
+  it('rejects prose that happens to end in what looks like an extension', () => {
+    expect(parseLocationLink('see section 3.2')).toBeNull();
+  });
+
+  it('rejects a multi-line clipboard payload that contains a slash', () => {
+    const snippet = 'function foo() {\n  return a/b;\n}';
+    expect(parseLocationLink(snippet)).toBeNull();
+  });
+
+  it('rejects targets with tabs or carriage returns', () => {
+    expect(parseLocationLink('src/foo.ts\tbar')).toBeNull();
+    expect(parseLocationLink('src/foo.ts\rbar')).toBeNull();
+  });
+
+  it('still accepts real paths with no fragment', () => {
+    expect(parseLocationLink('src/core/foo.ts')).toEqual({ file: 'src/core/foo.ts', range: null });
+    expect(parseLocationLink('README.md')).toEqual({ file: 'README.md', range: null });
+  });
+
+  it('still accepts a line-fragment link', () => {
+    expect(parseLocationLink('src/foo.ts#L4-L9')).toEqual({ file: 'src/foo.ts', range: { startLine: 4, endLine: 9 } });
+  });
+
+  it('accepts an extensionless path with a short segment as long as one segment is a real name', () => {
+    expect(parseLocationLink('bin/x')).toEqual({ file: 'bin/x', range: null });
+    expect(parseLocationLink('src/d/utils')).toEqual({ file: 'src/d/utils', range: null });
+    expect(parseLocationLink('a/deeply/nested/path')).toEqual({ file: 'a/deeply/nested/path', range: null });
+  });
+
+  it('still rejects an extensionless path where every segment is single-character', () => {
+    expect(parseLocationLink('N/A')).toBeNull();
+    expect(parseLocationLink('x/y/z')).toBeNull();
   });
 });

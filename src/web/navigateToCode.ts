@@ -66,15 +66,24 @@ export function clearAllHighlights(): void {
  * focus in the panel (preserveFocus) so the annotation view is untouched. Out-of-workspace or
  * unopenable targets warn and no-op rather than throw.
  */
-export async function revealLocation(folderUri: vscode.Uri, file: string, range: LineRange): Promise<void> {
+export async function revealLocation(folderUri: vscode.Uri, file: string, range: LineRange | null): Promise<void> {
   const segments = toWorkspaceRelativeSegments(file, folderUri.path);
   if (!segments) {
     void vscode.window.showWarningMessage(`Annotated: cannot open "${file}" (outside the workspace).`);
     return;
   }
   const uri = vscode.Uri.joinPath(folderUri, ...segments);
-  const vsRange = new vscode.Range(range.startLine - 1, 0, range.endLine - 1, Number.MAX_SAFE_INTEGER);
   clearLinkHighlight();
+  // A file-only link has no lines to select or highlight — just open it.
+  if (range === null) {
+    try {
+      await vscode.window.showTextDocument(uri, { preserveFocus: true });
+    } catch {
+      void vscode.window.showWarningMessage(`Annotated: cannot open "${file}".`);
+    }
+    return;
+  }
+  const vsRange = new vscode.Range(range.startLine - 1, 0, range.endLine - 1, Number.MAX_SAFE_INTEGER);
   let editor: vscode.TextEditor;
   try {
     editor = await vscode.window.showTextDocument(uri, { selection: vsRange, preserveFocus: true });
@@ -99,15 +108,26 @@ export async function revealAnnotation(folderUri: vscode.Uri, annotation: Annota
     return;
   }
   const uri = vscode.Uri.joinPath(folderUri, ...segments);
+
+  clearHighlight();
+  clearLinkHighlight(); // re-anchoring on the annotation drops any stale link-target highlight
+
+  // A whole-file annotation has no lines to reveal: just open the file (no selection, no highlight).
+  if (annotation.range === null) {
+    try {
+      await vscode.window.showTextDocument(uri, { preserveFocus: true });
+    } catch {
+      void vscode.window.showWarningMessage(`Annotated: cannot open "${annotation.file}".`);
+    }
+    return;
+  }
+
   const range = new vscode.Range(
     annotation.range.startLine - 1,
     0,
     annotation.range.endLine - 1,
     Number.MAX_SAFE_INTEGER,
   );
-
-  clearHighlight();
-  clearLinkHighlight(); // re-anchoring on the annotation drops any stale link-target highlight
 
   let editor: vscode.TextEditor;
   try {

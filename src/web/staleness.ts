@@ -10,7 +10,8 @@ export async function computeStaleIds(fs: FileSystem, group: AnnotationGroup): P
   for (const annotation of group.annotations) {
     try {
       const fileText = dec.decode(await fs.readFile(annotation.file));
-      if (await isAnnotationStale(fileText, annotation.range, annotation.contentHash)) {
+      // Whole-file annotations have no anchored lines: readable file → never "lines changed".
+      if (annotation.range !== null && (await isAnnotationStale(fileText, annotation.range, annotation.contentHash))) {
         stale.push(annotation.id);
       }
     } catch {

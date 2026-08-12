@@ -15,6 +15,11 @@ export function formatLineRange(range: LineRange): string {
     : `${range.startLine}–${range.endLine}`;
 }
 
+/** `src/foo.ts:12–18` / `src/foo.ts:12`, or just `src/foo.ts` for a whole-file annotation. */
+export function formatAnnotationLocation(a: Pick<Annotation, 'file' | 'range'>): string {
+  return a.range === null ? a.file : `${a.file}:${formatLineRange(a.range)}`;
+}
+
 /** A tag on a group: a display name + color. (Colors are also resolved from user config.) */
 export interface Tag {
   name: string;
@@ -28,10 +33,11 @@ export interface Annotation {
   id: string;
   /** Workspace-relative POSIX path. */
   file: string;
-  range: LineRange;
+  /** 1-based inclusive line range, or null for a whole-file annotation. */
+  range: LineRange | null;
   /** Markdown body. */
   content: string;
-  /** SHA-256 hex of the anchored lines at creation (for drift detection). */
+  /** SHA-256 hex of the anchored lines at creation (for drift detection); '' when range is null. */
   contentHash: string;
 }
 
@@ -79,7 +85,9 @@ function parseAnnotation(raw: unknown): Annotation {
   if (typeof file !== 'string') fail('annotation.file', 'must be a string');
   if (typeof content !== 'string') fail('annotation.content', 'must be a string');
   if (typeof contentHash !== 'string') fail('annotation.contentHash', 'must be a string');
-  return { id, file, range: parseRange(range), content, contentHash };
+  // A missing or null range means "the whole file" — no line anchor, no content hash.
+  const parsedRange = range === undefined || range === null ? null : parseRange(range);
+  return { id, file, range: parsedRange, content, contentHash };
 }
 
 function parseTag(raw: unknown): Tag {

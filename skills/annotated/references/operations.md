@@ -58,6 +58,9 @@ Resolve your `agentName` per §0 first (ask the user if it's unset) — it becom
 
 1. For each annotation, gather `file` (workspace-relative POSIX), 1-based inclusive `range`,
    and markdown `content`. Compute `contentHash` via the hash recipe with that `file`/range.
+   - **Whole-file annotation:** when the note is about the file as a whole (its role, its
+     invariants) rather than specific lines, set `"range": null` and `"contentHash": ""` and skip
+     the hash recipe. Prefer a line range whenever the note is about specific code.
    - **Reference other code with local links instead of extra annotations.** When a
      note needs to point at a *different* location (a call site, a related type,
      prior art), embed a local link `[label](path/to/file.ts#L10-L20)` in the
